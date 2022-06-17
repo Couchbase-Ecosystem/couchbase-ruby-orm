@@ -24,8 +24,10 @@ module Rails #:nodoc:
     module Couchbase #:nodoc:
         class Railtie < Rails::Railtie #:nodoc:
 
-            config.couchbase = ActiveSupport::OrderedOptions.new
-            config.couchbase.ensure_design_documents = true
+            puts "Railtie < Rails::Railtie"
+            config.couchbase2 = ActiveSupport::OrderedOptions.new
+            config.couchbase2.ensure_design_documents = true
+            puts "config.couchbase.ensure_design_documents : #{config.couchbase2.ensure_design_documents}"
 
             # Maping of rescued exceptions to HTTP responses
             #
@@ -51,9 +53,12 @@ module Rails #:nodoc:
             # Initialize Couchbase Mode. This will look for a couchbase.yml in the
             # config directory and configure Couchbase connection appropriately.
             initializer 'couchbase.setup_connection' do
+                puts "ici!!!"
+                puts Rails.env
                 config_file = Rails.root.join('config', 'couchbase.yml')
                 if config_file.file? &&
                     config = YAML.load(ERB.new(File.read(config_file)).result)[Rails.env]
+                    puts config
                     ::CouchbaseOrm::Connection.options = config.deep_symbolize_keys
                 end
             end
@@ -83,7 +88,7 @@ module Rails #:nodoc:
 
             # Check (and upgrade if needed) all design documents
             config.after_initialize do |app|
-                if config.couchbase.ensure_design_documents
+                if config.couchbase2.ensure_design_documents
                     begin
                         ::CouchbaseOrm::Base.descendants.each do |model|
                             model.ensure_design_document!

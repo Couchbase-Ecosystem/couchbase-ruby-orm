@@ -27,8 +27,8 @@ module CouchbaseOrm
             proxyfied.public_methods.each do |method|
                 next if self.public_methods.include?(method)
 
-                self.class.define_method(method) do |*params, &block|
-                    @proxyfied.send(method, *params, &block)
+                self.class.define_method(method) do |*params, **options, &block|
+                    @proxyfied.send(method, *params, **options, &block)
                 end
             end
         end

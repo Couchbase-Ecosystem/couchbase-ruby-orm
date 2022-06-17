@@ -1,6 +1,6 @@
-# frozen_string_literal: true, encoding: ASCII-8BIT
 
 require 'mt-libcouchbase'
+require 'couchbase'
 
 module CouchbaseOrm
     class Connection
@@ -10,7 +10,13 @@ module CouchbaseOrm
         end
 
         def self.bucket
-            @bucket ||= ::MTLibcouchbase::Bucket.new(**@options)
+            if @bucket.nil?
+                options = Couchbase::Cluster::ClusterOptions.new
+                options.authenticate("cb_admin", "cb_admin_pwd")
+
+                cluster = Couchbase::Cluster.connect('couchbase://127.0.0.1', options)
+                @bucket = cluster.bucket("billeo-db-bucket")
+            end
         end
     end
 end

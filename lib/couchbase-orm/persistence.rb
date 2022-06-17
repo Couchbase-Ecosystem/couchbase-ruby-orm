@@ -236,10 +236,10 @@ module CouchbaseOrm
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
                     CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    resp = self.class.bucket.replace(_id, @__attributes__, **options)
+                    resp = self.class.bucket.default_collection.upsert(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
-                    @__metadata__.key = resp.key
+                    @__metadata__.key = _id
                     @__metadata__.cas = resp.cas
 
                     changes_applied
@@ -247,7 +247,6 @@ module CouchbaseOrm
                 end
             end
         end
-
         def _create_record(**options)
             return false unless perform_validations(:create, options)
 
@@ -259,10 +258,14 @@ module CouchbaseOrm
 
                     _id = @id || self.class.uuid_generator.next(self)
                     CouchbaseOrm.logger.debug { "Data - Insert #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    resp = self.class.bucket.add(_id, @__attributes__, **options)
+                    #resp = self.class.bucket.add(_id, @__attributes__, **options)
+
+                    puts "ici"
+                    puts @__attributes__
+                    resp = self.class.bucket.default_collection.upsert(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
-                    @__metadata__.key = resp.key
+                    @__metadata__.key = _id
                     @__metadata__.cas = resp.cas
 
                     changes_applied

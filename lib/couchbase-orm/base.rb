@@ -100,12 +100,15 @@ module CouchbaseOrm
                     raise MTLibcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
-                CouchbaseOrm.logger.debug "Data - Get #{ids}"
-                record = bucket.get(*ids, **options)
+                puts "Data - Get #{ids}"
+
+                record = bucket.default_collection.get(*ids)
+                puts "After Data - Get #{record}"
                 records = record.is_a?(Array) ? record : [record]
                 records.map! { |record|
                     if record
-                        self.new(record)
+                        puts "content.delete(:type)"
+                        self.new(record, id: ids[0])
                     else
                         false
                     end
@@ -130,6 +133,7 @@ module CouchbaseOrm
 
         # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
+            puts "attributes : #{attributes}"
             @__metadata__   = Metadata.new
 
             # Assign default values
@@ -143,9 +147,28 @@ module CouchbaseOrm
                 end
             end
 
+            puts "model : #{model}"
             if model
                 case model
+                when Couchbase::Collection::GetResult
+                    puts "Couchbase::Collection::GetResult"
+                    doc = model.content || raise('empty response provided')
+                    type = doc.delete('type')
+                    doc.delete(:id)
+
+                    if type && !ignore_doc_type && type.to_s != self.class.design_document
+                        raise "document type mismatch, #{type} != #{self.class.design_document}"
+                    end
+
+                    @__metadata__.key = attributes[:id]
+                    @__metadata__.cas = model.cas
+
+                    puts "@__metadata__ : #{@__metadata__}"
+
+                    # This ensures that defaults are applied
+                    @__attributes__.merge! doc
                 when ::MTLibcouchbase::Response
+                    puts "MTLibcouchbase::Response"
                     doc = model.value || raise('empty response provided')
                     type = doc.delete(:type)
                     doc.delete(:id)
@@ -161,9 +184,11 @@ module CouchbaseOrm
                     @__attributes__.merge! doc
                     clear_changes_information
                 when CouchbaseOrm::Base
+                    puts "CouchbaseOrm::Base"
                     clear_changes_information
                     attributes = model.attributes
                     attributes.delete(:id)
+                    attributes.delete('type')
                     super(attributes)
                 else
                     clear_changes_information
