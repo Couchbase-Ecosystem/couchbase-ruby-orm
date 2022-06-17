@@ -1,0 +1,12 @@
+
+development:
+  hosts: localhost
+  username: cb_admin
+  password: cb_admin_pwd
+  bucket: billeo-db-bucket
+
+test:
+  hosts: localhost
+  username: cb_admin
+  password: cb_admin_pwd
+  bucket: billeo-db-bucket
