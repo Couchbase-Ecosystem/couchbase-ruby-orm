@@ -13,19 +13,18 @@ class Post < CouchbaseOrm::Base
 end
 
 class FirstTest < ActiveSupport::TestCase
-  test "the truth" do
-    assert true
-    puts "====> save new"
-    p = Post.new(id: 'hello-world5',
+  test 'the truth' do
+    id = "newid_#{DateTime.now.strftime('%s')}"
+    p = Post.new(id: id,
                  title: 'Hello world',
                  draft: true)
-    #p.save
-    puts "====> get "
-
-    p = Post.find('hello-world5')
-    p.body = "Once upon the times...."
-    puts "====> update "
-
     p.save
+    retrieved_p = Post.find(id)
+    assert_equal retrieved_p.title, p.title
+    retrieved_p.body = 'Once upon the times....'
+    retrieved_p.save
+
+    retrieved_p2 = Post.find(id)
+    assert_equal retrieved_p2.body, retrieved_p.body
   end
 end
