@@ -35,7 +35,7 @@ shared_examples "has_many example" do |parameter|
 
         docs = first.try(:"rating_#{@context}_tests").collect(&:rating)
 
-        expect(docs).to eq([1, 2])
+        expect(docs).to match_array([1, 2])
 
         first.destroy
         expect { @rating_test_class.find rate.id }.to raise_error(::MTLibcouchbase::Error::KeyNotFound)
