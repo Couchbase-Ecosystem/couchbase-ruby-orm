@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
     gem.require_paths = ["lib"]
 
     gem.add_runtime_dependency     'mt-libcouchbase', '~> 1.2'
-    gem.add_runtime_dependency     'activemodel',  '>= 4.0'
+    gem.add_runtime_dependency     'activemodel',  ENV["ACTIVE_MODEL_VERSION"] || '>= 4.0'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
 
     gem.add_development_dependency 'rake',         '~> 12.2'
