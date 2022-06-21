@@ -35,5 +35,5 @@ jobs:
       ACTIVE_MODEL_VERSION: ${{ matrix.gemfile }}
       BUNDLE_JOBS: 4
       BUNDLE_PATH: vendor/bundle
-      TRAVIS_CI: true
+      TRAVIS_TEST: true
       RAILS_ENV: test
