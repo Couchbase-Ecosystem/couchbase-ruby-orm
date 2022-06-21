@@ -20,7 +20,7 @@ jobs:
           - ruby: '2.6'
             gemfile: '7.0.0'
       fail-fast: false
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     name: ${{ matrix.ruby }} ${{ matrix.database }} rails-${{ matrix.gemfile }}
     steps:
     - uses: actions/checkout@v2
