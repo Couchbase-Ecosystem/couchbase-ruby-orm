@@ -8,6 +8,7 @@ module CouchbaseOrm
     autoload :Connection,  'couchbase-orm/connection'
     autoload :IdGenerator, 'couchbase-orm/id_generator'
     autoload :Base,        'couchbase-orm/base'
+    autoload :HasMany,     'couchbase-orm/utilities/has_many'
 
     def self.try_load(id)
         result = nil

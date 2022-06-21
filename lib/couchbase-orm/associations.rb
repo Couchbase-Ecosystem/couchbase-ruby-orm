@@ -112,8 +112,8 @@ module CouchbaseOrm
                     adds = (new || []) - (old || [])
                     subs = (old || []) - (new || [])
 
-                    update_has_and_belongs_to_many_reverse_association(assoc, adds, true, options)
-                    update_has_and_belongs_to_many_reverse_association(assoc, subs, false, options)
+                    update_has_and_belongs_to_many_reverse_association(assoc, adds, true, **options)
+                    update_has_and_belongs_to_many_reverse_association(assoc, subs, false, **options)
                 end
 
                 after_create save_method
