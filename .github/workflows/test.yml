@@ -53,5 +53,3 @@ jobs:
       BUNDLE_PATH: vendor/bundle
       TRAVIS_CI: true
       RAILS_ENV: test
-
-    services:
