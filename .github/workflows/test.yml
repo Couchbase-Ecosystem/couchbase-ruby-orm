@@ -2,10 +2,10 @@ name: CI
 
 on:
   push:
-    branches:
-      - 'master'
+    branches: [master]
   pull_request:
-    types: [opened, reopened]
+    branches: [master]
+
 jobs:
   test:
     strategy:
@@ -46,7 +46,6 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
     - run: bundle exec rspec
-
     env:
       ACTIVE_MODEL_VERSION: ${{ matrix.gemfile }}
       BUNDLE_JOBS: 4
