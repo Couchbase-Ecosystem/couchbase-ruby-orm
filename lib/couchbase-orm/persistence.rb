@@ -162,7 +162,10 @@ module CouchbaseOrm
         end
         alias_method :update_attributes!, :update!
 
-        # Updates the record without validating or running callbacks
+        # Updates the record without validating or running callbacks.
+        # Updates only the attributes that are passed in as parameters
+        # except if there is more than 16 attributes, in which case
+        # the whole record is saved.
         def update_columns(with_cas: false, **hash)
             _id = @__metadata__.key
             raise "unable to update columns, model not persisted" unless _id
@@ -174,11 +177,10 @@ module CouchbaseOrm
 
             # There is a limit of 16 subdoc operations per request
             resp = if hash.length <= 16
-                subdoc = self.class.collection.subdoc(_id)
-                hash.each do |key, value|
-                    subdoc.dict_upsert(key, value)
-                end
-                subdoc.execute!(**options)
+                self.class.collection.mutate_in(
+                    _id,
+                    hash.map { |k, v| Couchbase::MutateInSpec.replace(k.to_s, v) }
+                )
             else
                 # Fallback to writing the whole document
                 @__attributes__[:type] = self.class.design_document
@@ -188,7 +190,6 @@ module CouchbaseOrm
             end
 
             # Ensure the model is up to date
-            @__metadata__.key = resp.key
             @__metadata__.cas = resp.cas
 
             changes_applied
@@ -203,9 +204,9 @@ module CouchbaseOrm
             raise "unable to reload, model not persisted" unless key
 
             CouchbaseOrm.logger.debug "Data - Get #{key}"
-            resp = self.class.collection.get(key, quiet: false, extended: true)
-            @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.value)
-            @__metadata__.key = resp.key
+            resp = self.class.collection.get(key)
+            @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.content)
+            @__metadata__.key = key
             @__metadata__.cas = resp.cas
 
             reset_associations
