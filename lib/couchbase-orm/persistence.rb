@@ -100,7 +100,7 @@ module CouchbaseOrm
         def delete(with_cas: false, **options)
             options[:cas] = @__metadata__.cas if with_cas
             CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
-            self.class.bucket.delete(@__metadata__.key, options)
+            self.class.bucket.delete(@__metadata__.key, **options)
 
             @__metadata__.key = nil
             @id = nil
@@ -123,7 +123,7 @@ module CouchbaseOrm
 
                 options[:cas] = @__metadata__.cas if with_cas
                 CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
-                self.class.bucket.delete(@__metadata__.key, options)
+                self.class.bucket.delete(@__metadata__.key, **options)
 
                 @__metadata__.key = nil
                 @id = nil
@@ -176,7 +176,7 @@ module CouchbaseOrm
                 hash.each do |key, value|
                     subdoc.dict_upsert(key, value)
                 end
-                subdoc.execute!(options)
+                subdoc.execute!(**options)
             else
                 # Fallback to writing the whole document
                 @__attributes__[:type] = self.class.design_document

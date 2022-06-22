@@ -51,7 +51,7 @@ module CouchbaseOrm
                     opts = options.merge(opts)
 
                     values = convert_values(opts[:key])
-                    current_query = build_query(method_opts[:emit_key], values, query, opts)
+                    current_query = build_query(method_opts[:emit_key], values, query, **opts)
 
                     if result_modifier
                         opts[:include_docs] = true
