@@ -22,6 +22,7 @@ module CouchbaseOrm
                 super(message, record)
             end
         end
+        class TypeMismatchError < Error; end
         class RecordExists < Error; end
     end
 end

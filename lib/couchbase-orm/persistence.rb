@@ -100,7 +100,7 @@ module CouchbaseOrm
         def delete(with_cas: false, **options)
             options[:cas] = @__metadata__.cas if with_cas
             CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
-            self.class.bucket.delete(@__metadata__.key, **options)
+            self.class.collection.remove(@__metadata__.key, **options)
 
             @__metadata__.key = nil
             @id = nil
@@ -109,6 +109,8 @@ module CouchbaseOrm
             self.freeze
             self
         end
+
+        alias :remove :delete
 
         # Deletes the record in the database and freezes this instance to reflect
         # that no changes should be made (since they can't be persisted).
@@ -123,7 +125,7 @@ module CouchbaseOrm
 
                 options[:cas] = @__metadata__.cas if with_cas
                 CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
-                self.class.bucket.delete(@__metadata__.key, **options)
+                self.class.collection.remove(@__metadata__.key, **options)
 
                 @__metadata__.key = nil
                 @id = nil
@@ -172,7 +174,7 @@ module CouchbaseOrm
 
             # There is a limit of 16 subdoc operations per request
             resp = if hash.length <= 16
-                subdoc = self.class.bucket.subdoc(_id)
+                subdoc = self.class.collection.subdoc(_id)
                 hash.each do |key, value|
                     subdoc.dict_upsert(key, value)
                 end
@@ -182,7 +184,7 @@ module CouchbaseOrm
                 @__attributes__[:type] = self.class.design_document
                 @__attributes__.delete(:id)
                 CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                self.class.bucket.replace(_id, @__attributes__, **options)
+                self.class.collection.replace(_id, @__attributes__, **options)
             end
 
             # Ensure the model is up to date
@@ -201,7 +203,7 @@ module CouchbaseOrm
             raise "unable to reload, model not persisted" unless key
 
             CouchbaseOrm.logger.debug "Data - Get #{key}"
-            resp = self.class.bucket.get(key, quiet: false, extended: true)
+            resp = self.class.collection.get(key, quiet: false, extended: true)
             @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.value)
             @__metadata__.key = resp.key
             @__metadata__.cas = resp.cas
@@ -214,7 +216,7 @@ module CouchbaseOrm
         # Updates the TTL of the document
         def touch(**options)
             CouchbaseOrm.logger.debug "Data - Touch #{@__metadata__.key}"
-            res = self.class.bucket.touch(@__metadata__.key, async: false, **options)
+            res = self.class.collection.touch(@__metadata__.key, async: false, **options)
             @__metadata__.cas = resp.cas
             self
         end
@@ -236,7 +238,7 @@ module CouchbaseOrm
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
                     CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    resp = self.class.bucket.default_collection.upsert(_id, @__attributes__, **options)
+                    resp = self.class.collection.upsert(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
                     @__metadata__.key = _id
@@ -258,11 +260,11 @@ module CouchbaseOrm
 
                     _id = @id || self.class.uuid_generator.next(self)
                     CouchbaseOrm.logger.debug { "Data - Insert #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    #resp = self.class.bucket.add(_id, @__attributes__, **options)
+                    #resp = self.class.collection.add(_id, @__attributes__, **options)
 
                     puts "ici"
                     puts @__attributes__
-                    resp = self.class.bucket.default_collection.upsert(_id, @__attributes__, **options)
+                    resp = self.class.collection.upsert(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
                     @__metadata__.key = _id

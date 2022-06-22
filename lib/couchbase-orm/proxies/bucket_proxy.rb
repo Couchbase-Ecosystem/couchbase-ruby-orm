@@ -5,6 +5,8 @@ require 'couchbase-orm/proxies/n1ql_proxy'
 module CouchbaseOrm
     class BucketProxy
         def initialize(proxyfied)
+            raise "Must proxy a non nil object" if proxyfied.nil?
+
             @proxyfied = proxyfied
 
             self.class.define_method(:name) do
@@ -24,16 +26,13 @@ module CouchbaseOrm
                 @results = ResultsProxy.new(@proxyfied.send(:view, design, view, **opts, &block))
             end
 
-            proxyfied.public_methods.each do |method|
-                next if self.public_methods.include?(method)
-                if RUBY_VERSION.to_i >= 3
-                    self.class.define_method(method) do |*params, **options, &block|
-                        @proxyfied.send(method, *params, **options, &block)
-                    end
-                else
-                    self.class.define_method(method) do |*params,  &block|
-                        @proxyfied.send(method, *params, &block)
-                    end
+            if RUBY_VERSION.to_i >= 3
+                def method_missing(name, *args, **options, &block)
+                    @proxyfied.public_send(name, *args, **options, &block)
+                end
+            else
+                def method_missing(name, *args, &block)
+                    @proxyfied.public_send(name, *args, &block)
                 end
             end
         end

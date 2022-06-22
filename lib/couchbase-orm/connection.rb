@@ -10,12 +10,12 @@ module CouchbaseOrm
         end
 
         def self.bucket
-            if @bucket.nil?
+            @bucket ||= begin
                 options = Couchbase::Cluster::ClusterOptions.new
                 options.authenticate("cb_admin", "cb_admin_pwd")
 
                 cluster = Couchbase::Cluster.connect('couchbase://127.0.0.1', options)
-                @bucket = cluster.bucket("billeo-db-bucket")
+                cluster.bucket("billeo-db-bucket")
             end
         end
     end

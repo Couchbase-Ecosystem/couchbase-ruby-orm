@@ -3,6 +3,7 @@
 
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
+require 'couchbase'
 require 'couchbase-orm/error'
 require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
@@ -55,6 +56,10 @@ module CouchbaseOrm
                 @bucket ||= BucketProxy.new(Connection.bucket)
             end
 
+            def collection
+                bucket.default_collection
+            end
+
             def uuid_generator
                 @uuid_generator ||= IdGenerator
             end
@@ -102,7 +107,7 @@ module CouchbaseOrm
 
                 puts "Data - Get #{ids}"
 
-                record = bucket.default_collection.get(*ids)
+                record = collection.get(*ids)
                 puts "After Data - Get #{record}"
                 records = record.is_a?(Array) ? record : [record]
                 records.map! { |record|
@@ -130,10 +135,10 @@ module CouchbaseOrm
             alias_method :has_key?, :exists?
         end
 
+        class MismatchTypeError < RuntimeError; end
 
         # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
-            puts "attributes : #{attributes}"
             @__metadata__   = Metadata.new
 
             # Assign default values
@@ -147,7 +152,6 @@ module CouchbaseOrm
                 end
             end
 
-            puts "model : #{model}"
             if model
                 case model
                 when Couchbase::Collection::GetResult
@@ -157,7 +161,7 @@ module CouchbaseOrm
                     doc.delete(:id)
 
                     if type && !ignore_doc_type && type.to_s != self.class.design_document
-                        raise "document type mismatch, #{type} != #{self.class.design_document}"
+                        raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
                     end
 
                     @__metadata__.key = attributes[:id]
