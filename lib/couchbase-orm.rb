@@ -41,7 +41,6 @@ module CouchbaseOrm
     private
 
     def self.try_load_create_model(result, id)
-        puts "try_load_create_model : #{result.class} #{result.inspect} #{id.inspect}"
         ddoc = result&.content["type"]
         return nil unless ddoc
         ::CouchbaseOrm::Base.descendants.each do |model|
