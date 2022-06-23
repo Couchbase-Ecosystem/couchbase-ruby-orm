@@ -10,6 +10,7 @@ require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/proxies/bucket_proxy'
+require 'couchbase-orm/proxies/collection_proxy'
 require 'couchbase-orm/utilities/join'
 require 'couchbase-orm/utilities/enum'
 require 'couchbase-orm/utilities/index'
@@ -61,7 +62,7 @@ module CouchbaseOrm
             end
 
             def collection
-                bucket.default_collection
+                CollectionProxy.new(bucket.default_collection)
             end
 
             def uuid_generator
@@ -109,7 +110,7 @@ module CouchbaseOrm
                     raise MTLibcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
-                puts "Data - Get #{ids}"
+                puts "Data - Get(#{ids.length}) #{ids}"
 
                 record = collection.get(*ids)
                 puts "After Data - Get #{record}"
@@ -117,7 +118,7 @@ module CouchbaseOrm
                 records.map! { |record|
                     if record
                         puts "content.delete(:type)"
-                        raise "NOT YET IMPLEMENTED" if ids.length > 1
+                        raise "FIXME: NOT YET IMPLEMENTED" if ids.length > 1
                         self.new(record, id: ids[0])
                     else
                         false

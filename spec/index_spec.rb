@@ -4,6 +4,7 @@ require File.expand_path("../support", __FILE__)
 
 
 class IndexTest < CouchbaseOrm::Base
+    n1ql :all
     attribute :email, type: String
     attribute :name,  type: String, default: :joe
     ensure_unique :email, presence: false
@@ -23,8 +24,7 @@ end
 
 describe CouchbaseOrm::Index do
     after :each do
-        IndexTest.bucket.delete('index_testemail-joe@aca.com')
-        IndexTest.bucket.delete('index_testemail-')
+        IndexTest.all.map(&:destroy)
     end
 
     it "should prevent models being created if they should have unique keys" do

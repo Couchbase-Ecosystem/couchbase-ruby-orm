@@ -50,13 +50,13 @@ module CouchbaseOrm
             # use the bucket key as an index - lookup records by attr values
             define_singleton_method(find_by_method) do |*values|
                 key = self.send(class_bucket_key_method, *values)
-                id = self.bucket.get(key, quiet: true)
+                id = self.collection.get(key)&.content
                 if id
                     mod = self.find_by_id(id)
                     return mod if mod
 
                     # Clean up record if the id doesn't exist
-                    self.bucket.delete(key, quiet: true)
+                    self.collection.remove(key)
                 end
 
                 nil
@@ -100,18 +100,17 @@ module CouchbaseOrm
                 original_key = instance_variable_get(original_bucket_key_var)
 
                 if original_key
-                    check_ref_id = record.class.bucket.get(original_key, extended: true, quiet: true)
-                    if check_ref_id && check_ref_id.value == record.id
-                        begin
-                            record.class.bucket.delete(original_key, cas: check_ref_id.cas)
-                        rescue ::MTLibcouchbase::Error::KeyExists
-                            # Errors here can be ignored. Just means the key was updated elswhere
+                    begin
+                        check_ref_id = record.class.collection.get(original_key)
+                        if check_ref_id && check_ref_id.content == record.id
+                            CouchbaseOrm.logger.debug "Removing old key #{original_key}"
+                            record.class.collection.remove(original_key, cas: check_ref_id.cas)
                         end
                     end
                 end
 
                 unless presence == false && attrs.length == 1 && record[attrs[0]].nil?
-                    record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
+                    record.class.collection.upsert(record.send(bucket_key_method), record.id)
                 end
                 instance_variable_set(original_bucket_key_var, nil)
             end
@@ -119,13 +118,9 @@ module CouchbaseOrm
             # cleanup by removing the bucket key before the record is deleted
             # TODO: handle unpersisted, modified component values
             before_destroy do |record|
-                check_ref_id = record.class.bucket.get(record.send(bucket_key_method), extended: true, quiet: true)
-                if check_ref_id && check_ref_id.value == record.id
-                    begin
-                        record.class.bucket.delete(record.send(bucket_key_method), cas: check_ref_id.cas)
-                    rescue ::MTLibcouchbase::Error::KeyExists
-                        # Errors here can be ignored. Just means the key was updated elswhere
-                    end
+                check_ref_id = record.class.collection.get(record.send(bucket_key_method))
+                if check_ref_id && check_ref_id.content == record.id
+                    record.class.collection.remove(record.send(bucket_key_method), cas: check_ref_id.cas)
                 end
                 true
             end

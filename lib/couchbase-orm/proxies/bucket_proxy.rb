@@ -21,15 +21,15 @@ module CouchbaseOrm
                 CouchbaseOrm.logger.debug "View - #{design} #{view}"
                 @results = ResultsProxy.new(@proxyfied.send(:view, design, view, **opts, &block))
             end
-
-            if RUBY_VERSION.to_i >= 3
-                def method_missing(name, *args, **options, &block)
-                    @proxyfied.public_send(name, *args, **options, &block)
-                end
-            else
-                def method_missing(name, *args, &block)
-                    @proxyfied.public_send(name, *args, &block)
-                end
+        end
+    
+        if RUBY_VERSION.to_i >= 3
+            def method_missing(name, *args, **options, &block)
+                @proxyfied.public_send(name, *args, **options, &block)
+            end
+        else
+            def method_missing(name, *args, &block)
+                @proxyfied.public_send(name, *args, &block)
             end
         end
     end
