@@ -25,7 +25,3 @@ shared_examples_for "ActiveModel" do
         @model = subject
     end
 end
-
-if ENV["COUCHBASE_ORM_DEBUG"]
-    CouchbaseOrm.logger.level = Logger::DEBUG
-end

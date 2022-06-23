@@ -204,7 +204,7 @@ module CouchbaseOrm
             raise "unable to reload, model not persisted" unless key
 
             CouchbaseOrm.logger.debug "Data - Get #{key}"
-            resp = self.class.collection.get(key)
+            resp = self.class.collection.get!(key)
             @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.content)
             @__metadata__.key = key
             @__metadata__.cas = resp.cas
@@ -238,8 +238,8 @@ module CouchbaseOrm
 
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
-                    CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    resp = self.class.collection.upsert(_id, @__attributes__, **options)
+                    CouchbaseOrm.logger.debug { "_update_record - replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
+                    resp = self.class.collection.replace(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
                     @__metadata__.key = _id
@@ -260,7 +260,7 @@ module CouchbaseOrm
                     @__attributes__.delete(:id)
 
                     _id = @id || self.class.uuid_generator.next(self)
-                    CouchbaseOrm.logger.debug { "Data - Insert #{_id} #{@__attributes__.to_s.truncate(200)}" }
+                    CouchbaseOrm.logger.debug { "_create_record - Upsert #{_id} #{@__attributes__.to_s.truncate(200)}" }
                     #resp = self.class.collection.add(_id, @__attributes__, **options)
 
                     resp = self.class.collection.upsert(_id, @__attributes__, **options)

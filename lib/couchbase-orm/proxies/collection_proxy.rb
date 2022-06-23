@@ -11,6 +11,18 @@ module CouchbaseOrm
             nil
         end
 
+        def get_multi!(*ids, **options)
+            result = @proxyfied.get_multi(*ids, Couchbase::Options::GetMulti.new(**options))
+            first_result_with_error = result.find(&:error)
+            raise first_result_with_error.error if first_result_with_error
+            result
+        end
+
+        def get_multi(*ids, **options)
+            result = @proxyfied.get_multi(*ids, Couchbase::Options::GetMulti.new(**options))
+            result.reject(&:error)
+        end
+
         def remove!(id, **options)
             @proxyfied.remove(id, Couchbase::Options::Remove.new(**options))
         end

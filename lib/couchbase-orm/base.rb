@@ -101,6 +101,7 @@ module CouchbaseOrm
             end
 
             def find(*ids, **options)
+                CouchbaseOrm.logger.debug { "Base.find(l##{ids.length}) #{ids}" }
                 options[:extended] = true
                 options[:quiet] ||= false
 
@@ -110,21 +111,12 @@ module CouchbaseOrm
                     raise MTLibcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
-                puts "Data - Get(#{ids.length}) #{ids}"
-
-                record = collection.get(*ids)
-                puts "After Data - Get #{record}"
-                records = record.is_a?(Array) ? record : [record]
-                records.map! { |record|
-                    if record
-                        puts "content.delete(:type)"
-                        raise "FIXME: NOT YET IMPLEMENTED" if ids.length > 1
-                        self.new(record, id: ids[0])
-                    else
-                        false
-                    end
+                records = options[:quiet] ? collection.get_multi(ids) : collection.get_multi!(ids)
+                CouchbaseOrm.logger.debug { "Base.find found(#{records})" }
+                records = records.zip(ids).map { |record, id|
+                    self.new(record, id: id) if record
                 }
-                records.select! { |rec| rec }
+                records.compact!
                 ids.length > 1 ? records : records[0]
             end
 
@@ -135,8 +127,8 @@ module CouchbaseOrm
             alias_method :[], :find_by_id
 
             def exists?(id)
-                CouchbaseOrm.logger.debug "Data - Get #{id}"
-                !bucket.get(id, quiet: true).nil?
+                CouchbaseOrm.logger.debug "Data - Exists? #{id}"
+                collection.exists(id).exists
             end
             alias_method :has_key?, :exists?
         end
