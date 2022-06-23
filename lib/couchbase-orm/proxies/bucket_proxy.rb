@@ -9,10 +9,6 @@ module CouchbaseOrm
 
             @proxyfied = proxyfied
 
-            self.class.define_method(:name) do
-                @proxyfied.bucket
-            end
-
             self.class.define_method(:n1ql) do
                 N1qlProxy.new(@proxyfied.n1ql)
             end

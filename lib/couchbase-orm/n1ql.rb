@@ -48,10 +48,9 @@ module CouchbaseOrm
                 @indexes[name] = method_opts
 
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
-                    opts = options.merge(opts)
-
-                    values = convert_values(opts[:key])
-                    current_query = build_query(method_opts[:emit_key], values, query, **opts)
+                    opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
+                    values = convert_values(opts.delete(:key))
+                    current_query = run_query(method_opts[:emit_key], values, query, **opts.except(:include_docs))
 
                     if result_modifier
                         opts[:include_docs] = true
@@ -110,24 +109,22 @@ module CouchbaseOrm
                 "#{keys.dup.push("meta().id").map { |k| "#{k} #{descending ? "desc" : "asc" }" }.join(",")}"
             end
 
-            def build_query(keys, values, query, descending: false, limit: nil, **options)
+            def build_limit(limit)
+                limit ? "limit #{limit}" : ""
+            end
+
+            def run_query(keys, values, query, descending: false, limit: nil, **options)
                 if query
                     query.call(bucket, values)
                 else
-                    bucket_name = bucket.bucket
+                    bucket_name = bucket.name
                     where = build_where(keys, values)
                     order = build_order(keys, descending)
-                    query = bucket.n1ql
-                                    .select("raw meta().id")
-                                    .from("`#{bucket_name}`")
-                                    .where(where)
-                    if order
-                        query = query.order_by(order)
-                    end
-                    if limit
-                        query = query.limit(limit)
-                    end
-                    query
+                    limit = build_limit(limit)
+                    n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
+                    result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
+                    CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
+                    N1qlProxy.new(result)
                 end
             end
         end

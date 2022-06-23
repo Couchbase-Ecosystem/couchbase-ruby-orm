@@ -1,12 +1,5 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
-
-if ENV['TRAVIS_TEST']
-    require 'mt-libcouchbase'
-    MTLibcouchbase::Defaults.username = 'tester'
-    MTLibcouchbase::Defaults.password = 'password123'
-end
-
 require 'couchbase-orm'
 require 'minitest/assertions'
 require 'active_model/lint'
@@ -31,4 +24,8 @@ shared_examples_for "ActiveModel" do
     before do
         @model = subject
     end
+end
+
+if ENV["COUCHBASE_ORM_DEBUG"]
+    CouchbaseOrm.logger.level = Logger::DEBUG
 end

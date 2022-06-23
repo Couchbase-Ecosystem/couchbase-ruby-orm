@@ -56,6 +56,10 @@ module CouchbaseOrm
                 @bucket ||= BucketProxy.new(Connection.bucket)
             end
 
+            def cluster
+                Connection.cluster
+            end
+
             def collection
                 bucket.default_collection
             end
@@ -113,6 +117,7 @@ module CouchbaseOrm
                 records.map! { |record|
                     if record
                         puts "content.delete(:type)"
+                        raise "NOT YET IMPLEMENTED" if ids.length > 1
                         self.new(record, id: ids[0])
                     else
                         false

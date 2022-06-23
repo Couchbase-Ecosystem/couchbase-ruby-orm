@@ -53,8 +53,6 @@ module Rails #:nodoc:
             # Initialize Couchbase Mode. This will look for a couchbase.yml in the
             # config directory and configure Couchbase connection appropriately.
             initializer 'couchbase.setup_connection' do
-                puts "ici!!!"
-                puts Rails.env
                 config_file = Rails.root.join('config', 'couchbase.yml')
                 if config_file.file? &&
                     config = YAML.load(ERB.new(File.read(config_file)).result)[Rails.env]

@@ -263,8 +263,6 @@ module CouchbaseOrm
                     CouchbaseOrm.logger.debug { "Data - Insert #{_id} #{@__attributes__.to_s.truncate(200)}" }
                     #resp = self.class.collection.add(_id, @__attributes__, **options)
 
-                    puts "ici"
-                    puts @__attributes__
                     resp = self.class.collection.upsert(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
