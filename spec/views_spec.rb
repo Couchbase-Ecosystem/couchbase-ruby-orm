@@ -18,11 +18,14 @@ end
 
 
 describe CouchbaseOrm::Views do
+    before(:each) do
+        ViewTest.all.each(&:destroy)
+    end
+    after(:each) do
+        ViewTest.all.each(&:destroy)
+    end
     it "should save a new design document" do
-        begin
-            ViewTest.bucket.delete_design_doc(ViewTest.design_document)
-        rescue MTLibcouchbase::Error::HttpResponseError
-        end
+        ViewTest.bucket.view_indexes.drop_design_document(ViewTest.design_document, :production)
         expect(ViewTest.ensure_design_document!).to be(true)
     end
 
@@ -47,7 +50,7 @@ describe CouchbaseOrm::Views do
         ViewTest.create! name: :jane, rating: :awesome
         ViewTest.create! name: :greg, rating: :bad
 
-        docs = ViewTest.by_rating(descending: :true).collect { |ob|
+        docs = ViewTest.by_rating(order: :descending).collect { |ob|
             ob.destroy
             ob.name
         }
@@ -63,9 +66,6 @@ describe CouchbaseOrm::Views do
 
         docs = ViewTest.find_by_rating(1).collect { |ob|
             ob.name
-        }
-        ViewTest.all.stream { |ob|
-            ob.destroy
         }
 
         expect(Set.new(docs)).to eq(Set.new(['bob', 'jane']))

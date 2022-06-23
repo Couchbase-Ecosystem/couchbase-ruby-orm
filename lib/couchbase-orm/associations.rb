@@ -181,7 +181,7 @@ module CouchbaseOrm
                     when :destroy, :delete
                         if model.respond_to?(:stream)
                             model.stream { |mod| mod.__send__(dependent) }
-                        elsif model.is_a?(Array)
+                        elsif model.is_a?(Array) || model.is_a?(CouchbaseOrm::ResultsProxy)
                             model.each { |m| m.__send__(dependent) }
                         else
                             model.__send__(dependent)

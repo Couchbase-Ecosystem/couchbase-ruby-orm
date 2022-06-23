@@ -19,7 +19,7 @@ module CouchbaseOrm
             #    view :by_rating, emit_key: :rating
             #  end
             #
-            #  Post.by_rating.stream do |response|
+            #  Post.by_rating do |response|
             #    # ...
             #  end
             def view(name, map: nil, emit_key: nil, reduce: nil, **options)
@@ -78,17 +78,14 @@ EMAP
                 @views[name] = method_opts
 
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
-                    opts = options.merge(opts)
-
+                    opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
+                    CouchbaseOrm.logger.debug("View [#{@design_document}, #{name.inspect}] options: #{opts.inspect}")
                     if result_modifier
-                        opts[:include_docs] = true
-                        bucket.view(@design_document, name, **opts, &result_modifier)
+                        include_docs(bucket.view_query(@design_document, name.to_s, Couchbase::Options::View.new(**opts.except(:include_docs)))).map(&result_modifier)
                     elsif opts[:include_docs]
-                        bucket.view(@design_document, name, **opts) { |row|
-                            self.new(row)
-                        }
+                        include_docs(bucket.view_query(@design_document, name.to_s, Couchbase::Options::View.new(**opts.except(:include_docs))))
                     else
-                        bucket.view(@design_document, name, **opts)
+                        bucket.view_query(@design_document, name.to_s, Couchbase::Options::View.new(**opts.except(:include_docs)))
                     end
                 end
             end
@@ -116,26 +113,28 @@ EMAP
                 update_required = false
 
                 # Grab the existing view details
-                ddoc = bucket.design_docs[@design_document]
-                existing = ddoc.view_config if ddoc
-
+                begin
+                    ddoc = bucket.view_indexes.get_design_document(@design_document, :production)
+                rescue Couchbase::Error::DesignDocumentNotFound
+                end
+                existing = ddoc.views if ddoc
                 views_actual = {}
                 # Fill in the design documents
                 @views.each do |name, document|
-                    doc = document.dup
-                    views_actual[name] = doc
-                    doc[:map] = doc[:map].gsub('{{design_document}}', @design_document) if doc[:map]
-                    doc[:reduce] = doc[:reduce].gsub('{{design_document}}', @design_document) if doc[:reduce]
+                    views_actual[name.to_s] = Couchbase::Management::View.new(
+                        document[:map]&.gsub('{{design_document}}', @design_document),
+                        document[:reduce]&.gsub('{{design_document}}', @design_document)
+                    )
                 end
 
                 # Check there are no changes we need to apply
                 views_actual.each do |name, desired|
                     check = existing[name]
                     if check
-                        cmap = (check[:map] || '').gsub(/\s+/, '')
-                        creduce = (check[:reduce] || '').gsub(/\s+/, '')
-                        dmap = (desired[:map] || '').gsub(/\s+/, '')
-                        dreduce = (desired[:reduce] || '').gsub(/\s+/, '')
+                        cmap = (check.map || '').gsub(/\s+/, '')
+                        creduce = (check.reduce || '').gsub(/\s+/, '')
+                        dmap = (desired.map || '').gsub(/\s+/, '')
+                        dreduce = (desired.reduce || '').gsub(/\s+/, '')
 
                         unless cmap == dmap && creduce == dreduce
                             update_required = true
@@ -149,14 +148,24 @@ EMAP
 
                 # Updated the design document
                 if update_required
-                    bucket.save_design_doc({
-                        views: views_actual
-                    }, @design_document)
+                    document = Couchbase::Management::DesignDocument.new
+                    document.views = views_actual
+                    document.name = @design_document
+                    bucket.view_indexes.upsert_design_document(document, :production)
 
-                    puts "Couchbase views updated for #{self.name}, design doc: #{@design_document}"
                     true
                 else
                     false
+                end
+            end
+
+            def include_docs(view_result)
+                if view_result.rows.length > 1
+                    self.find(view_result.rows.map(&:id))
+                elsif view_result.rows.length == 1
+                    [self.find(view_result.rows.first.id)]
+                else
+                    []
                 end
             end
         end

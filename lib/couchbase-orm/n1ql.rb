@@ -31,11 +31,11 @@ module CouchbaseOrm
             #    n1ql :by_rating, emit_key: :rating
             #  end
             #
-            #  Post.by_rating.stream do |response|
+            #  Post.by_rating do |response|
             #    # ...
             #  end
             # TODO: add range keys [:startkey, :endkey]
-            def n1ql(name, query: nil, emit_key: [], **options)
+            def n1ql(name, select: nil, emit_key: [], **options)
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
                     raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
@@ -50,7 +50,7 @@ module CouchbaseOrm
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
                     opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
                     values = convert_values(opts.delete(:key))
-                    current_query = run_query(method_opts[:emit_key], values, query, **opts.except(:include_docs))
+                    current_query = run_query(method_opts[:emit_key], values, select: select, **opts.except(:include_docs))
 
                     if result_modifier
                         opts[:include_docs] = true
@@ -113,19 +113,17 @@ module CouchbaseOrm
                 limit ? "limit #{limit}" : ""
             end
 
-            def run_query(keys, values, query, descending: false, limit: nil, **options)
-                if query
-                    query.call(bucket, values)
-                else
-                    bucket_name = bucket.name
-                    where = build_where(keys, values)
-                    order = build_order(keys, descending)
-                    limit = build_limit(limit)
-                    n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
-                    result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
-                    N1qlProxy.new(result)
-                end
+            def run_query(keys, values, select: nil, descending: false, limit: nil, **options)
+                bucket_name = bucket.name
+                where = build_where(keys, values)
+                order = build_order(keys, descending)
+                limit = build_limit(limit)
+                select ||= "raw meta().id"
+                raise "select must be a string" unless select.is_a?(String)
+                n1ql_query = "select #{select} from `#{bucket_name}` where #{where} order by #{order} #{limit}"
+                result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
+                CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
+                N1qlProxy.new(result)
             end
         end
     end
