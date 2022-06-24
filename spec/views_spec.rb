@@ -20,12 +20,14 @@ end
 describe CouchbaseOrm::Views do
     before(:each) do
         ViewTest.all.each(&:destroy)
+    rescue Couchbase::Error::DesignDocumentNotFound
+        # ignore (FIXME: check before merge)
     end
 
     after(:each) do
         ViewTest.all.each(&:destroy)
     rescue Couchbase::Error::InternalServerFailure
-        # ignore
+        # ignore (FIXME: check before merge)
     end
 
     it "should save a new design document" do
