@@ -1,8 +1,8 @@
 set -x
 set -e
 apt-get install libev-dev python-httplib2 libssl1.0.0
-wget https://packages.couchbase.com/releases/5.1.0/couchbase-server-enterprise_5.1.0-ubuntu14.04_amd64.deb
-dpkg -i couchbase-server-enterprise_5.1.0-ubuntu14.04_amd64.deb
+wget https://packages.couchbase.com/releases/7.1.0/couchbase-server-enterprise_7.1.0-ubuntu20.04_amd64.deb
+dpkg -i couchbase-server-enterprise_7.1.0-ubuntu20.04_amd64.deb
 sleep 8
 sudo service couchbase-server status
 /opt/couchbase/bin/couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-username=admin --cluster-password=password --cluster-ramsize=320 --cluster-index-ramsize=256 --cluster-fts-ramsize=256 --services=data,index,query,fts
