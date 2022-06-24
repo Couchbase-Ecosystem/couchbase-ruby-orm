@@ -19,6 +19,7 @@ end
 
 class EnumTest < CouchbaseOrm::Base
     enum visibility: [:group, :authority, :public], default: :authority
+    enum color: [:red, :green, :blue]
 end
 
 
@@ -98,6 +99,10 @@ describe CouchbaseOrm::Index do
         enum = EnumTest.create!
         expect(enum.visibility).to eq(2)
         enum.destroy
+
+        # Test default default
+        enum = EnumTest.create!
+        expect(enum.color).to eq(1)
     end
 
     it "should not overwrite index's that do not belong to the current model" do
