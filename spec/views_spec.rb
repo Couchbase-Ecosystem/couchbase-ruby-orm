@@ -21,13 +21,15 @@ describe CouchbaseOrm::Views do
     before(:each) do
         ViewTest.all.each(&:destroy)
     rescue Couchbase::Error::DesignDocumentNotFound
-        # ignore (FIXME: check before merge)
+        # ignore (FIXME: check before merge) mainly because if there is nothing in all we should not have an error
     end
 
     after(:each) do
         ViewTest.all.each(&:destroy)
     rescue Couchbase::Error::InternalServerFailure
         # ignore (FIXME: check before merge)
+    rescue Couchbase::Error::DesignDocumentNotFound
+        # ignore (FIXME: check before merge) (7.1)
     end
 
     it "should save a new design document" do
@@ -35,12 +37,18 @@ describe CouchbaseOrm::Views do
             ViewTest.bucket.view_indexes.drop_design_document(ViewTest.design_document, :production)
         rescue Couchbase::Error::InternalServerFailure
             # ignore if design document does not exist
+        rescue Couchbase::Error::DesignDocumentNotFound
+            # ignore if design document does not exist (7.1)
         end
         expect(ViewTest.ensure_design_document!).to be(true)
     end
 
     it "should not re-save a design doc if nothing has changed" do
         expect(ViewTest.ensure_design_document!).to be(false)
+    end
+    
+    it "should return an empty array when there is no objects" do
+        expect(ViewTest.all).to eq([])
     end
 
     it "should perform a map-reduce and return the view" do
