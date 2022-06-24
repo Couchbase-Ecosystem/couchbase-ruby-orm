@@ -17,8 +17,8 @@ module CouchbaseOrm
 
         klass = begin
                     class_name.constantize
-                rescue NameError => e
-                    puts "WARNING: #{class_name} referenced in #{self.name} before it was aded"
+                rescue NameError
+                    CouchbaseORM.logger.warn "WARNING: #{class_name} referenced in #{self.name} before it was aded"
 
                     # Open the class early - load order will have to be changed to prevent this.
                     # Warning notice required as a misspelling will not raise an error

@@ -153,7 +153,7 @@ module CouchbaseOrm
             if model
                 case model
                 when Couchbase::Collection::GetResult
-                    puts "Couchbase::Collection::GetResult"
+                    CouchbaseORM.logger.debug "Initialize with Couchbase::Collection::GetResult"
                     doc = model.content || raise('empty response provided')
                     type = doc.delete('type')
                     doc.delete(:id)
@@ -165,12 +165,11 @@ module CouchbaseOrm
                     @__metadata__.key = attributes[:id]
                     @__metadata__.cas = model.cas
 
-                    puts "@__metadata__ : #{@__metadata__}"
-
                     # This ensures that defaults are applied
                     @__attributes__.merge! doc
                 when CouchbaseOrm::Base
-                    puts "CouchbaseOrm::Base"
+                    CouchbaseORM.logger.debug "Initialize with CouchbaseOrm::Base"
+
                     clear_changes_information
                     attributes = model.attributes
                     attributes.delete(:id)
