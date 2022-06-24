@@ -1,6 +1,6 @@
 set -x
 set -e
-apt-get install libev-dev python-httplib2 libssl1.0.0
+apt-get install libev-dev python-httplib2
 wget https://packages.couchbase.com/releases/7.1.0/couchbase-server-enterprise_7.1.0-ubuntu20.04_amd64.deb
 dpkg -i couchbase-server-enterprise_7.1.0-ubuntu20.04_amd64.deb
 sleep 8
