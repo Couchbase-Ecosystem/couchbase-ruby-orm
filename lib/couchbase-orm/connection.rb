@@ -1,5 +1,4 @@
 
-require 'mt-libcouchbase'
 require 'couchbase'
 
 module CouchbaseOrm

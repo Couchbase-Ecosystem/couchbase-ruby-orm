@@ -169,22 +169,6 @@ module CouchbaseOrm
 
                     # This ensures that defaults are applied
                     @__attributes__.merge! doc
-                when ::MTLibcouchbase::Response
-                    puts "MTLibcouchbase::Response"
-                    doc = model.value || raise('empty response provided')
-                    type = doc.delete(:type)
-                    doc.delete(:id)
-
-                    if type && !ignore_doc_type && type.to_s != self.class.design_document
-                        raise "document type mismatch, #{type} != #{self.class.design_document}"
-                    end
-
-                    @__metadata__.key = model.key
-                    @__metadata__.cas = model.cas
-
-                    # This ensures that defaults are applied
-                    @__attributes__.merge! doc
-                    clear_changes_information
                 when CouchbaseOrm::Base
                     puts "CouchbaseOrm::Base"
                     clear_changes_information
