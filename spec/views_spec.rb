@@ -24,6 +24,8 @@ describe CouchbaseOrm::Views do
 
     after(:each) do
         ViewTest.all.each(&:destroy)
+    rescue Couchbase::Error::InternalServerFailure
+        # ignore
     end
 
     it "should save a new design document" do

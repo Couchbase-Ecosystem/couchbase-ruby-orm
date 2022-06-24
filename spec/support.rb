@@ -9,7 +9,7 @@ SimpleCov.start do
     add_group 'Proxies', 'lib/couchbase-orm/proxies'
     add_group 'Utilities', 'lib/couchbase-orm/utilities'
     add_group 'Specs', 'spec'
-    minimum_coverage 93
+    minimum_coverage 94
 end
 
 shared_examples_for "ActiveModel" do
