@@ -239,7 +239,7 @@ module CouchbaseOrm
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
                     CouchbaseOrm.logger.debug { "_update_record - replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    resp = self.class.collection.replace(_id, @__attributes__, **options)
+                    resp = self.class.collection.replace(_id, @__attributes__, Couchbase::Options::Replace.new(**options))
 
                     # Ensure the model is up to date
                     @__metadata__.key = _id
@@ -263,7 +263,7 @@ module CouchbaseOrm
                     CouchbaseOrm.logger.debug { "_create_record - Upsert #{_id} #{@__attributes__.to_s.truncate(200)}" }
                     #resp = self.class.collection.add(_id, @__attributes__, **options)
 
-                    resp = self.class.collection.upsert(_id, @__attributes__, **options)
+                    resp = self.class.collection.upsert(_id, @__attributes__, Couchbase::Options::Upsert.new(**options))
 
                     # Ensure the model is up to date
                     @__metadata__.key = _id
