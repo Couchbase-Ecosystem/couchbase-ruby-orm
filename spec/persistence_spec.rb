@@ -205,11 +205,7 @@ describe CouchbaseOrm::Persistence do
         expect(model.save!).to be(model)
 
         # coercion will fail here
-        begin
-            model.age = 'a23'
-            expect(false).to be(true)
-        rescue ArgumentError => e
-        end
+        expect{ model.age = "a23" }.to raise_error(ArgumentError)
 
         model.destroy
     end

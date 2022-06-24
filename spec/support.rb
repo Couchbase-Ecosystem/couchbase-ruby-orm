@@ -1,9 +1,16 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
-
+require 'simplecov'
 require 'couchbase-orm'
 require 'minitest/assertions'
 require 'active_model/lint'
 
+SimpleCov.start do
+    add_group 'Core', [/lib\/couchbase-orm\/(?!(proxies|utilities))/, 'lib/couchbase-orm.rb']
+    add_group 'Proxies', 'lib/couchbase-orm/proxies'
+    add_group 'Utilities', 'lib/couchbase-orm/utilities'
+    add_group 'Specs', 'spec'
+    minimum_coverage 93
+end
 
 shared_examples_for "ActiveModel" do
     include Minitest::Assertions

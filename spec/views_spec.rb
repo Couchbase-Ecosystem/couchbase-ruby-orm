@@ -21,11 +21,17 @@ describe CouchbaseOrm::Views do
     before(:each) do
         ViewTest.all.each(&:destroy)
     end
+
     after(:each) do
         ViewTest.all.each(&:destroy)
     end
+
     it "should save a new design document" do
-        ViewTest.bucket.view_indexes.drop_design_document(ViewTest.design_document, :production)
+        begin
+            ViewTest.bucket.view_indexes.drop_design_document(ViewTest.design_document, :production)
+        rescue Couchbase::Error::InternalServerFailure
+            # ignore if design document does not exist
+        end
         expect(ViewTest.ensure_design_document!).to be(true)
     end
 
