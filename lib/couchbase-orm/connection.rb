@@ -22,7 +22,7 @@ module CouchbaseOrm
         end
 
         def self.bucket
-            @bucket ||= cluster.bucket("billeo-db-bucket")
+            @bucket ||= cluster.bucket("default")
         end
     end
 end
