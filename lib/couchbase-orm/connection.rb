@@ -11,7 +11,11 @@ module CouchbaseOrm
         def self.cluster
             @cluster ||= begin
                 options = Couchbase::Cluster::ClusterOptions.new
-                options.authenticate("cb_admin", "cb_admin_pwd")
+                if ENV["TRAVIS_TEST"]
+                    options.authenticate("tester", "password123")
+                else
+                    options.authenticate("cb_admin", "cb_admin_pwd")
+                end
 
                 cluster = Couchbase::Cluster.connect('couchbase://127.0.0.1', options) 
             end
