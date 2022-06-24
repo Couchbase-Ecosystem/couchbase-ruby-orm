@@ -24,5 +24,6 @@ module CouchbaseOrm
         end
         class TypeMismatchError < Error; end
         class RecordExists < Error; end
+        class CouchbaseOrm::Error::EmptyNotAllowed < Error; end
     end
 end

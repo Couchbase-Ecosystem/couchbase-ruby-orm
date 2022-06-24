@@ -75,12 +75,15 @@ module CouchbaseOrm
                 # Define reader
                 define_method(name) do
                     return instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
+                    ref_value = self.send(ref)
+                    ref_value = nil if ref_value.respond_to?(:empty?) && ref_value.empty?
+
                     val = if options[:polymorphic]
-                        ::CouchbaseOrm.try_load(self.send(ref))
+                        ::CouchbaseOrm.try_load(ref_value) if ref_value
                     else
-                        assoc.constantize.find(self.send(ref), quiet: true)
+                        assoc.constantize.find(ref_value) if ref_value
                     end
-                    val = Array.wrap(val)
+                    val = Array.wrap(val || [])
                     instance_variable_set(instance_var, val)
                     val
                 end

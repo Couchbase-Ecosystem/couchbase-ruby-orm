@@ -100,18 +100,15 @@ module CouchbaseOrm
                 @attributes ||= {}
             end
 
-            def find(*ids, **options)
+            def find(*ids, quiet: false)
                 CouchbaseOrm.logger.debug { "Base.find(l##{ids.length}) #{ids}" }
-                options[:extended] = true
-                options[:quiet] ||= false
 
                 ids = ids.flatten.select { |id| id.present? }
                 if ids.empty?
-                    return nil if options[:quiet]
-                    raise MTLibcouchbase::Error::EmptyKey, 'no id(s) provided'
+                    raise CouchbaseOrm::Error::EmptyNotAllowed, 'no id(s) provided'
                 end
 
-                records = options[:quiet] ? collection.get_multi(ids) : collection.get_multi!(ids)
+                records = quiet ? collection.get_multi(ids) : collection.get_multi!(ids)
                 CouchbaseOrm.logger.debug { "Base.find found(#{records})" }
                 records = records.zip(ids).map { |record, id|
                     self.new(record, id: id) if record
