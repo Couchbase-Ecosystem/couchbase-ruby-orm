@@ -1,3 +1,5 @@
+require "couchbase"
+
 module CouchbaseOrm
     class CollectionProxy
 
@@ -42,8 +44,8 @@ module CouchbaseOrm
             def method_missing(name, *args, **options, &block)
                 @proxyfied.public_send(name, *args, **options, &block)
             end
-        else
-            def method_missing(name, *args, &block)
+        else # :nocov:
+            def method_missing(name, *args, &block) 
                 @proxyfied.public_send(name, *args, &block)
             end
         end
