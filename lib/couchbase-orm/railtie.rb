@@ -37,10 +37,6 @@ module Rails #:nodoc:
             # @return [Hash] rescued responses
             def self.rescue_responses
                 {
-                    'MTLibcouchbase::Error::KeyNotFound' => :not_found,
-                    'MTLibcouchbase::Error::NotStored' => :unprocessable_entity,
-                    MTLibcouchbase::Error::KeyNotFound => :not_found,
-                    MTLibcouchbase::Error::NotStored => :unprocessable_entity
                 }
             end
 

@@ -14,7 +14,7 @@ module CouchbaseOrm
                 if ENV["TRAVIS_TEST"]
                     options.authenticate("tester", "password123")
                 else
-                    options.authenticate("cb_admin", "cb_admin_pwd")
+                    options.authenticate(ENV["COUCHBASE_USER"], ENV["COUCHBASE_PASSWORD"])
                 end
 
                 cluster = Couchbase::Cluster.connect('couchbase://127.0.0.1', options) 
@@ -22,7 +22,7 @@ module CouchbaseOrm
         end
 
         def self.bucket
-            @bucket ||= cluster.bucket("default")
+            @bucket ||= cluster.bucket(ENV["COUCHBASE_BUCKET"])
         end
     end
 end
