@@ -7,8 +7,8 @@ USER=$3
 PASSWORD=$4
 
 
-wget https://packages.couchbase.com/releases/$VERSION.0/couchbase-server-enterprise_$VERSION.0-ubuntu20.04_amd64.deb
-dpkg -i couchbase-server-enterprise_$VERSION.0-ubuntu20.04_amd64.deb
+wget https://packages.couchbase.com/releases/$VERSION/couchbase-server-enterprise_$VERSION-ubuntu20.04_amd64.deb
+dpkg -i couchbase-server-enterprise_$VERSION-ubuntu20.04_amd64.deb
 sleep 8
 sudo service couchbase-server status
 /opt/couchbase/bin/couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-username=admin --cluster-password=password --cluster-ramsize=320 --cluster-index-ramsize=256 --cluster-fts-ramsize=256 --services=data,index,query,fts
