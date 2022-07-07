@@ -29,7 +29,7 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
-    - run: sudo ./ci/run_couchbase.sh
+    - run: sudo -E ./ci/run_couchbase.sh
     - run: bundle exec rspec
     env:
       ACTIVE_MODEL_VERSION: ${{ matrix.gemfile }}
