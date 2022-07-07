@@ -1,7 +1,18 @@
 set -x
 set -e
-wget https://packages.couchbase.com/releases/7.1.0/couchbase-server-enterprise_7.1.0-ubuntu20.04_amd64.deb
-dpkg -i couchbase-server-enterprise_7.1.0-ubuntu20.04_amd64.deb
+
+if [ -z "$COUCHBASE_VERSION" ]
+  echo "missing COUCHBASE_VERSION"
+  exit
+fi
+
+if [ -z "$COUCHBASE_USER" ]
+  echo "missing COUCHBASE_USER"
+  exit
+fi
+
+wget https://packages.couchbase.com/releases/$COUCHBASE_VERSION.0/couchbase-server-enterprise_$COUCHBASE_VERSION.0-ubuntu20.04_amd64.deb
+dpkg -i couchbase-server-enterprise_$COUCHBASE_VERSION.0-ubuntu20.04_amd64.deb
 sleep 8
 sudo service couchbase-server status
 /opt/couchbase/bin/couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-username=admin --cluster-password=password --cluster-ramsize=320 --cluster-index-ramsize=256 --cluster-fts-ramsize=256 --services=data,index,query,fts

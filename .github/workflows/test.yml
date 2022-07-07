@@ -12,13 +12,20 @@ jobs:
       matrix:
         gemfile: [ '7.0.0', '5.1.7' ]
         ruby: [ '3.0', '2.7', '2.6']
-        exclude:
+        couchbase: ['6.6', '7.1']
+        include:
           - ruby: '3.0'
-            gemfile: '5.1.7'
-          - ruby: '2.7'
-            gemfile: '5.1.7'
-          - ruby: '2.6'
             gemfile: '7.0.0'
+            couchbase: '6.6'           
+          - ruby: '3.0'
+            gemfile: '7.0.0'
+            couchbase: '7.1'
+          - ruby: '2.7'
+            gemfile: '7.0.0'
+            couchbase: '7.1'
+          - ruby: '2.6'
+            gemfile: '5.1.7'
+            couchbase: '7.1'
       fail-fast: false
     runs-on: ubuntu-20.04
     name: ${{ matrix.ruby }} ${{ matrix.database }} rails-${{ matrix.gemfile }}
@@ -38,3 +45,4 @@ jobs:
       COUCHBASE_BUCKET: default
       COUCHBASE_USER: tester
       COUCHBASE_PASSWORD: password123
+      COUCHBASE_VERSION: ${{ matrix.couchbase }}
