@@ -35,5 +35,6 @@ jobs:
       ACTIVE_MODEL_VERSION: ${{ matrix.gemfile }}
       BUNDLE_JOBS: 4
       BUNDLE_PATH: vendor/bundle
-      TRAVIS_TEST: true
-      RAILS_ENV: test
+      COUCHBASE_BUCKET: default
+      COUCHBASE_USER: tester
+      COUCHBASE_PASSWORD: password123
