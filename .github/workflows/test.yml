@@ -10,9 +10,6 @@ jobs:
   test:
     strategy:
       matrix:
-        gemfile: [ '7.0.0', '5.1.7' ]
-        ruby: [ '3.0', '2.7', '2.6']
-        couchbase: ['6.6', '7.1']
         include:
           - ruby: '3.0'
             gemfile: '7.0.0'
@@ -28,7 +25,7 @@ jobs:
             couchbase: '7.1'
       fail-fast: false
     runs-on: ubuntu-20.04
-    name: ${{ matrix.ruby }} ${{ matrix.database }} rails-${{ matrix.gemfile }}
+    name: ${{ matrix.ruby }} rails-${{ matrix.gemfile }}  couchbase-${{ matrix.database }} 
     steps:
     - uses: actions/checkout@v2
     - run: sudo apt-get update && sudo apt-get install libevent-dev libev-dev python-httplib2
@@ -36,7 +33,7 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
-    - run: sudo -E ./ci/run_couchbase.sh
+    - run: sudo ./ci/run_couchbase.sh $COUCHBASE_VERSION $COUCHBASE_BUCKET $COUCHBASE_USER $COUCHBASE_PASSWORD
     - run: bundle exec rspec
     env:
       ACTIVE_MODEL_VERSION: ${{ matrix.gemfile }}
