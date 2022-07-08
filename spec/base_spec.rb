@@ -4,11 +4,12 @@ require File.expand_path("../support", __FILE__)
 
 
 class BaseTest < CouchbaseOrm::Base
-    attribute :name, :job
+    attribute :name, :string
+    attribute :job, :string
 end
 
 class CompareTest < CouchbaseOrm::Base
-    attribute :age
+    attribute :age, :integer
 end
 
 
@@ -31,6 +32,11 @@ describe CouchbaseOrm::Base do
         base.delete
         base2.delete
         base3.delete
+    end
+
+    it "should be inspectable" do
+        base = BaseTest.create!(name: 'joe')
+        expect(base.inspect).to eq("#<BaseTest id: \"#{base.id}\", name: \"joe\", job: nil>")
     end
 
     it "should load database responses" do
@@ -58,7 +64,7 @@ describe CouchbaseOrm::Base do
         base = BaseTest.create!(name: 'joe')
 
         base_id = base.id
-        expect(base.to_json).to eq({name: 'joe', job: nil, id: base_id}.to_json)
+        expect(base.to_json).to eq({id: base_id, name: 'joe', job: nil}.to_json)
         expect(base.to_json(only: :name)).to eq({name: 'joe'}.to_json)
 
         base.destroy
@@ -119,6 +125,20 @@ describe CouchbaseOrm::Base do
         ensure
             bases.each(&:destroy)
         end
+    end
+
+    it "should set the attribute on creation" do
+        base = BaseTest.create!(name: 'joe')
+        expect(base.name).to eq('joe')
+    ensure
+        base.destroy
+    end
+
+    it "should support getting the attribute by key" do
+        base = BaseTest.create!(name: 'joe')
+        expect(base[:name]).to eq('joe')
+    ensure
+        base.destroy
     end
 
     describe BaseTest do

@@ -70,7 +70,7 @@ module CouchbaseOrm
             if presence
                 attrs.each do |attr|
                     validates attr, presence: true
-                    define_attribute_methods attr
+                    attribute attr
                 end
             end
 

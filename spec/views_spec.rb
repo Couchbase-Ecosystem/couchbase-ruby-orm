@@ -53,7 +53,7 @@ describe CouchbaseOrm::Views do
 
     it "should perform a map-reduce and return the view" do
         ViewTest.ensure_design_document!
-        mod = ViewTest.create! name: :bob, rating: :good
+        ViewTest.create! name: :bob, rating: :good
 
         docs = ViewTest.all.collect { |ob|
             ob.destroy

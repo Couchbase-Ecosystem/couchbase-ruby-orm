@@ -25,10 +25,10 @@ module CouchbaseOrm
             def view(name, map: nil, emit_key: nil, reduce: nil, **options)
                 if emit_key.class == Array
                     emit_key.each do |key|
-                        raise "unknown emit_key attribute for view :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
+                        raise "unknown emit_key attribute for view :#{name}, emit_key: :#{key}" if key && !attribute_names.include?(key.to_s)
                     end
                 else
-                    raise "unknown emit_key attribute for view :#{name}, emit_key: :#{emit_key}" if emit_key && @attributes[emit_key].nil?
+                    raise "unknown emit_key attribute for view :#{name}, emit_key: :#{emit_key}" if emit_key && !attribute_names.include?(emit_key.to_s)
                 end
 
                 options = ViewDefaults.merge(options)
@@ -49,7 +49,7 @@ EMAP
                     else
                         emit_key = emit_key || :created_at
 
-                        if emit_key != :created_at && self.attributes[emit_key][:type].to_s == 'Array'
+                        if emit_key != :created_at && false # FIXME: not longer supported, need tests # self.attributes[emit_key][:type].to_s == 'Array'
                             method_opts[:map] = <<-EMAP
 function(doc) {
     var i;

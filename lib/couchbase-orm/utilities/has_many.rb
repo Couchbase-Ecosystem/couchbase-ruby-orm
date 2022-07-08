@@ -103,5 +103,5 @@ module CouchbaseOrm
                 end
             end
         end
-  end
+    end
 end

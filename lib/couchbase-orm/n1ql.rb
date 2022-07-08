@@ -38,7 +38,7 @@ module CouchbaseOrm
             def n1ql(name, query_fn: nil, emit_key: [], **options)
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
-                    raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
+                    raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && !attribute_names.include?(key.to_s)
                 end
                 options = N1QL_DEFAULTS.merge(options)
                 method_opts = {}
