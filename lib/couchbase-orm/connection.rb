@@ -12,7 +12,7 @@ module CouchbaseOrm
             @cluster ||= begin
                 options = Couchbase::Cluster::ClusterOptions.new
                 options.authenticate(ENV["COUCHBASE_USER"], ENV["COUCHBASE_PASSWORD"])
-                cluster = Couchbase::Cluster.connect('couchbase://127.0.0.1', options) 
+                Couchbase::Cluster.connect('couchbase://127.0.0.1', options)
             end
         end
 
