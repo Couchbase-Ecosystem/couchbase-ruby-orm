@@ -12,6 +12,7 @@ class N1QLTest < CouchbaseOrm::Base
     }
     n1ql :by_name, emit_key: [:name, :rating]
     n1ql :by_rating, emit_key: :rating
+    n1ql :by_rating_reverse, emit_key: :rating, custom_order: "name DESC"
 
     # This generates both:
     # view :by_rating, emit_key: :rating    # same as above
@@ -59,6 +60,12 @@ describe CouchbaseOrm::N1ql do
         }
 
         expect(Set.new(docs)).to eq(Set.new(%w[bob jane]))
+
+        docs = N1QLTest.by_rating_reverse(key: 1).collect { |ob|
+            ob.name
+        }
+
+        expect(docs).to eq(%w[jane bob])
 
         docs = N1QLTest.by_custom_rating().collect { |ob|
             ob.name
