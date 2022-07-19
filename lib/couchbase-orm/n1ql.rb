@@ -96,7 +96,7 @@ module CouchbaseOrm
 
             def build_where(keys, values)
                 where = keys.each_with_index
-                            .map { |key, i| "#{key} = #{values[i].nil? ? "IS NULL" : values[i]}" }
+                            .map { |key, i| "#{key} #{values[i].nil? ? "IS NULL" : "= #{values[i]}"}" }
                             .join(" AND ")
                 "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end
