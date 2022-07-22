@@ -199,7 +199,10 @@ module CouchbaseOrm
         end
 
         def read_attribute(attr_name)
-            @__attributes__[attr_name]
+            read_fn = self.class.attributes[attr_name][:read_fn]
+            value = @__attributes__[attr_name]
+            value = read_fn.call(value) if read_fn
+            value
         end
         alias_method :[], :read_attribute
 
