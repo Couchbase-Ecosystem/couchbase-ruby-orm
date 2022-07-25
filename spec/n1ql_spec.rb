@@ -13,6 +13,7 @@ class N1QLTest < CouchbaseOrm::Base
     n1ql :by_name, emit_key: [:name, :rating]
     n1ql :by_rating, emit_key: :rating
     n1ql :by_rating_reverse, emit_key: :rating, custom_order: "name DESC"
+    n1ql :by_rating_without_docs, emit_key: :rating, include_docs: false
 
     # This generates both:
     # view :by_rating, emit_key: :rating    # same as above
@@ -50,10 +51,10 @@ describe CouchbaseOrm::N1ql do
     end
 
     it "should return matching results" do
-        N1QLTest.create! name: :bob, rating: :awesome
-        N1QLTest.create! name: :jane, rating: :awesome
-        N1QLTest.create! name: :greg, rating: :bad
-        N1QLTest.create! name: :mel, rating: :good
+        inst_bob = N1QLTest.create! name: :bob, rating: :awesome
+        inst_jane = N1QLTest.create! name: :jane, rating: :awesome
+        inst_greg = N1QLTest.create! name: :greg, rating: :bad
+        inst_mel = N1QLTest.create! name: :mel, rating: :good
 
         docs = N1QLTest.find_by_rating(1).collect { |ob|
             ob.name
@@ -73,6 +74,10 @@ describe CouchbaseOrm::N1ql do
 
         expect(Set.new(docs)).to eq(Set.new(%w[bob jane mel]))
 
+
+        docs = N1QLTest.by_rating_without_docs(key: 1)
+
+        expect(Set.new(docs)).to eq(Set.new([inst_bob.id, inst_jane.id]))
     end
 
     after(:all) do
