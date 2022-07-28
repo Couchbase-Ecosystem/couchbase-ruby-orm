@@ -3,7 +3,6 @@
 require File.expand_path("../support", __FILE__)
 
 class BaseTest < CouchbaseOrm::Base
-  extend ActiveModel::Naming
   attribute :name, :job
   attribute(:prescribing_date, type: String, read_fn: proc { |value| encode_date(value) }) # timestamp without time zone,
 
@@ -28,12 +27,7 @@ end
 describe CouchbaseOrm::Base do
   it "should be comparable to other objects" do
     base = BaseTest.create!(name: 'joe', prescribing_date: Time.now)
-
-    puts "base.prescribing_date #{base.prescribing_date} #{base.prescribing_date.class}"
     base.reload
-
-    puts "base.prescribing_date #{base.prescribing_date} #{base.prescribing_date.class}"
-
     base.update({ prescribing_date: '2022-07-01' })
 
   end
@@ -63,7 +57,7 @@ describe CouchbaseOrm::Base do
     base = BaseTest.create!(name: 'joe')
 
     base_id = base.id
-    expect(base.to_json).to eq({ name: 'joe', job: nil, id: base_id }.to_json)
+    expect(base.to_json).to eq({ name: 'joe', job: nil, prescribing_date:nil, id: base_id }.to_json)
     expect(base.to_json(only: :name)).to eq({ name: 'joe' }.to_json)
 
     base.destroy
