@@ -9,7 +9,6 @@ class BaseTest < CouchbaseOrm::Base
 
   class << self
     def encode_date(value)
-      puts "DateTime.strptime(value, '%Q') : #{DateTime.strptime(value, '%Y-%m-%d') if value.present? && value.is_a?(String) && value.length == 10}"
       return DateTime.strptime(value, '%Y-%m-%d') if value.present? && value.is_a?(String) && value.length == 10
       return DateTime.strptime(value, '%Y-%m-%d %H:%M:%s %z') if value.present? && value.is_a?(String)
       value
