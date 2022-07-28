@@ -4,6 +4,7 @@ require File.expand_path("../support", __FILE__)
 
 class N1QLTest < CouchbaseOrm::Base
     attribute :name, type: String
+    attribute :lastname, type: String
     enum rating: [:awesome, :good, :okay, :bad], default: :okay
 
     n1ql :all
@@ -11,6 +12,7 @@ class N1QLTest < CouchbaseOrm::Base
         cluster.query("SELECT raw meta().id FROM `#{bucket.name}` WHERE rating IN [1, 2] ORDER BY name ASC")
     }
     n1ql :by_name, emit_key: [:name, :rating]
+    n1ql :by_lastname, emit_key: [:lastname]
     n1ql :by_rating, emit_key: :rating
     n1ql :by_rating_reverse, emit_key: :rating, custom_order: "name DESC"
     n1ql :by_rating_without_docs, emit_key: :rating, include_docs: false
@@ -53,8 +55,8 @@ describe CouchbaseOrm::N1ql do
     it "should return matching results" do
         inst_bob = N1QLTest.create! name: :bob, rating: :awesome
         inst_jane = N1QLTest.create! name: :jane, rating: :awesome
-        inst_greg = N1QLTest.create! name: :greg, rating: :bad
-        inst_mel = N1QLTest.create! name: :mel, rating: :good
+        N1QLTest.create! name: :greg, rating: :bad
+        N1QLTest.create! name: :mel, rating: :good
 
         docs = N1QLTest.find_by_rating(1).collect { |ob|
             ob.name
@@ -78,6 +80,16 @@ describe CouchbaseOrm::N1ql do
         docs = N1QLTest.by_rating_without_docs(key: 1)
 
         expect(Set.new(docs)).to eq(Set.new([inst_bob.id, inst_jane.id]))
+    end
+
+    it "should return matching results with nil usage" do
+        N1QLTest.create! name: :bob, lastname: nil
+        N1QLTest.create! name: :jane, lastname: "dupond"
+
+        docs = N1QLTest.by_lastname(key: [nil]).collect { |ob|
+            ob.name
+        }
+        expect(docs).to eq(%w[bob])
     end
 
     after(:all) do
