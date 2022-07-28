@@ -8,7 +8,7 @@ class N1QLTest < CouchbaseOrm::Base
     enum rating: [:awesome, :good, :okay, :bad], default: :okay
 
     n1ql :all
-    n1ql :by_custom_rating, emit_key: :rating, query_fn: proc { |bucket, _values, cluster|
+    n1ql :by_custom_rating, emit_key: [:name, :rating], query_fn: proc { |bucket, _values, cluster|
         cluster.query("SELECT raw meta().id FROM `#{bucket.name}` WHERE rating IN [1, 2] ORDER BY name ASC")
     }
     n1ql :by_name, emit_key: [:name, :rating]
