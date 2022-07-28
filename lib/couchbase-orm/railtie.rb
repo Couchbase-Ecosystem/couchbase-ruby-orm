@@ -49,7 +49,6 @@ module Rails #:nodoc:
                 config_file = Rails.root.join('config', 'couchbase.yml')
                 if config_file.file? &&
                     config = YAML.load(ERB.new(File.read(config_file)).result)[Rails.env]
-                    puts config
                     ::CouchbaseOrm::Connection.options = config.deep_symbolize_keys
                 end
             end
