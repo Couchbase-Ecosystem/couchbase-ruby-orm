@@ -18,3 +18,5 @@ sleep 5
 sleep 1
 /opt/couchbase/bin/couchbase-cli user-manage   -c 127.0.0.1:8091 -u admin -p password --set --rbac-username $USER --rbac-password $PASSWORD --rbac-name "Auto Tester" --roles admin --auth-domain local
 curl http://admin:password@localhost:8093/query/service -d "statement=CREATE INDEX \`default_type\` ON \`$BUCKET\`(\`type\`)"
+curl http://admin:password@localhost:8093/query/service -d "statement=CREATE INDEX \`default_type\` ON \`$BUCKET\`(\`rating\`)"
+curl http://admin:password@localhost:8093/query/service -d "statement=CREATE INDEX \`default_type\` ON \`$BUCKET\`(\`name\`)"
