@@ -125,7 +125,6 @@ module CouchbaseOrm
                     select ||= "raw meta().id"
                     raise "select must be a string" unless select.is_a?(String)
                     n1ql_query = "select #{select} from `#{bucket_name}` where #{where} order by #{order} #{limit}"
-                    puts options
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
                     CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
                     N1qlProxy.new(result)

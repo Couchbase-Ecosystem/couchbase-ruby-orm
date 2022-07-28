@@ -23,11 +23,8 @@ require 'couchbase-orm/base'
 module Rails #:nodoc:
     module Couchbase #:nodoc:
         class Railtie < Rails::Railtie #:nodoc:
-
-            puts "Railtie < Rails::Railtie"
             config.couchbase2 = ActiveSupport::OrderedOptions.new
             config.couchbase2.ensure_design_documents = true
-            puts "config.couchbase.ensure_design_documents : #{config.couchbase2.ensure_design_documents}"
 
             # Maping of rescued exceptions to HTTP responses
             #
