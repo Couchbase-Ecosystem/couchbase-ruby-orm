@@ -83,8 +83,10 @@ module CouchbaseOrm
             private
 
             def convert_values(values)
-                Array.wrap(values).compact.map do |v|
-                    if v.class == String
+                Array.wrap(values).map do |v|
+                    if v.nil?
+                        nil
+                    elsif v.class == String
                         "'#{N1ql.sanitize(v)}'"
                     elsif v.class == Date || v.class == Time
                         "'#{v.iso8601(3)}'"
@@ -96,7 +98,7 @@ module CouchbaseOrm
 
             def build_where(keys, values)
                 where = keys.each_with_index
-                            .reject { |_key, i| i > values.count }
+                            .select { |_key, i| i < values.count }
                             .map { |key, i| values[i].nil? ? "(#{key} IS NULL OR #{key} IS MISSING)" : "#{key} = #{values[i]}" }
                             .join(" AND ")
                 "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
