@@ -33,6 +33,7 @@ module CouchbaseOrm
         include Associations
         include Views
         include N1ql
+        include Encrypt
 
         extend Join
         extend Enum
@@ -180,6 +181,8 @@ module CouchbaseOrm
                 clear_changes_information
                 super(attributes)
             end
+
+            decrypted_attributes(@__attributes__)
 
             yield self if block_given?
 
