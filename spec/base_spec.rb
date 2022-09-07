@@ -12,7 +12,9 @@ class CompareTest < CouchbaseOrm::Base
     attribute :age, :integer
 end
 
-
+class TimestampTest < CouchbaseOrm::Base
+    attribute :created_at, :datetime
+end
 
 describe CouchbaseOrm::Base do
     it "should be comparable to other objects" do
@@ -139,6 +141,15 @@ describe CouchbaseOrm::Base do
         expect(base[:name]).to eq('joe')
     ensure
         base.destroy
+    end
+    
+    it "should have timestamp attributes for create in model" do
+        expect(TimestampTest.timestamp_attributes_for_create_in_model).to eq(["created_at"])
+    end
+
+    it "should generate a timestamp on creation" do
+        base = TimestampTest.create!()
+        expect(base.created_at).to be_a(Time)
     end
 
     describe BaseTest do

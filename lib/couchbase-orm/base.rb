@@ -61,6 +61,10 @@ module CouchbaseOrm
             def symbol_column_to_string(name)
                 name.to_s
             end
+
+            def column_names # fixme should be an alias
+                attribute_names
+            end
         end
 
         def respond_to?(name)
@@ -94,6 +98,7 @@ module CouchbaseOrm
         define_model_callbacks :create, :destroy, :save, :update
 
         include Persistence
+        include ::ActiveRecord::Timestamp # must be included after Persistence
         include Associations
         include Views
         include N1ql
