@@ -5,7 +5,7 @@ module CouchbaseOrm
         @@config = nil
         def self.config
             @@config || {
-              :connection_string => "couchbase://#{ENV['COUCHBASE_HOST'] || 'localhost'}",
+              :connection_string => "couchbase://#{ENV['COUCHBASE_HOST'] || '127.0.0.1'}",
               :username => ENV['COUCHBASE_USER'],
               :password => ENV['COUCHBASE_PASSWORD'],
               :bucket => ENV['COUCHBASE_BUCKET']
