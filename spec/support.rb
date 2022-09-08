@@ -3,8 +3,8 @@
 
 if ENV['TRAVIS_TEST']
     require 'mt-libcouchbase'
-    Libcouchbase::Defaults.username = 'tester'
-    Libcouchbase::Defaults.password = 'password123'
+    MTLibcouchbase::Defaults.username = 'tester'
+    MTLibcouchbase::Defaults.password = 'password123'
 end
 
 require 'couchbase-orm'
