@@ -2,9 +2,14 @@ require 'couchbase'
 
 module CouchbaseOrm
     class Connection
-
+        @@config = nil
         def self.config
-            @@config || raise(CouchbaseOrm::Error, 'Missing CouchbaseOrm connection config')
+            @@config || {
+              :connection_string => "couchbase://#{ENV['COUCHBASE_HOST'] || 'localhost'}",
+              :username => ENV['COUCHBASE_USER'],
+              :password => ENV['COUCHBASE_PASSWORD'],
+              :bucket => ENV['COUCHBASE_BUCKET']
+            }
         end
 
         def self.config=(config)
