@@ -65,6 +65,41 @@ module CouchbaseOrm
             def column_names # fixme should be an alias
                 attribute_names
             end
+
+            # for Arel
+
+            # def table_alias
+            #     bucket.name
+            # end
+
+            # def quote_table_name(table_name)
+            #     "quoted_table_name(#{table_name})"
+            # end
+
+            # def quote_column_name(column_name)
+            #     "quoted_column_name(#{column_name})"
+            # end
+
+            # def able_to_type_cast?
+            #     return true
+            # end
+
+            # def type_cast_for_database(key, value)
+            #     attribute_types[key.to_s].cast(value)
+            # end
+
+            # def quote(value)
+            #     case value
+            #     when String
+            #         "'#{value}'"
+            #     when Numeric
+            #         value.to_s
+            #     when NilClass
+            #         "NULL"
+            #     else
+            #         value
+            #     end
+            # end
         end
 
         def respond_to?(name)
@@ -114,6 +149,8 @@ module CouchbaseOrm
 
 
         class << self
+
+
 
             def connect(**options)
                 @bucket = BucketProxy.new(::MTLibcouchbase::Bucket.new(**options))

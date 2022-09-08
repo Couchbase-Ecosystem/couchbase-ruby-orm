@@ -49,8 +49,13 @@ module CouchbaseOrm
 
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
                     opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
+<<<<<<< HEAD
                     values = convert_values(opts.delete(:key))
                     current_query = run_query(method_opts[:emit_key], values, query_fn, **opts.except(:include_docs))
+=======
+                    values = convert_values(method_opts[:emit_key], opts.delete(:key))
+                    current_query = run_query(method_opts[:emit_key], values, select: select, **opts.except(:include_docs))
+>>>>>>> 1d54e67 (WIP)
 
                     if result_modifier
                         opts[:include_docs] = true
@@ -73,23 +78,34 @@ module CouchbaseOrm
                 validates(attr, presence: true) if validate
                 n1ql n1ql_method, emit_key: attr
 
-                instance_eval "
-                                def self.#{find_method}(#{attr})
-                                    #{n1ql_method}(key: #{attr})
-                                end
-                            "
+                define_singleton_method find_method do |value|
+                    send n1ql_method, key: value
+                end
             end
 
             private
 
-            def convert_values(values)
-                Array.wrap(values).compact.map do |v|
-                    if v.class == String
-                        "'#{N1ql.sanitize(v)}'"
-                    elsif v.class == Date || v.class == Time
-                        "'#{v.iso8601(3)}'"
+            def convert_values(keys, values)
+                keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|
+                    CouchbaseOrm.logger.debug "convert_values: #{key} => #{value_before_type_cast.inspect}"
+                    
+                    # cast value to type
+                    value = attribute_types[key.to_s].cast(value_before_type_cast)
+                    
+                    ## prototype using arel builder
+                    # t = ::Arel::Attribute.new(self, key).eq(value_before_type_cast)
+                    # compiled = Arel::Visitors::PostgreSQL.new(self).compile(t)
+                    # puts compiled
+
+                    # then quote and sanitize
+                    if value.class == String
+                        "'#{N1ql.sanitize(value)}'"
+                    elsif value.class == Date
+                        "'#{value.iso8601}'"
+                    elsif value.class == Time
+                        "'#{value}'"
                     else
-                        N1ql.sanitize(v).to_s
+                        N1ql.sanitize(value).to_s
                     end
                 end
             end

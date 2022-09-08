@@ -50,6 +50,7 @@ module CouchbaseOrm
             # use the bucket key as an index - lookup records by attr values
             define_singleton_method(find_by_method) do |*values|
                 key = self.send(class_bucket_key_method, *values)
+                CouchbaseOrm.logger.debug("#{find_by_method}: #{class_bucket_key_method} with values #{values.inspect} give key: #{key}")
                 id = self.collection.get(key)&.content
                 if id
                     mod = self.find_by_id(id)
@@ -57,6 +58,8 @@ module CouchbaseOrm
 
                     # Clean up record if the id doesn't exist
                     self.collection.remove(key)
+                else
+                    CouchbaseOrm.logger.debug("#{find_by_method}: #{key} not found")
                 end
 
                 nil
