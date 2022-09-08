@@ -21,7 +21,7 @@ describe CouchbaseOrm::Views do
     it "should save a new design document" do
         begin
             ViewTest.bucket.delete_design_doc(ViewTest.design_document)
-        rescue Libcouchbase::Error::HttpResponseError
+        rescue MTLibcouchbase::Error::HttpResponseError
         end
         expect(ViewTest.ensure_design_document!).to be(true)
     end
