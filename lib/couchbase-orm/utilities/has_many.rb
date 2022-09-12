@@ -93,7 +93,9 @@ module CouchbaseOrm
         def build_index_n1ql(klass, remote_class, remote_method, through_key, foreign_key)
             if remote_class
                 klass.class_eval do
-                    n1ql remote_method, select: "raw #{through_key}"
+                  n1ql remote_method, query_fn: proc { |bucket, values, options|
+                    cluster.query("SELECT raw #{through_key} FROM `#{bucket.name}` where type = \"#{design_document}\" and #{foreign_key} = #{values[0]}", options)
+                  }
                 end
             else
                 klass.class_eval do

@@ -5,7 +5,7 @@ require 'couchbase-orm/proxies/n1ql_proxy'
 module CouchbaseOrm
     class BucketProxy
         def initialize(proxyfied)
-            raise "Must proxy a non nil object" if proxyfied.nil?
+            raise ArgumentError, "Must proxy a non nil object" if proxyfied.nil?
 
             @proxyfied = proxyfied
 
