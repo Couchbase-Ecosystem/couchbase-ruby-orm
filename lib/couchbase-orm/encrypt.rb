@@ -4,7 +4,7 @@ module CouchbaseOrm
     module Encrypt
         TANKER_ENCRYPTED_PREFIX = 'tanker_encrypted_'
 
-        def encrypted_attributes(attributes)
+        def encode_encrypted_attributes(attributes)
             attributes.clone.each do |key, value|
                 if key.to_s.starts_with?(TANKER_ENCRYPTED_PREFIX)
                     attributes["encrypted$#{key}"] = {
@@ -16,7 +16,7 @@ module CouchbaseOrm
             end
         end
 
-        def decrypted_attributes(attributes)
+        def decode_encrypted_attributes(attributes)
             attributes.clone.each do |key, value|
                 key = key.to_s
                 if key.starts_with?('encrypted$')

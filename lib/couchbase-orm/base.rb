@@ -182,7 +182,7 @@ module CouchbaseOrm
                 super(attributes)
             end
 
-            decrypted_attributes(@__attributes__)
+            decode_encrypted_attributes(@__attributes__)
 
             yield self if block_given?
 

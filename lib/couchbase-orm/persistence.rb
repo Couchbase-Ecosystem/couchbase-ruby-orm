@@ -210,7 +210,7 @@ module CouchbaseOrm
             @__metadata__.key = key
             @__metadata__.cas = resp.cas
 
-            decrypted_attributes(@__attributes__)
+            decode_encrypted_attributes(@__attributes__)
 
             reset_associations
             clear_changes_information
@@ -239,7 +239,7 @@ module CouchbaseOrm
                     @__attributes__[:type] = self.class.design_document
                     @__attributes__.delete(:id)
 
-                    encrypted_attributes(@__attributes__)
+                    encode_encrypted_attributes(@__attributes__)
 
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
@@ -264,7 +264,7 @@ module CouchbaseOrm
                     @__attributes__[:type] = self.class.design_document
                     @__attributes__.delete(:id)
 
-                    encrypted_attributes(@__attributes__)
+                    encode_encrypted_attributes(@__attributes__)
 
                     _id = @id || self.class.uuid_generator.next(self)
                     CouchbaseOrm.logger.debug { "_create_record - Upsert #{_id} #{@__attributes__.to_s.truncate(200)}" }
