@@ -11,8 +11,9 @@ To generate config you can use `rails generate couchbase_orm:config`:
 
 It will generate this `config/couchbase.yml` for you:
 
+```yaml
     common: &common
-      hosts: localhost
+      connection_string: couchbase://localhost
       username: dev_user
       password: dev_password
 
@@ -26,10 +27,23 @@ It will generate this `config/couchbase.yml` for you:
 
     # set these environment variables on your production server
     production:
-    hosts: <%= ENV['COUCHBASE_HOST'] || ENV['COUCHBASE_HOSTS'] %>
-    bucket: <%= ENV['COUCHBASE_BUCKET'] %>
-    username: <%= ENV['COUCHBASE_USER'] %>
-    password: <%= ENV['COUCHBASE_PASSWORD'] %>
+      connection_string: <%= ENV['COUCHBASE_CONNECTION_STRING'] %>
+      bucket: <%= ENV['COUCHBASE_BUCKET'] %>
+      username: <%= ENV['COUCHBASE_USER'] %>
+      password: <%= ENV['COUCHBASE_PASSWORD'] %>
+```
+
+## Setup without Rails
+If you are not using Rails, you can configure couchbase-orm with an initializer:
+```ruby
+# config/initializers/couchbase_orm.rb
+CouchbaseOrm::Connection.config = {
+  connection_string: "couchbase://localhost"
+  username: "dev_user"
+  password: "dev_password"
+  bucket: "dev_bucket"
+}
+```
 
 Views are generated on application load if they don't exist or mismatch.
 This works fine in production however by default in development models are lazy loaded.

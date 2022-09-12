@@ -1,8 +1,5 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
-require 'mt-libcouchbase'
-MTLibcouchbase.autoload(:QueryN1QL, 'ext/query_n1ql')
-
 module CouchbaseOrm
     autoload :Error,       'couchbase-orm/error'
     autoload :Connection,  'couchbase-orm/connection'
@@ -10,37 +7,45 @@ module CouchbaseOrm
     autoload :Base,        'couchbase-orm/base'
     autoload :HasMany,     'couchbase-orm/utilities/has_many'
 
-    def self.try_load(id)
-        result = nil
-        was_array = id.is_a?(Array)
-        if was_array && id.length == 1
-            id = id.first
-        end
-        result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
-        if was_array
-            result = Array.wrap(result)
-        end
-        if result && result.is_a?(Array)
-            return result.map { |r| self.try_load(r) }.compact
-        end
-
-        if result && result.value.is_a?(Hash) && result.value[:type]
-            ddoc = result.value[:type]
-            ::CouchbaseOrm::Base.descendants.each do |model|
-                if model.design_document == ddoc
-                    return model.new(result)
-                end
-            end
-        end
-        nil
-    end
-
     def self.logger
         @@logger ||= defined?(Rails) ? Rails.logger : Logger.new(STDOUT)
     end
 
     def self.logger=(logger)
         @@logger = logger
+    end
+
+    def self.try_load(id)
+        result = nil
+        was_array = id.is_a?(Array)
+        if was_array && id.length == 1
+            query_id = id.first
+        else
+            query_id = id
+        end
+
+        result = query_id.is_a?(Array) ? CouchbaseOrm::Base.bucket.default_collection.get_multi(query_id) : CouchbaseOrm::Base.bucket.default_collection.get(query_id)
+
+        result = Array.wrap(result) if was_array
+
+        if result&.is_a?(Array)
+            return result.zip(id).map { |r, id| try_load_create_model(r, id) }.compact
+        end
+
+        return try_load_create_model(result, id)
+    end
+
+    private
+
+    def self.try_load_create_model(result, id)
+        ddoc = result&.content["type"]
+        return nil unless ddoc
+        ::CouchbaseOrm::Base.descendants.each do |model|
+            if model.design_document == ddoc
+                return model.new(result, id: id)
+            end
+        end
+        nil
     end
 end
 

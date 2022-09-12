@@ -3,12 +3,14 @@
 
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
+require 'couchbase'
 require 'couchbase-orm/error'
 require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/proxies/bucket_proxy'
+require 'couchbase-orm/proxies/collection_proxy'
 require 'couchbase-orm/utilities/join'
 require 'couchbase-orm/utilities/enum'
 require 'couchbase-orm/utilities/index'
@@ -55,6 +57,14 @@ module CouchbaseOrm
                 @bucket ||= BucketProxy.new(Connection.bucket)
             end
 
+            def cluster
+                Connection.cluster
+            end
+
+            def collection
+                CollectionProxy.new(bucket.default_collection)
+            end
+
             def uuid_generator
                 @uuid_generator ||= IdGenerator
             end
@@ -90,27 +100,20 @@ module CouchbaseOrm
                 @attributes ||= {}
             end
 
-            def find(*ids, **options)
-                options[:extended] = true
-                options[:quiet] ||= false
+            def find(*ids, quiet: false)
+                CouchbaseOrm.logger.debug { "Base.find(l##{ids.length}) #{ids}" }
 
                 ids = ids.flatten.select { |id| id.present? }
                 if ids.empty?
-                    return nil if options[:quiet]
-                    raise MTLibcouchbase::Error::EmptyKey, 'no id(s) provided'
+                    raise CouchbaseOrm::Error::EmptyNotAllowed, 'no id(s) provided'
                 end
 
-                CouchbaseOrm.logger.debug "Data - Get #{ids}"
-                record = bucket.get(*ids, **options)
-                records = record.is_a?(Array) ? record : [record]
-                records.map! { |record|
-                    if record
-                        self.new(record)
-                    else
-                        false
-                    end
+                records = quiet ? collection.get_multi(ids) : collection.get_multi!(ids)
+                CouchbaseOrm.logger.debug { "Base.find found(#{records})" }
+                records = records.zip(ids).map { |record, id|
+                    self.new(record, id: id) if record
                 }
-                records.select! { |rec| rec }
+                records.compact!
                 ids.length > 1 ? records : records[0]
             end
 
@@ -121,12 +124,13 @@ module CouchbaseOrm
             alias_method :[], :find_by_id
 
             def exists?(id)
-                CouchbaseOrm.logger.debug "Data - Get #{id}"
-                !bucket.get(id, quiet: true).nil?
+                CouchbaseOrm.logger.debug "Data - Exists? #{id}"
+                collection.exists(id).exists
             end
             alias_method :has_key?, :exists?
         end
 
+        class MismatchTypeError < RuntimeError; end
 
         # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
@@ -145,25 +149,28 @@ module CouchbaseOrm
 
             if model
                 case model
-                when ::MTLibcouchbase::Response
-                    doc = model.value || raise('empty response provided')
-                    type = doc.delete(:type)
+                when Couchbase::Collection::GetResult
+                    CouchbaseOrm.logger.debug "Initialize with Couchbase::Collection::GetResult"
+                    doc = model.content || raise('empty response provided')
+                    type = doc.delete('type')
                     doc.delete(:id)
 
                     if type && !ignore_doc_type && type.to_s != self.class.design_document
-                        raise "document type mismatch, #{type} != #{self.class.design_document}"
+                        raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
                     end
 
-                    @__metadata__.key = model.key
+                    @__metadata__.key = attributes[:id]
                     @__metadata__.cas = model.cas
 
                     # This ensures that defaults are applied
                     @__attributes__.merge! doc
-                    clear_changes_information
                 when CouchbaseOrm::Base
+                    CouchbaseOrm.logger.debug "Initialize with CouchbaseOrm::Base"
+
                     clear_changes_information
                     attributes = model.attributes
                     attributes.delete(:id)
+                    attributes.delete('type')
                     super(attributes)
                 else
                     clear_changes_information
