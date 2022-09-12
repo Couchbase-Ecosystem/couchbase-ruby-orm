@@ -13,7 +13,10 @@ module CouchbaseOrm
                 return @results if @results
 
                 CouchbaseOrm.logger.debug 'Query - ' + self.to_s
-                @results = ResultsProxy.new(@proxyfied.results(*params, &block))
+
+                results = @proxyfied.rows
+                results = results.map { |r| block.call(r) } if block
+                @results = ResultsProxy.new(results.to_a)
             end
 
             self.class.define_method(:to_s) do

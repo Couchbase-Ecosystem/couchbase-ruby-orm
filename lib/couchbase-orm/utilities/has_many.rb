@@ -17,8 +17,8 @@ module CouchbaseOrm
 
         klass = begin
                     class_name.constantize
-                rescue NameError => e
-                    puts "WARNING: #{class_name} referenced in #{self.name} before it was aded"
+                rescue NameError
+                    warn "WARNING: #{class_name} referenced in #{self.name} before it was aded"
 
                     # Open the class early - load order will have to be changed to prevent this.
                     # Warning notice required as a misspelling will not raise an error
@@ -42,7 +42,7 @@ module CouchbaseOrm
                     when :n1ql
                         remote_klass.find(row)
                     when :view
-                        remote_klass.find(row.value[through_key])
+                        remote_klass.find(row[through_key])
                     else
                         raise 'type is unknown'
                     end
@@ -93,12 +93,9 @@ module CouchbaseOrm
         def build_index_n1ql(klass, remote_class, remote_method, through_key, foreign_key)
             if remote_class
                 klass.class_eval do
-                    n1ql remote_method, query: proc { |bucket, values|
-                        bucket_name = bucket.bucket
-                        bucket.n1ql.select("raw #{through_key}")
-                            .from("`#{bucket_name}`")
-                            .where("type=\"#{design_document}\" and #{foreign_key} = #{values[0]}")
-                    }
+                  n1ql remote_method, query_fn: proc { |bucket, values, options|
+                    cluster.query("SELECT raw #{through_key} FROM `#{bucket.name}` where type = \"#{design_document}\" and #{foreign_key} = #{values[0]}", options)
+                  }
                 end
             else
                 klass.class_eval do

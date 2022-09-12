@@ -4,6 +4,7 @@ require File.expand_path("../support", __FILE__)
 
 
 class IndexTest < CouchbaseOrm::Base
+    n1ql :all
     attribute :email, type: String
     attribute :name,  type: String, default: :joe
     ensure_unique :email, presence: false
@@ -18,13 +19,13 @@ end
 
 class EnumTest < CouchbaseOrm::Base
     enum visibility: [:group, :authority, :public], default: :authority
+    enum color: [:red, :green, :blue]
 end
 
 
 describe CouchbaseOrm::Index do
     after :each do
-        IndexTest.bucket.delete('index_testemail-joe@aca.com')
-        IndexTest.bucket.delete('index_testemail-')
+        IndexTest.all.map(&:destroy)
     end
 
     it "should prevent models being created if they should have unique keys" do
@@ -98,6 +99,10 @@ describe CouchbaseOrm::Index do
         enum = EnumTest.create!
         expect(enum.visibility).to eq(2)
         enum.destroy
+
+        # Test default default
+        enum = EnumTest.create!
+        expect(enum.color).to eq(1)
     end
 
     it "should not overwrite index's that do not belong to the current model" do

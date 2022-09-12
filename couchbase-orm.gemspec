@@ -13,14 +13,15 @@ Gem::Specification.new do |gem|
     gem.required_ruby_version = '>= 2.1.0'
     gem.require_paths = ["lib"]
 
-    gem.add_runtime_dependency     'mt-libcouchbase', '~> 1.2'
     gem.add_runtime_dependency     'activemodel',  ENV["ACTIVE_MODEL_VERSION"] || '>= 5.0'
+    gem.add_runtime_dependency     'couchbase'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
 
     gem.add_development_dependency 'rake',         '~> 12.2'
     gem.add_development_dependency 'rspec',        '~> 3.7'
     gem.add_development_dependency 'yard',         '~> 0.9'
-    gem.add_development_dependency 'minitest',     '~> 5.10'
+    gem.add_development_dependency 'pry'
+    gem.add_development_dependency 'simplecov'
 
     gem.files         = `git ls-files`.split("\n")
     gem.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

@@ -24,8 +24,8 @@ module Rails #:nodoc:
     module Couchbase #:nodoc:
         class Railtie < Rails::Railtie #:nodoc:
 
-            config.couchbase = ActiveSupport::OrderedOptions.new
-            config.couchbase.ensure_design_documents = true
+            config.couchbase_orm = ActiveSupport::OrderedOptions.new
+            config.couchbase_orm.ensure_design_documents = true
 
             # Maping of rescued exceptions to HTTP responses
             #
@@ -35,10 +35,6 @@ module Rails #:nodoc:
             # @return [Hash] rescued responses
             def self.rescue_responses
                 {
-                    'MTLibcouchbase::Error::KeyNotFound' => :not_found,
-                    'MTLibcouchbase::Error::NotStored' => :unprocessable_entity,
-                    MTLibcouchbase::Error::KeyNotFound => :not_found,
-                    MTLibcouchbase::Error::NotStored => :unprocessable_entity
                 }
             end
 
@@ -48,14 +44,8 @@ module Rails #:nodoc:
                 config.action_dispatch.rescue_responses.merge!(rescue_responses)
             end
 
-            # Initialize Couchbase Mode. This will look for a couchbase.yml in the
-            # config directory and configure Couchbase connection appropriately.
-            initializer 'couchbase.setup_connection' do
-                config_file = Rails.root.join('config', 'couchbase.yml')
-                if config_file.file? &&
-                    config = YAML.load(ERB.new(File.read(config_file)).result)[Rails.env]
-                    ::CouchbaseOrm::Connection.options = config.deep_symbolize_keys
-                end
+            initializer 'couchbase_orm.setup_connection_config' do
+                CouchbaseOrm::Connection.config = Rails.application.config_for(:couchbase)
             end
 
             # After initialization we will warn the user if we can't find a couchbase.yml and
@@ -83,7 +73,7 @@ module Rails #:nodoc:
 
             # Check (and upgrade if needed) all design documents
             config.after_initialize do |app|
-                if config.couchbase.ensure_design_documents
+                if config.couchbase_orm.ensure_design_documents
                     begin
                         ::CouchbaseOrm::Base.descendants.each do |model|
                             model.ensure_design_document!

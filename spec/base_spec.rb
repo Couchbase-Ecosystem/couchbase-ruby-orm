@@ -35,11 +35,11 @@ describe CouchbaseOrm::Base do
 
     it "should load database responses" do
         base = BaseTest.create!(name: 'joe')
-        resp = BaseTest.bucket.get(base.id, extended: true)
+        resp = BaseTest.bucket.default_collection.get(base.id)
 
-        expect(resp.key).to eq(base.id)
+        base_loaded = BaseTest.new(resp, id: base.id)
 
-        base_loaded = BaseTest.new(resp)
+        expect(base_loaded.id).to eq(base.id)
         expect(base_loaded).to     eq(base)
         expect(base_loaded).not_to be(base)
 
@@ -49,7 +49,7 @@ describe CouchbaseOrm::Base do
     it "should not load objects if there is a type mismatch" do
         base = BaseTest.create!(name: 'joe')
 
-        expect { CompareTest.find_by_id(base.id) }.to raise_error(RuntimeError)
+        expect { CompareTest.find_by_id(base.id) }.to raise_error(CouchbaseOrm::Error::TypeMismatchError)
 
         base.destroy
     end
