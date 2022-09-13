@@ -1,4 +1,3 @@
-
 require 'couchbase'
 
 module CouchbaseOrm
