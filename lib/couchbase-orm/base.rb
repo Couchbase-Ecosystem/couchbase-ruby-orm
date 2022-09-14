@@ -62,44 +62,9 @@ module CouchbaseOrm
                 name.to_s
             end
 
-            def column_names # fixme should be an alias
+            def column_names # can't be an alias for now
                 attribute_names
             end
-
-            # for Arel
-
-            # def table_alias
-            #     bucket.name
-            # end
-
-            # def quote_table_name(table_name)
-            #     "quoted_table_name(#{table_name})"
-            # end
-
-            # def quote_column_name(column_name)
-            #     "quoted_column_name(#{column_name})"
-            # end
-
-            # def able_to_type_cast?
-            #     return true
-            # end
-
-            # def type_cast_for_database(key, value)
-            #     attribute_types[key.to_s].cast(value)
-            # end
-
-            # def quote(value)
-            #     case value
-            #     when String
-            #         "'#{value}'"
-            #     when Numeric
-            #         value.to_s
-            #     when NilClass
-            #         "NULL"
-            #     else
-            #         value
-            #     end
-            # end
         end
 
         def respond_to?(name)
@@ -231,7 +196,7 @@ module CouchbaseOrm
                         raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
                     end
 
-                    self.id = attributes[:id] if attributes[:id]
+                    self.id = attributes[:id].presence if attributes[:id].present?
                     @__metadata__.cas = model.cas
 
                     assign_attributes(doc)
@@ -254,13 +219,13 @@ module CouchbaseOrm
 
         # Document ID is a special case as it is not stored in the document
         def id
-            @id.presence
+            @id
         end
 
         def id=(value)
             raise 'ID cannot be changed' if @__metadata__.cas && value
             attribute_will_change!(:id)
-            @id = value.to_s
+            @id = value.to_s.presence
         end
 
         def [](key)
@@ -271,50 +236,6 @@ module CouchbaseOrm
             CouchbaseOrm.logger.debug "Set attribute #{key} to #{value}"
             send(:"#{key}=", value)
         end
-
-        # def write_attribute(attr_name, value)
-        #     unless value.nil?
-        #         coerce = self.class.attributes[attr_name][:type]
-        #         value = Kernel.send(coerce.to_s, value) if coerce
-        #     end
-        #     attribute_will_change!(attr_name) unless @__attributes__[attr_name] == value
-        #     @__attributes__[attr_name] = value
-        # end
-        # alias_method :[]=, :write_attribute
-
-        #
-        # Add support for Serialization:
-        # http://guides.rubyonrails.org/active_model_basics.html#serialization
-        #
-
-        # def attributes
-        #     copy = @__attributes__.merge({id: id})
-        #     copy.delete(:type)
-        #     copy
-        # end
-
-        # def attributes=(attributes)
-        #     attributes.each do |key, value|
-        #         setter = :"#{key}="
-        #         send(setter, value) if respond_to?(setter)
-        #     end
-        # end
-
-        # ID_LOOKUP = ['id', :id].freeze
-        # def attribute(name)
-        #     return self.id if ID_LOOKUP.include?(name)
-        #     @__attributes__[name]
-        # end
-        # alias_method :read_attribute_for_serialization, :attribute
-
-        # def attribute=(name, value)
-        #     __send__(:"#{name}=", value)
-        # end
-
-
-        #
-        # Add support for comparisons
-        #
 
         # Public: Allows for access to ActiveModel functionality.
         #
