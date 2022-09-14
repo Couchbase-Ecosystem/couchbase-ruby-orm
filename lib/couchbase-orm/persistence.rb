@@ -125,7 +125,7 @@ module CouchbaseOrm
                 destroy_associations!
 
                 options[:cas] = @__metadata__.cas if with_cas
-                CouchbaseOrm.logger.debug "Data - Delete #{id}"
+                CouchbaseOrm.logger.debug "Data - Destroy #{id}"
                 self.class.collection.remove(id, **options)
                 
                 self.id = nil

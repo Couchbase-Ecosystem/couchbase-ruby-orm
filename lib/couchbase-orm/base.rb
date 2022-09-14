@@ -192,7 +192,7 @@ module CouchbaseOrm
                         raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
                     end
 
-                    self.id = attributes[:id].presence if attributes[:id].present?
+                    self.id = attributes[:id] if attributes[:id].present?
                     @__metadata__.cas = model.cas
 
                     assign_attributes(doc)
