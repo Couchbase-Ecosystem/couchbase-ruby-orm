@@ -42,25 +42,25 @@ module CouchbaseOrm
                 true
             end
 
-            def base_class
-                self
-            end
+            # def base_class
+            #     self
+            # end
 
-            def abstract_class?
-                false
-            end
+            # def abstract_class?
+            #     false
+            # end
 
-            def table_exists?
-                true
-            end
+            # def table_exists?
+            #     true
+            # end
 
-            def connected?
-                true
-            end
+            # def connected?
+            #     true
+            # end
 
-            def symbol_column_to_string(name)
-                name.to_s
-            end
+            # def symbol_column_to_string(name)
+            #     name.to_s
+            # end
 
             def column_names # can't be an alias for now
                 attribute_names
