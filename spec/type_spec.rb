@@ -148,6 +148,7 @@ describe CouchbaseOrm::Base do
         t = TypeTest.create!(name: "t", some_time: now)
         _t2 = TypeTest.create!(name: "t2", some_time: now + 1)
         expect(TypeTest.find_by_some_time(now)).to eq t
+        binding.pry
     end
 
     it "should be able to query by time and type cast" do

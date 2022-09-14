@@ -10,7 +10,7 @@ module CouchbaseOrm
             end
         
             def serialize(value)
-                value&.to_i&.to_s
+                value&.to_i
             end
         end
     end
