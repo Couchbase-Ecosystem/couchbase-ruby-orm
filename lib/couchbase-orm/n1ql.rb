@@ -80,11 +80,18 @@ module CouchbaseOrm
             private
 
             def convert_values(keys, values)
-                keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|
-                    CouchbaseOrm.logger.debug "convert_values: #{key} => #{value_before_type_cast.inspect}"
-                    
+                raise ArgumentError, "Empty keys but values are present, can't type cast" if keys.empty? && Array.wrap(values).any?
+                keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|                    
                     # cast value to type
-                    value = attribute_types[key.to_s].cast(value_before_type_cast)
+                    value = if value_before_type_cast.is_a?(Array)
+                        value_before_type_cast.map do |v|
+                            attribute_types[key.to_s].cast(v)
+                        end
+                    else
+                        attribute_types[key.to_s].cast(value_before_type_cast)
+                    end
+
+                    CouchbaseOrm.logger.debug "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value}"
 
                     # then quote and sanitize
                     if value.class == String
