@@ -23,6 +23,7 @@ Gem::Specification.new do |gem|
     gem.add_development_dependency 'rspec',        '~> 3.7'
     gem.add_development_dependency 'yard',         '~> 0.9'
     gem.add_development_dependency 'pry'
+    gem.add_development_dependency 'pry-stack_explorer'
     gem.add_development_dependency 'simplecov'
 
     gem.files         = `git ls-files`.split("\n")
