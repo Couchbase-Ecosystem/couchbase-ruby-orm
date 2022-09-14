@@ -31,7 +31,7 @@ module CouchbaseOrm
 
             # collect a list of values for each key component attribute
             define_method(bucket_key_vals_method) do
-                attrs.collect {|attr| self[attr]}
+                attrs.collect {|attr| self.class.attribute_types[attr.to_s].cast(self[attr])}
             end
 
 
@@ -40,6 +40,7 @@ module CouchbaseOrm
             #----------------
             # simple wrapper around the processor proc if supplied
             define_singleton_method(processor_method) do |*values|
+                values = attrs.zip(values).map { |attr,value| attribute_types[attr.to_s].serialize(attribute_types[attr.to_s].cast(value)) }
                 if processor
                     processor.call(values.length == 1 ? values.first : values)
                 else

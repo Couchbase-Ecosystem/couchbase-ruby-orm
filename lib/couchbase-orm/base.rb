@@ -12,6 +12,7 @@ require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
+require 'couchbase-orm/types'
 require 'couchbase-orm/proxies/bucket_proxy'
 require 'couchbase-orm/proxies/collection_proxy'
 require 'couchbase-orm/utilities/join'
@@ -30,10 +31,6 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         module ClassMethods
-            def reset_primary_key
-                primary_key = "id"
-            end
-
             def primary_key
                 "id"
             end

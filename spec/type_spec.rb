@@ -1,5 +1,14 @@
 require File.expand_path("../support", __FILE__)
 
+require "active_model"
+
+class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
+  def serialize(value)
+    value&.iso8601(3)
+  end
+end
+
+ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
 
 class TypeTest < CouchbaseOrm::Base
     attribute :name, :string
@@ -7,12 +16,16 @@ class TypeTest < CouchbaseOrm::Base
     attribute :size, :float
     attribute :renewal_date, :date
     attribute :subscribed_at, :datetime
+    attribute :some_time, :timestamp
+    attribute :precision_time, :datetime3decimal
     attribute :active, :boolean
 
     n1ql :all
 
     index :age, presence: false
     index :renewal_date, presence: false
+    index :some_time, presence: false
+    index :precision_time, presence: false
 end
 
 class N1qlTypeTest < CouchbaseOrm::Base
@@ -21,6 +34,8 @@ class N1qlTypeTest < CouchbaseOrm::Base
     attribute :size, :float
     attribute :renewal_date, :date
     attribute :subscribed_at, :datetime
+    attribute :some_time, :timestamp
+    attribute :precision_time, :datetime3decimal
     attribute :active, :boolean
 
     n1ql :all
@@ -30,13 +45,25 @@ class N1qlTypeTest < CouchbaseOrm::Base
     index_n1ql :size, validate: false
     index_n1ql :active, validate: false
     index_n1ql :renewal_date, validate: false
+    index_n1ql :some_time, validate: false
     index_n1ql :subscribed_at, validate: false
-
+    index_n1ql :precision_time, validate: false
     n1ql :by_both_dates, emit_key: [:renewal_date, :subscribed_at], presence: false
 end
 
 TypeTest.ensure_design_document!
 N1qlTypeTest.ensure_design_document!
+
+describe CouchbaseOrm::Types::Timestamp do
+    it "should cast an integer to time" do
+        t = Time.at(Time.now.to_i)
+        expect(CouchbaseOrm::Types::Timestamp.new.cast(t.to_i)).to eq(t)
+    end
+    it "should cast an integer string to time" do
+        t = Time.at(Time.now.to_i)
+        expect(CouchbaseOrm::Types::Timestamp.new.cast(t.to_s)).to eq(t)
+    end
+end
 
 describe CouchbaseOrm::Base do
     before(:each) do
@@ -116,6 +143,36 @@ describe CouchbaseOrm::Base do
         expect(TypeTest.find_by_renewal_date(Date.today.to_s)).to eq t
     end
 
+    it "should be able to query by time" do
+        now = Time.now
+        t = TypeTest.create!(name: "t", some_time: now)
+        _t2 = TypeTest.create!(name: "t2", some_time: now + 1)
+        expect(TypeTest.find_by_some_time(now)).to eq t
+    end
+
+    it "should be able to query by time and type cast" do
+        now = Time.now
+        now_s = now.to_i.to_s
+        t = TypeTest.create!(some_time: now_s)
+        expect(TypeTest.find_by_some_time(now)).to eq t
+        expect(TypeTest.find_by_some_time(now_s)).to eq t
+    end
+
+    it "should be able to query by custom type" do
+        now = Time.now
+        t = TypeTest.create!(precision_time: now)
+        _t2 = TypeTest.create!(precision_time: now + 1)
+        expect(TypeTest.find_by_precision_time(now)).to eq t
+    end
+
+    it "should be able to query by custom type and type cast" do
+        now = Time.now
+        now_s = now.utc.iso8601(3)
+        t = TypeTest.create!(precision_time: now_s)
+        expect(TypeTest.find_by_precision_time(now)).to eq t
+        expect(TypeTest.find_by_precision_time(now_s)).to eq t
+    end
+
     it "should be able to set attributes with a hash with indifferent access" do
         t = TypeTest.new(ActiveSupport::HashWithIndifferentAccess.new(name: "joe", age: 20, size: 1.5, renewal_date: Date.today, subscribed_at: Time.now, active: true))
         t.save!
@@ -189,11 +246,25 @@ describe CouchbaseOrm::Base do
         expect(N1qlTypeTest.find_by_renewal_date(Date.today).to_a).to eq [t]
     end
 
-    it "should be able to query by time" do
+    it "should be able to query by datetime" do
         now = Time.now
         t = N1qlTypeTest.create!(subscribed_at: now)
         _t2 = N1qlTypeTest.create!(subscribed_at: now + 1)
         expect(N1qlTypeTest.find_by_subscribed_at(now).to_a).to eq [t]
+    end
+
+    it "should be able to query by timestamp" do
+        now = Time.now
+        t = N1qlTypeTest.create!(some_time: now)
+        _t2 = N1qlTypeTest.create!(some_time: now + 1)
+        expect(N1qlTypeTest.find_by_some_time(now).to_a).to eq [t]
+    end
+
+    it "should be able to query by custom type" do
+        now = Time.now
+        t = N1qlTypeTest.create!(precision_time: now)
+        _t2 = N1qlTypeTest.create!(precision_time: now + 1)
+        expect(N1qlTypeTest.find_by_precision_time(now).to_a).to eq [t]
     end
 
     it "should be able to query by boolean" do
