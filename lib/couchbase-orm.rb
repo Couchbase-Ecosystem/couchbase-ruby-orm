@@ -13,7 +13,7 @@ module CouchbaseOrm
     autoload :HasMany,     'couchbase-orm/utilities/has_many'
 
     def self.logger
-        @@logger ||= defined?(Rails) ? Rails.logger : Logger.new(STDOUT).tap { |l| l.level = Logger::INFO }
+        @@logger ||= defined?(Rails) ? Rails.logger : Logger.new(STDOUT).tap { |l| l.level = Logger::INFO unless ENV["COUCHBASE_ORM_DEBUG"] }
     end
 
     def self.logger=(logger)
