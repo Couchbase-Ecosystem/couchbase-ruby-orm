@@ -91,15 +91,11 @@ module CouchbaseOrm
                         attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(value_before_type_cast))
                     end
 
-                    CouchbaseOrm.logger.debug "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value}"
+                    CouchbaseOrm.logger.debug "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}"
 
                     # then quote and sanitize
                     if value.class == String
                         "'#{N1ql.sanitize(value)}'"
-                    elsif value.class == Date
-                        "'#{value.iso8601}'"
-                    elsif value.class == Time
-                        "'#{value}'"
                     else
                         N1ql.sanitize(value).to_s
                     end

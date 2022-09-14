@@ -1,6 +1,7 @@
 require File.expand_path("../support", __FILE__)
 
 require "active_model"
+require "couchbase-orm/types"
 
 class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
   def serialize(value)
