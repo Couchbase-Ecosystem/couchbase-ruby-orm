@@ -47,11 +47,6 @@ module CouchbaseOrm
             end
         end
 
-        def respond_to?(name)
-            # skip ActiveRecord::AttributeMethods respond_to? method
-            method(:respond_to?).super_method.super_method.call(name)
-        end
-
         def _has_attribute?(attr_name)
             attribute_names.include?(attr_name.to_s)
         end
