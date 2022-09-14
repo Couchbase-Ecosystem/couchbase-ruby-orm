@@ -85,11 +85,6 @@ module CouchbaseOrm
                     
                     # cast value to type
                     value = attribute_types[key.to_s].cast(value_before_type_cast)
-                    
-                    ## prototype using arel builder
-                    # t = ::Arel::Attribute.new(self, key).eq(value_before_type_cast)
-                    # compiled = Arel::Visitors::PostgreSQL.new(self).compile(t)
-                    # puts compiled
 
                     # then quote and sanitize
                     if value.class == String

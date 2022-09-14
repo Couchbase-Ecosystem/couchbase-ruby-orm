@@ -81,6 +81,12 @@ describe CouchbaseOrm::Base do
             base.name = 'change'
             expect(base.changes.empty?).to be(false)
 
+            # Attributes are set by key
+            base = BaseTest.new
+            base[:name] = 'bob'
+            expect(base.changes.empty?).to be(false)
+
+            # Attributes are set by initializer from hash
             base = BaseTest.new({name: 'bob'})
             expect(base.changes.empty?).to be(false)
             expect(base.previous_changes.empty?).to be(true)
@@ -94,6 +100,7 @@ describe CouchbaseOrm::Base do
             base = BaseTest.new(base)
             expect(base.changes.empty?).to be(false)
             expect(base.previous_changes.empty?).to be(true)
+
         ensure
             base.destroy if base.id
         end

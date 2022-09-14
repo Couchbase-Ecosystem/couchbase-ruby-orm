@@ -48,27 +48,13 @@ function(doc) {
 EMAP
                     else
                         emit_key = emit_key || :created_at
-
-                        if emit_key != :created_at && false # FIXME: not longer supported, need tests # self.attributes[emit_key][:type].to_s == 'Array'
-                            method_opts[:map] = <<-EMAP
-function(doc) {
-    var i;
-    if (doc.type === "{{design_document}}") {
-        for (i = 0; i < doc.#{emit_key}.length; i += 1) {
-            emit(doc.#{emit_key}[i], null);
-        }
-    }
-}
-EMAP
-                        else
-                            method_opts[:map] = <<-EMAP
+                        method_opts[:map] = <<-EMAP
 function(doc) {
     if (doc.type === "{{design_document}}") {
         emit(doc.#{emit_key}, null);
     }
 }
 EMAP
-                        end
                     end
                 end
 

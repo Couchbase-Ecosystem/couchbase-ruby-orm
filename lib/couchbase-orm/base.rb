@@ -114,9 +114,6 @@ module CouchbaseOrm
 
 
         class << self
-
-
-
             def connect(**options)
                 @bucket = BucketProxy.new(::MTLibcouchbase::Bucket.new(**options))
             end
@@ -173,7 +170,6 @@ module CouchbaseOrm
                 collection.exists(id).exists
             end
             alias_method :has_key?, :exists?
-
         end
 
         class MismatchTypeError < RuntimeError; end
