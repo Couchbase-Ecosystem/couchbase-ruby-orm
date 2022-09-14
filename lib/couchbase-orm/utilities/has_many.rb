@@ -37,6 +37,7 @@ module CouchbaseOrm
                 return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
 
                 remote_klass = remote_class.constantize
+                raise ArgumentError, "Can't find #{remote_method} without an id" unless self.id.present?
                 enum = klass.__send__(remote_method, key: self.id) { |row|
                     case type
                     when :n1ql
@@ -93,7 +94,8 @@ module CouchbaseOrm
         def build_index_n1ql(klass, remote_class, remote_method, through_key, foreign_key)
             if remote_class
                 klass.class_eval do
-                  n1ql remote_method, query_fn: proc { |bucket, values, options|
+                  n1ql remote_method, emit_key: 'id', query_fn: proc { |bucket, values, options|
+                    raise ArgumentError, "values[0] must not be blank" if values[0].blank?
                     cluster.query("SELECT raw #{through_key} FROM `#{bucket.name}` where type = \"#{design_document}\" and #{foreign_key} = #{values[0]}", options)
                   }
                 end
