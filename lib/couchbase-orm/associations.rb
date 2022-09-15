@@ -114,9 +114,8 @@ module CouchbaseOrm
                     old, new = previous_changes[ref]
                     adds = (new || []) - (old || [])
                     subs = (old || []) - (new || [])
-
-                    update_has_and_belongs_to_many_reverse_association(assoc, adds, true, **options)
-                    update_has_and_belongs_to_many_reverse_association(assoc, subs, false, **options)
+                    update_has_and_belongs_to_many_reverse_association(assoc, adds, true, **options) if adds.any?
+                    update_has_and_belongs_to_many_reverse_association(assoc, subs, false, **options) if subs.any?
                 end
 
                 after_create save_method
@@ -167,9 +166,11 @@ module CouchbaseOrm
                 elsif !is_add && index
                     tab = tab.dup
                     tab.delete_at(index)
+                else
+                    next
                 end
-                v.__send__(:"#{remote_method}=", tab)
-                v.__send__(:save!)
+                v[remote_method] = tab
+                v.save!
             end
         end
 

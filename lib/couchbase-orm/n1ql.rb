@@ -38,7 +38,7 @@ module CouchbaseOrm
             def n1ql(name, query_fn: nil, emit_key: [], **options)
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
-                    raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
+                    raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && !attribute_names.include?(key.to_s)
                 end
                 options = N1QL_DEFAULTS.merge(options)
                 method_opts = {}
@@ -49,9 +49,8 @@ module CouchbaseOrm
 
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
                     opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
-                    values = convert_values(opts.delete(:key))
+                    values = convert_values(method_opts[:emit_key], opts.delete(:key)) if opts[:key]
                     current_query = run_query(method_opts[:emit_key], values, query_fn, **opts.except(:include_docs))
-
                     if result_modifier
                         opts[:include_docs] = true
                         current_query.results &result_modifier
@@ -73,23 +72,32 @@ module CouchbaseOrm
                 validates(attr, presence: true) if validate
                 n1ql n1ql_method, emit_key: attr
 
-                instance_eval "
-                                def self.#{find_method}(#{attr})
-                                    #{n1ql_method}(key: #{attr})
-                                end
-                            "
+                define_singleton_method find_method do |value|
+                    send n1ql_method, key: value
+                end
             end
 
             private
 
-            def convert_values(values)
-                Array.wrap(values).compact.map do |v|
-                    if v.class == String
-                        "'#{N1ql.sanitize(v)}'"
-                    elsif v.class == Date || v.class == Time
-                        "'#{v.iso8601(3)}'"
+            def convert_values(keys, values)
+                raise ArgumentError, "Empty keys but values are present, can't type cast" if keys.empty? && Array.wrap(values).any?
+                keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|                    
+                    # cast value to type
+                    value = if value_before_type_cast.is_a?(Array)
+                        value_before_type_cast.map do |v|
+                            attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(v))
+                        end
                     else
-                        N1ql.sanitize(v).to_s
+                        attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(value_before_type_cast))
+                    end
+
+                    CouchbaseOrm.logger.debug { "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}" }
+
+                    # then quote and sanitize
+                    if value.class == String
+                        "'#{N1ql.sanitize(value)}'"
+                    else
+                        N1ql.sanitize(value).to_s
                     end
                 end
             end
@@ -123,7 +131,7 @@ module CouchbaseOrm
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
+                    CouchbaseOrm.logger.debug { "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows" }
                     N1qlProxy.new(result)
                 end
             end

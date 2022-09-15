@@ -9,6 +9,10 @@ module CouchbaseOrm
 
         include Encrypt
 
+        included do
+            attribute :id, :string
+        end
+
         module ClassMethods
             def create(attributes = nil, &block)
                 if attributes.is_a?(Array)
@@ -55,20 +59,19 @@ module CouchbaseOrm
         # Returns true if this object hasn't been saved yet -- that is, a record
         # for the object doesn't exist in the database yet; otherwise, returns false.
         def new_record?
-            @__metadata__.cas.nil? && @__metadata__.key.nil?
+            @__metadata__.cas.nil? && id.nil?
         end
         alias_method :new?, :new_record?
 
         # Returns true if this object has been destroyed, otherwise returns false.
         def destroyed?
-            !!(@__metadata__.cas && @__metadata__.key.nil?)
+            !!(@__metadata__.cas && id.blank?)
         end
 
         # Returns true if the record is persisted, i.e. it's not a new record and it was
         # not destroyed, otherwise returns false.
         def persisted?
-            # Changed? is provided by ActiveModel::Dirty
-            !!@__metadata__.key
+            id.present?
         end
         alias_method :exists?, :persisted?
 
@@ -89,6 +92,7 @@ module CouchbaseOrm
         # By default, #save! always runs validations. If any of them fail
         # CouchbaseOrm::Error::RecordInvalid gets raised, and the record won't be saved.
         def save!(**options)
+            CouchbaseOrm.logger.debug { "Will save! : #{id} -> #{attributes.to_s.truncate(200)}" }
             self.class.fail_validate!(self) unless self.save(**options)
             self
         end
@@ -100,12 +104,10 @@ module CouchbaseOrm
         # The record is simply removed, no callbacks are executed.
         def delete(with_cas: false, **options)
             options[:cas] = @__metadata__.cas if with_cas
-            CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
-            self.class.collection.remove(@__metadata__.key, **options)
+            CouchbaseOrm.logger.debug "Data - Delete #{self.id}"
+            self.class.collection.remove(self.id, **options)
 
-            @__metadata__.key = nil
-            @id = nil
-
+            self.id = nil
             clear_changes_information
             self.freeze
             self
@@ -125,11 +127,10 @@ module CouchbaseOrm
                 destroy_associations!
 
                 options[:cas] = @__metadata__.cas if with_cas
-                CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
-                self.class.collection.remove(@__metadata__.key, **options)
+                CouchbaseOrm.logger.debug "Data - Destroy #{id}"
+                self.class.collection.remove(id, **options)
 
-                @__metadata__.key = nil
-                @id = nil
+                self.id = nil
 
                 clear_changes_information
                 freeze
@@ -145,6 +146,10 @@ module CouchbaseOrm
         def update_attribute(name, value)
             public_send(:"#{name}=", value)
             changed? ? save(validate: false) : true
+        end
+
+        def assign_attributes(hash)
+            super(hash.with_indifferent_access.except("type"))
         end
 
         # Updates the attributes of the model from the passed-in hash and saves the
@@ -168,8 +173,7 @@ module CouchbaseOrm
         # except if there is more than 16 attributes, in which case
         # the whole record is saved.
         def update_columns(with_cas: false, **hash)
-            _id = @__metadata__.key
-            raise "unable to update columns, model not persisted" unless _id
+            raise "unable to update columns, model not persisted" unless id
 
             assign_attributes(hash)
 
@@ -179,15 +183,13 @@ module CouchbaseOrm
             # There is a limit of 16 subdoc operations per request
             resp = if hash.length <= 16
                 self.class.collection.mutate_in(
-                    _id,
+                    id,
                     hash.map { |k, v| Couchbase::MutateInSpec.replace(k.to_s, v) }
                 )
             else
                 # Fallback to writing the whole document
-                @__attributes__[:type] = self.class.design_document
-                @__attributes__.delete(:id)
-                CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                self.class.collection.replace(_id, @__attributes__, **options)
+                CouchbaseOrm.logger.debug { "Data - Replace #{id} #{attributes.to_s.truncate(200)}" }
+                self.class.collection.replace(id, attributes.except(:id).merge(type: self.class.design_document), **options)
             end
 
             # Ensure the model is up to date
@@ -201,13 +203,11 @@ module CouchbaseOrm
         #
         # This method finds record by its key and modifies the receiver in-place:
         def reload
-            key = @__metadata__.key
-            raise "unable to reload, model not persisted" unless key
+            raise "unable to reload, model not persisted" unless id
 
-            CouchbaseOrm.logger.debug "Data - Get #{key}"
-            resp = self.class.collection.get!(key)
-            @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.content)
-            @__metadata__.key = key
+            CouchbaseOrm.logger.debug "Data - Get #{id}"
+            resp = self.class.collection.get!(id)
+            assign_attributes(resp.content.except("id")) # API return a nil id
             @__metadata__.cas = resp.cas
 
             decode_encrypted_attributes(@__attributes__)
@@ -219,8 +219,8 @@ module CouchbaseOrm
 
         # Updates the TTL of the document
         def touch(**options)
-            CouchbaseOrm.logger.debug "Data - Touch #{@__metadata__.key}"
-            res = self.class.collection.touch(@__metadata__.key, async: false, **options)
+            CouchbaseOrm.logger.debug "Data - Touch #{id}"
+            _res = self.class.collection.touch(id, async: false, **options)
             @__metadata__.cas = resp.cas
             self
         end
@@ -228,26 +228,24 @@ module CouchbaseOrm
 
         protected
 
+        def serialized_attributes
+            attributes.map { |k, v|
+                [k, self.class.attribute_types[k].serialize(v)]
+            }.to_h
+        end
 
-        def _update_record(with_cas: false, **options)
+        def _update_record(*_args, with_cas: false, **options)
             return false unless perform_validations(:update, options)
             return true unless changed?
 
             run_callbacks :update do
                 run_callbacks :save do
-                    # Ensure the type is set
-                    @__attributes__[:type] = self.class.design_document
-                    @__attributes__.delete(:id)
-
                     encode_encrypted_attributes(@__attributes__)
-
-                    _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
-                    CouchbaseOrm.logger.debug { "_update_record - replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    resp = self.class.collection.replace(_id, @__attributes__, Couchbase::Options::Replace.new(**options))
+                    CouchbaseOrm.logger.debug { "_update_record - replace #{id} #{serialized_attributes.to_s.truncate(200)}" }
+                    resp = self.class.collection.replace(id, serialized_attributes.except(:id).merge(type: self.class.design_document), Couchbase::Options::Replace.new(**options))
 
                     # Ensure the model is up to date
-                    @__metadata__.key = _id
                     @__metadata__.cas = resp.cas
 
                     changes_applied
@@ -255,25 +253,18 @@ module CouchbaseOrm
                 end
             end
         end
-        def _create_record(**options)
+        def _create_record(*_args, **options)
             return false unless perform_validations(:create, options)
 
             run_callbacks :create do
                 run_callbacks :save do
-                    # Ensure the type is set
-                    @__attributes__[:type] = self.class.design_document
-                    @__attributes__.delete(:id)
+                    assign_attributes(id: self.class.uuid_generator.next(self)) unless self.id
+                    CouchbaseOrm.logger.debug { "_create_record - Upsert #{id} #{serialized_attributes.to_s.truncate(200)}" }
 
                     encode_encrypted_attributes(@__attributes__)
-
-                    _id = @id || self.class.uuid_generator.next(self)
-                    CouchbaseOrm.logger.debug { "_create_record - Upsert #{_id} #{@__attributes__.to_s.truncate(200)}" }
-                    #resp = self.class.collection.add(_id, @__attributes__, **options)
-
-                    resp = self.class.collection.upsert(_id, @__attributes__, Couchbase::Options::Upsert.new(**options))
+                    resp = self.class.collection.upsert(self.id, serialized_attributes.except(:id).merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
 
                     # Ensure the model is up to date
-                    @__metadata__.key = _id
                     @__metadata__.cas = resp.cas
 
                     changes_applied

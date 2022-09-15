@@ -27,7 +27,19 @@ module CouchbaseOrm
             else
                 default_value = 1
             end
-            attribute name, default: default_value
+            attribute name, :integer, default: default_value
+
+            define_method "#{name}=" do |value|
+                unless value.nil?
+                    value = case value
+                    when Symbol, String
+                        self.class.const_get(name.to_s.upcase)[value.to_sym]
+                    else
+                        Integer(value)
+                    end
+                end
+                super(value)
+            end
 
             # keep the attribute's value within bounds
             before_save do |record|

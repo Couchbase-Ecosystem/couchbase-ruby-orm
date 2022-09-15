@@ -3,6 +3,8 @@ require 'simplecov'
 require 'couchbase-orm'
 require 'minitest/assertions'
 require 'active_model/lint'
+require 'pry'
+require 'pry-stack_explorer'
 
 SimpleCov.start do
     add_group 'Core', [/lib\/couchbase-orm\/(?!(proxies|utilities))/, 'lib/couchbase-orm.rb']
