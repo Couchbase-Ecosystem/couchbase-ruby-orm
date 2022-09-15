@@ -35,6 +35,7 @@ module CouchbaseOrm
             if remote_class
                 define_method(model) do
                     return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
+
                     remote_klass = remote_class.constantize
                     raise ArgumentError, "Can't find #{remote_method} without an id" unless self.id.present?
                     enum = klass.__send__(remote_method, key: self.id) { |row|
