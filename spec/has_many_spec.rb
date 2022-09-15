@@ -50,8 +50,8 @@ shared_examples "has_many example" do |parameter|
         second = @object_test_class.create! name: :jane
 
         rate1 = @rating_test_class.create! rating: :awesome, "object_#{@context}_test": first
-        rate2 = @rating_test_class.create! rating: :bad, "object_#{@context}_test": second
-        rate3 = @rating_test_class.create! rating: :good, "object_#{@context}_test": first
+        _rate2 = @rating_test_class.create! rating: :bad, "object_#{@context}_test": second
+        _rate3 = @rating_test_class.create! rating: :good, "object_#{@context}_test": first
 
         ort = @object_rating_test_class.create! "object_#{@context}_test": first, "rating_#{@context}_test": rate1
         @object_rating_test_class.create! "object_#{@context}_test": second, "rating_#{@context}_test": rate1

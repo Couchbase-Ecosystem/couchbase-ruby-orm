@@ -31,7 +31,7 @@ module CouchbaseOrm
 
             # collect a list of values for each key component attribute
             define_method(bucket_key_vals_method) do
-                attrs.collect {|attr| self[attr]}
+                attrs.collect {|attr| self.class.attribute_types[attr.to_s].cast(self[attr])}
             end
 
 
@@ -40,6 +40,7 @@ module CouchbaseOrm
             #----------------
             # simple wrapper around the processor proc if supplied
             define_singleton_method(processor_method) do |*values|
+                values = attrs.zip(values).map { |attr,value| attribute_types[attr.to_s].serialize(attribute_types[attr.to_s].cast(value)) }
                 if processor
                     processor.call(values.length == 1 ? values.first : values)
                 else
@@ -50,6 +51,7 @@ module CouchbaseOrm
             # use the bucket key as an index - lookup records by attr values
             define_singleton_method(find_by_method) do |*values|
                 key = self.send(class_bucket_key_method, *values)
+                CouchbaseOrm.logger.debug { "#{find_by_method}: #{class_bucket_key_method} with values #{values.inspect} give key: #{key}" }
                 id = self.collection.get(key)&.content
                 if id
                     mod = self.find_by_id(id)
@@ -57,6 +59,8 @@ module CouchbaseOrm
 
                     # Clean up record if the id doesn't exist
                     self.collection.remove(key)
+                else
+                    CouchbaseOrm.logger.debug("#{find_by_method}: #{key} not found")
                 end
 
                 nil
@@ -70,7 +74,7 @@ module CouchbaseOrm
             if presence
                 attrs.each do |attr|
                     validates attr, presence: true
-                    define_attribute_methods attr
+                    attribute attr
                 end
             end
 
@@ -103,7 +107,7 @@ module CouchbaseOrm
                     begin
                         check_ref_id = record.class.collection.get(original_key)
                         if check_ref_id && check_ref_id.content == record.id
-                            CouchbaseOrm.logger.debug "Removing old key #{original_key}"
+                            CouchbaseOrm.logger.debug { "Removing old key #{original_key}" }
                             record.class.collection.remove(original_key, cas: check_ref_id.cas)
                         end
                     end

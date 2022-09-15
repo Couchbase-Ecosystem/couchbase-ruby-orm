@@ -3,7 +3,8 @@
 require File.expand_path("../support", __FILE__)
 
 class BaseTest < CouchbaseOrm::Base
-  attribute :name, :job
+  attribute :name, :string
+  attribute :job, :string
   attribute(:prescribing_date, type: String, read_fn: proc { |value| encode_date(value) }) # timestamp without time zone,
 
   class << self
@@ -16,7 +17,11 @@ class BaseTest < CouchbaseOrm::Base
 end
 
 class CompareTest < CouchbaseOrm::Base
-  attribute :age
+  attribute :age, :integer
+end
+
+class TimestampTest < CouchbaseOrm::Base
+    attribute :created_at, :datetime
 end
 
 class TypeNamedTest < CouchbaseOrm::Base
@@ -30,6 +35,11 @@ describe CouchbaseOrm::Base do
     base.reload
     base.update({ prescribing_date: '2022-07-01' })
 
+  end
+
+  it "should be inspectable" do
+    base = BaseTest.create!(name: 'joe')
+    expect(base.inspect).to eq("#<BaseTest id: \"#{base.id}\", name: \"joe\", job: nil>")
   end
 
   it "should load database responses" do
@@ -57,7 +67,7 @@ describe CouchbaseOrm::Base do
     base = BaseTest.create!(name: 'joe')
 
     base_id = base.id
-    expect(base.to_json).to eq({ name: 'joe', job: nil, prescribing_date:nil, id: base_id }.to_json)
+    expect(base.to_json).to eq({ id: base_id, name: 'joe', job: nil, prescribing_date:nil }.to_json)
     expect(base.to_json(only: :name)).to eq({ name: 'joe' }.to_json)
 
     base.destroy
@@ -72,6 +82,12 @@ describe CouchbaseOrm::Base do
       base.name = 'change'
       expect(base.changes.empty?).to be(false)
 
+      # Attributes are set by key
+      base = BaseTest.new
+      base[:name] = 'bob'
+      expect(base.changes.empty?).to be(false)
+
+      # Attributes are set by initializer from hash
       base = BaseTest.new({ name: 'bob' })
       expect(base.changes.empty?).to be(false)
       expect(base.previous_changes.empty?).to be(true)
@@ -118,6 +134,31 @@ describe CouchbaseOrm::Base do
     ensure
       bases.each(&:destroy)
     end
+  end
+
+  it "should set the attribute on creation" do
+    base = BaseTest.create!(name: 'joe')
+    expect(base.name).to eq('joe')
+  ensure
+    base.destroy
+  end
+
+  it "should support getting the attribute by key" do
+    base = BaseTest.create!(name: 'joe')
+    expect(base[:name]).to eq('joe')
+  ensure
+    base.destroy
+  end
+
+  if ActiveModel::VERSION::MAJOR >= 6
+    it "should have timestamp attributes for create in model" do
+      expect(TimestampTest.timestamp_attributes_for_create_in_model).to eq(["created_at"])
+    end
+  end
+
+  it "should generate a timestamp on creation" do
+    base = TimestampTest.create!()
+    expect(base.created_at).to be_a(Time)
   end
 
   describe BaseTest do

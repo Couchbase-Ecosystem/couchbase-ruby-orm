@@ -17,7 +17,7 @@ class NoUniqueIndexTest < CouchbaseOrm::Base
     index :email, presence: false
 end
 
-class EnumTest < CouchbaseOrm::Base
+class IndexEnumTest < CouchbaseOrm::Base
     enum visibility: [:group, :authority, :public], default: :authority
     enum color: [:red, :green, :blue]
 end
@@ -86,22 +86,22 @@ describe CouchbaseOrm::Index do
 
     it "should work with enumerators" do
         # Test symbol
-        enum = EnumTest.create!(visibility: :public)
+        enum = IndexEnumTest.create!(visibility: :public)
         expect(enum.visibility).to eq(3)
         enum.destroy
 
         # Test number
-        enum = EnumTest.create!(visibility: 2)
+        enum = IndexEnumTest.create!(visibility: 2)
         expect(enum.visibility).to eq(2)
         enum.destroy
 
         # Test default
-        enum = EnumTest.create!
+        enum = IndexEnumTest.create!
         expect(enum.visibility).to eq(2)
         enum.destroy
 
         # Test default default
-        enum = EnumTest.create!
+        enum = IndexEnumTest.create!
         expect(enum.color).to eq(1)
     end
 
