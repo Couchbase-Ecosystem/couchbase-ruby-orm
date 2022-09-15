@@ -4,62 +4,61 @@ module CouchbaseOrm
         def has_many(model, class_name: nil, foreign_key: nil, through: nil, through_class: nil, through_key: nil, type: :view, **options)
             class_name = (class_name || model.to_s.singularize.camelcase).to_s
             foreign_key = (foreign_key || ActiveSupport::Inflector.foreign_key(self.name)).to_sym
-        if through || through_class
-            remote_class = class_name
-            class_name = (through_class || through.to_s.camelcase).to_s
-            through_key = (through_key || "#{remote_class.underscore}_id").to_sym
-            remote_method = :"by_#{foreign_key}_with_#{through_key}"
-        else
-            remote_method = :"find_by_#{foreign_key}"
-        end
+            if through || through_class
+                remote_class = class_name
+                class_name = (through_class || through.to_s.camelcase).to_s
+                through_key = (through_key || "#{remote_class.underscore}_id").to_sym
+                remote_method = :"by_#{foreign_key}_with_#{through_key}"
+            else
+                remote_method = :"find_by_#{foreign_key}"
+            end
 
-        instance_var = "@__assoc_#{model}"
+            instance_var = "@__assoc_#{model}"
 
-        klass = begin
-                    class_name.constantize
-                rescue NameError
-                    warn "WARNING: #{class_name} referenced in #{self.name} before it was aded"
+            klass = begin
+                        class_name.constantize
+                    rescue NameError
+                        warn "WARNING: #{class_name} referenced in #{self.name} before it was aded"
 
-                    # Open the class early - load order will have to be changed to prevent this.
-                    # Warning notice required as a misspelling will not raise an error
-                    Object.class_eval <<-EKLASS
-                        class #{class_name} < CouchbaseOrm::Base
-                            attribute :#{foreign_key}
-                        end
-                    EKLASS
-                    class_name.constantize
-                end
-
-        build_index(type, klass, remote_class, remote_method, through_key, foreign_key)
-
-        if remote_class
-            define_method(model) do
-                return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
-
-                remote_klass = remote_class.constantize
-                raise ArgumentError, "Can't find #{remote_method} without an id" unless self.id.present?
-                enum = klass.__send__(remote_method, key: self.id) { |row|
-                    case type
-                    when :n1ql
-                        remote_klass.find(row)
-                    when :view
-                        remote_klass.find(row[through_key])
-                    else
-                        raise 'type is unknown'
+                        # Open the class early - load order will have to be changed to prevent this.
+                        # Warning notice required as a misspelling will not raise an error
+                        Object.class_eval <<-EKLASS
+                            class #{class_name} < CouchbaseOrm::Base
+                                attribute :#{foreign_key}
+                            end
+                        EKLASS
+                        class_name.constantize
                     end
-                }
 
-                self.instance_variable_set(instance_var, enum)
-            end
-        else
-            define_method(model) do
-                return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
-                self.instance_variable_set(instance_var, klass.__send__(remote_method, self.id))
-            end
-        end
+            build_index(type, klass, remote_class, remote_method, through_key, foreign_key)
 
-        @associations ||= []
-        @associations << [model, options[:dependent]]
+            if remote_class
+                define_method(model) do
+                    return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
+                    remote_klass = remote_class.constantize
+                    raise ArgumentError, "Can't find #{remote_method} without an id" unless self.id.present?
+                    enum = klass.__send__(remote_method, key: self.id) { |row|
+                        case type
+                        when :n1ql
+                            remote_klass.find(row)
+                        when :view
+                            remote_klass.find(row[through_key])
+                        else
+                            raise 'type is unknown'
+                        end
+                    }
+
+                    self.instance_variable_set(instance_var, enum)
+                end
+            else
+                define_method(model) do
+                    return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
+                    self.instance_variable_set(instance_var, self.id ? klass.__send__(remote_method, self.id) : [])
+                end
+            end
+
+            @associations ||= []
+            @associations << [model, options[:dependent]]
         end
 
         def build_index(type, klass, remote_class, remote_method, through_key, foreign_key)
