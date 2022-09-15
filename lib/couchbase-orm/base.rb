@@ -184,7 +184,7 @@ module CouchbaseOrm
             alias_method :[], :find_by_id
 
             def exists?(id)
-                CouchbaseOrm.logger.debug "Data - Exists? #{id}"
+                CouchbaseOrm.logger.debug { "Data - Exists? #{id}" }
                 collection.exists(id).exists
             end
             alias_method :has_key?, :exists?
@@ -194,7 +194,7 @@ module CouchbaseOrm
 
         # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
-            CouchbaseOrm.logger.debug "Initialize model #{model} with #{attributes}"
+            CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
             @__metadata__   = Metadata.new
 
             super()
@@ -247,7 +247,7 @@ module CouchbaseOrm
         end
 
         def []=(key, value)
-            CouchbaseOrm.logger.debug "Set attribute #{key} to #{value}"
+            CouchbaseOrm.logger.debug { "Set attribute #{key} to #{value}" }
             send(:"#{key}=", value)
         end
 

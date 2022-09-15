@@ -57,7 +57,7 @@ module CouchbaseOrm
         # Returns true if this object hasn't been saved yet -- that is, a record
         # for the object doesn't exist in the database yet; otherwise, returns false.
         def new_record?
-            @__metadata__.cas.nil? && id.blank?
+            @__metadata__.cas.nil? && id.nil?
         end
         alias_method :new?, :new_record?
 
@@ -90,7 +90,7 @@ module CouchbaseOrm
         # By default, #save! always runs validations. If any of them fail
         # CouchbaseOrm::Error::RecordInvalid gets raised, and the record won't be saved.
         def save!(**options)
-            CouchbaseOrm.logger.debug { "Will save! : #{id} -> #{attributes}" }
+            CouchbaseOrm.logger.debug { "Will save! : #{id} -> #{attributes.to_s.truncate(200)}" }
             self.class.fail_validate!(self) unless self.save(**options)
             self
         end

@@ -91,7 +91,7 @@ module CouchbaseOrm
                         attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(value_before_type_cast))
                     end
 
-                    CouchbaseOrm.logger.debug "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}"
+                    CouchbaseOrm.logger.debug { "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}" }
 
                     # then quote and sanitize
                     if value.class == String
@@ -131,7 +131,7 @@ module CouchbaseOrm
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
+                    CouchbaseOrm.logger.debug { "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows" }
                     N1qlProxy.new(result)
                 end
             end

@@ -12,7 +12,7 @@ module CouchbaseOrm
                 @current_query = self.to_s
                 return @results if @results
 
-                CouchbaseOrm.logger.debug 'Query - ' + self.to_s
+                CouchbaseOrm.logger.debug { 'Query - ' + self.to_s }
 
                 results = @proxyfied.rows
                 results = results.map { |r| block.call(r) } if block

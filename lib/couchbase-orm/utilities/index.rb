@@ -51,7 +51,7 @@ module CouchbaseOrm
             # use the bucket key as an index - lookup records by attr values
             define_singleton_method(find_by_method) do |*values|
                 key = self.send(class_bucket_key_method, *values)
-                CouchbaseOrm.logger.debug("#{find_by_method}: #{class_bucket_key_method} with values #{values.inspect} give key: #{key}")
+                CouchbaseOrm.logger.debug { "#{find_by_method}: #{class_bucket_key_method} with values #{values.inspect} give key: #{key}" }
                 id = self.collection.get(key)&.content
                 if id
                     mod = self.find_by_id(id)
@@ -107,7 +107,7 @@ module CouchbaseOrm
                     begin
                         check_ref_id = record.class.collection.get(original_key)
                         if check_ref_id && check_ref_id.content == record.id
-                            CouchbaseOrm.logger.debug "Removing old key #{original_key}"
+                            CouchbaseOrm.logger.debug { "Removing old key #{original_key}" }
                             record.class.collection.remove(original_key, cas: check_ref_id.cas)
                         end
                     end
