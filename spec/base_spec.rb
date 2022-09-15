@@ -94,7 +94,6 @@ describe CouchbaseOrm::Base do
             # A saved model should have no changes
             base = BaseTest.create!(name: 'joe')
             expect(base.changes.empty?).to be(true)
-            expect(base.previous_changes.empty?).to be(false)
 
             # Attributes are copied from the existing model
             base = BaseTest.new(base)
@@ -149,9 +148,11 @@ describe CouchbaseOrm::Base do
     ensure
         base.destroy
     end
-    
-    it "should have timestamp attributes for create in model" do
-        expect(TimestampTest.timestamp_attributes_for_create_in_model).to eq(["created_at"])
+
+    if ActiveModel::VERSION::MAJOR >= 6
+        it "should have timestamp attributes for create in model" do
+            expect(TimestampTest.timestamp_attributes_for_create_in_model).to eq(["created_at"])
+        end
     end
 
     it "should generate a timestamp on creation" do

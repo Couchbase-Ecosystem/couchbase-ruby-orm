@@ -230,7 +230,7 @@ module CouchbaseOrm
             }.to_h
         end
         
-        def _update_record(with_cas: false, **options)
+        def _update_record(*_args, with_cas: false, **options)
             return false unless perform_validations(:update, options)
             return true unless changed?
 
@@ -248,7 +248,7 @@ module CouchbaseOrm
                 end
             end
         end
-        def _create_record(**options)
+        def _create_record(*_args, **options)
             return false unless perform_validations(:create, options)
 
             run_callbacks :create do

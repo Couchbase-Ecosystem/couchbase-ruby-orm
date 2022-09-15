@@ -66,6 +66,22 @@ describe CouchbaseOrm::Types::Timestamp do
     end
 end
 
+describe CouchbaseOrm::Types::Date do
+    it "should cast an string to date" do
+        d = Date.today
+        expect(CouchbaseOrm::Types::Date.new.cast(d.to_s)).to eq(d)
+    end
+
+    it "should serialize date to string" do
+        d = Date.today
+        expect(CouchbaseOrm::Types::Date.new.serialize(d)).to eq(d.to_s)
+    end
+
+    it "should get the type from the registry" do
+        expect(ActiveModel::Type.lookup(:date)).to eq(CouchbaseOrm::Types::Date.new)
+    end
+end
+
 describe CouchbaseOrm::Base do
     before(:each) do
         TypeTest.all.each(&:destroy)

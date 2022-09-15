@@ -3,8 +3,11 @@
 
 require 'active_model'
 require 'active_record'
-require 'active_record/database_configurations'
-
+if ActiveModel::VERSION::MAJOR >= 6
+    require 'active_record/database_configurations'
+else
+    require 'active_model/type'
+end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
 require 'couchbase-orm/error'
@@ -42,6 +45,28 @@ module CouchbaseOrm
             def column_names # can't be an alias for now
                 attribute_names
             end
+
+            if ActiveModel::VERSION::MAJOR < 6
+                def attribute_names
+                    attribute_types.keys
+                end
+
+                def abstract_class?
+                    false
+                end
+
+                def connected?
+                    true
+                end
+
+                def table_exists?
+                    true
+                end
+
+                # def partial_writes?
+                #     partial_updates? && partial_inserts?
+                # end
+            end
         end
 
         def _has_attribute?(attr_name)
@@ -51,6 +76,26 @@ module CouchbaseOrm
         def attribute_for_inspect(attr_name)
             value = send(attr_name)
             value.inspect
+        end
+
+        if ActiveModel::VERSION::MAJOR < 6
+            def attribute_names
+                self.class.attribute_names
+            end
+
+            def has_attribute?(attr_name)
+                @attributes.key?(attr_name.to_s)
+            end
+
+            def attribute_present?(attribute)
+                value = send(attribute)
+                !value.nil? && !(value.respond_to?(:empty?) && value.empty?)
+            end
+
+            def _write_attribute(attr_name, value)
+                @attributes.write_from_user(attr_name.to_s, value)
+                value
+            end
         end
     end
 
@@ -70,6 +115,7 @@ module CouchbaseOrm
         define_model_callbacks :create, :destroy, :save, :update
 
         include Persistence
+        include ::ActiveRecord::AttributeMethods::Dirty
         include ::ActiveRecord::Timestamp # must be included after Persistence
         include Associations
         include Views
@@ -173,7 +219,7 @@ module CouchbaseOrm
                     super(model.attributes.except(:id, 'type'))
                 else
                     clear_changes_information
-                    assign_attributes(**attributes.merge(Hash(model)))
+                    assign_attributes(**attributes.merge(Hash(model)).symbolize_keys)
                 end
             else
                 clear_changes_information
