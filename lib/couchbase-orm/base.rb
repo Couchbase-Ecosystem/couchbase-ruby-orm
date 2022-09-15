@@ -2,6 +2,12 @@
 
 
 require 'active_model'
+require 'active_record'
+if ActiveModel::VERSION::MAJOR >= 6
+    require 'active_record/database_configurations'
+else
+    require 'active_model/type'
+end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
 require 'couchbase-orm/error'
@@ -9,6 +15,7 @@ require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
+require 'couchbase-orm/types'
 require 'couchbase-orm/proxies/bucket_proxy'
 require 'couchbase-orm/proxies/collection_proxy'
 require 'couchbase-orm/utilities/join'
@@ -19,17 +26,97 @@ require 'couchbase-orm/utilities/ensure_unique'
 
 
 module CouchbaseOrm
+
+    module ActiveRecordCompat
+        # try to avoid dependencies on too many active record classes
+        # by exemple we don't want to go down to the concept of tables
+
+        extend ActiveSupport::Concern
+
+        module ClassMethods
+            def primary_key
+                "id"
+            end
+
+            def base_class?
+                true
+            end
+
+            def column_names # can't be an alias for now
+                attribute_names
+            end
+
+            if ActiveModel::VERSION::MAJOR < 6
+                def attribute_names
+                    attribute_types.keys
+                end
+
+                def abstract_class?
+                    false
+                end
+
+                def connected?
+                    true
+                end
+
+                def table_exists?
+                    true
+                end
+
+                # def partial_writes?
+                #     partial_updates? && partial_inserts?
+                # end
+            end
+        end
+
+        def _has_attribute?(attr_name)
+            attribute_names.include?(attr_name.to_s)
+        end
+
+        def attribute_for_inspect(attr_name)
+            value = send(attr_name)
+            value.inspect
+        end
+
+        if ActiveModel::VERSION::MAJOR < 6
+            def attribute_names
+                self.class.attribute_names
+            end
+
+            def has_attribute?(attr_name)
+                @attributes.key?(attr_name.to_s)
+            end
+
+            def attribute_present?(attribute)
+                value = send(attribute)
+                !value.nil? && !(value.respond_to?(:empty?) && value.empty?)
+            end
+
+            def _write_attribute(attr_name, value)
+                @attributes.write_from_user(attr_name.to_s, value)
+                value
+            end
+        end
+    end
+
     class Base
         include ::ActiveModel::Model
         include ::ActiveModel::Dirty
+        include ::ActiveModel::Attributes
         include ::ActiveModel::Serializers::JSON
 
         include ::ActiveModel::Validations
         include ::ActiveModel::Validations::Callbacks
+
+        include ::ActiveRecord::Core
+        include ActiveRecordCompat
+
         define_model_callbacks :initialize, :only => :after
         define_model_callbacks :create, :destroy, :save, :update
 
         include Persistence
+        include ::ActiveRecord::AttributeMethods::Dirty
+        include ::ActiveRecord::Timestamp # must be included after Persistence
         include Associations
         include Views
         include N1ql
@@ -73,33 +160,6 @@ module CouchbaseOrm
                 @uuid_generator = generator
             end
 
-            def attribute(*names, **options)
-                @attributes ||= {}
-                names.each do |name|
-                    name = name.to_sym
-
-                    @attributes[name] = options
-
-                    unless self.instance_methods.include?(name)
-                        define_method(name) do
-                            read_attribute(name)
-                        end
-                    end
-
-                    eq_meth = :"#{name}="
-                    unless self.instance_methods.include?(eq_meth)
-                        define_method(eq_meth) do |value|
-                            value = yield(value) if block_given?
-                            write_attribute(name, value)
-                        end
-                    end
-                end
-            end
-
-            def attributes
-                @attributes ||= {}
-            end
-
             def find(*ids, quiet: false)
                 CouchbaseOrm.logger.debug { "Base.find(l##{ids.length}) #{ids}" }
 
@@ -124,7 +184,7 @@ module CouchbaseOrm
             alias_method :[], :find_by_id
 
             def exists?(id)
-                CouchbaseOrm.logger.debug "Data - Exists? #{id}"
+                CouchbaseOrm.logger.debug { "Data - Exists? #{id}" }
                 collection.exists(id).exists
             end
             alias_method :has_key?, :exists?
@@ -134,53 +194,37 @@ module CouchbaseOrm
 
         # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
+            CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
             @__metadata__   = Metadata.new
 
-            # Assign default values
-            @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new({type: self.class.design_document})
-            self.class.attributes.each do |key, options|
-                default = options[:default]
-                if default.respond_to?(:call)
-                    write_attribute key, default.call
-                else
-                    write_attribute key, default
-                end
-            end
+            super()
 
             if model
                 case model
                 when Couchbase::Collection::GetResult
-                    CouchbaseOrm.logger.debug "Initialize with Couchbase::Collection::GetResult"
-                    doc = model.content || raise('empty response provided')
-                    type = doc.delete('type')
+                    doc = HashWithIndifferentAccess.new(model.content) || raise('empty response provided')
+                    type = doc.delete(:type)
                     doc.delete(:id)
 
                     if type && !ignore_doc_type && type.to_s != self.class.design_document
                         raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
                     end
 
-                    @__metadata__.key = attributes[:id]
+                    self.id = attributes[:id] if attributes[:id].present?
                     @__metadata__.cas = model.cas
 
-                    # This ensures that defaults are applied
-                    @__attributes__.merge! doc
+                    assign_attributes(doc)
                 when CouchbaseOrm::Base
-                    CouchbaseOrm.logger.debug "Initialize with CouchbaseOrm::Base"
-
                     clear_changes_information
-                    attributes = model.attributes
-                    attributes.delete(:id)
-                    attributes.delete('type')
-                    super(attributes)
+                    super(model.attributes.except(:id, 'type'))
                 else
                     clear_changes_information
-                    super(attributes.merge(Hash(model)))
+                    assign_attributes(**attributes.merge(Hash(model)).symbolize_keys)
                 end
             else
                 clear_changes_information
                 super(attributes)
             end
-
             yield self if block_given?
 
             run_callbacks :initialize
@@ -189,63 +233,23 @@ module CouchbaseOrm
 
         # Document ID is a special case as it is not stored in the document
         def id
-            @__metadata__.key || @id
+            @id
         end
 
         def id=(value)
-            raise 'ID cannot be changed' if @__metadata__.cas
+            raise 'ID cannot be changed' if @__metadata__.cas && value
             attribute_will_change!(:id)
-            @id = value.to_s
+            @id = value.to_s.presence
         end
 
-        def read_attribute(attr_name)
-            @__attributes__[attr_name]
-        end
-        alias_method :[], :read_attribute
-
-        def write_attribute(attr_name, value)
-            unless value.nil?
-                coerce = self.class.attributes[attr_name][:type]
-                value = Kernel.send(coerce.to_s, value) if coerce
-            end
-            attribute_will_change!(attr_name) unless @__attributes__[attr_name] == value
-            @__attributes__[attr_name] = value
-        end
-        alias_method :[]=, :write_attribute
-
-        #
-        # Add support for Serialization:
-        # http://guides.rubyonrails.org/active_model_basics.html#serialization
-        #
-
-        def attributes
-            copy = @__attributes__.merge({id: id})
-            copy.delete(:type)
-            copy
+        def [](key)
+            send(key)
         end
 
-        def attributes=(attributes)
-            attributes.each do |key, value|
-                setter = :"#{key}="
-                send(setter, value) if respond_to?(setter)
-            end
+        def []=(key, value)
+            CouchbaseOrm.logger.debug { "Set attribute #{key} to #{value}" }
+            send(:"#{key}=", value)
         end
-
-        ID_LOOKUP = ['id', :id].freeze
-        def attribute(name)
-            return self.id if ID_LOOKUP.include?(name)
-            @__attributes__[name]
-        end
-        alias_method :read_attribute_for_serialization, :attribute
-
-        def attribute=(name, value)
-            __send__(:"#{name}=", value)
-        end
-
-
-        #
-        # Add support for comparisons
-        #
 
         # Public: Allows for access to ActiveModel functionality.
         #
@@ -279,12 +283,7 @@ module CouchbaseOrm
         #
         # Returns a boolean.
         def ==(other)
-            case other
-            when self.class
-                hash == other.hash
-            else
-                false
-            end
+            super || other.instance_of?(self.class) && !id.nil? && other.id == id
         end
     end
 end

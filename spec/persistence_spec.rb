@@ -4,7 +4,9 @@ require File.expand_path("../support", __FILE__)
 
 
 class BasicModel < CouchbaseOrm::Base
-    attribute :name, :address, :age
+    attribute :name
+    attribute :address
+    attribute :age
 end
 
 class ModelWithDefaults < CouchbaseOrm::Base
@@ -14,7 +16,9 @@ class ModelWithDefaults < CouchbaseOrm::Base
 end
 
 class ModelWithCallbacks < CouchbaseOrm::Base
-    attribute :name, :address, :age
+    attribute :name
+    attribute :address
+    attribute :age
 
     before_create :update_name
     before_save   :set_address
@@ -32,7 +36,8 @@ class ModelWithCallbacks < CouchbaseOrm::Base
 end
 
 class ModelWithValidations < CouchbaseOrm::Base
-    attribute :name, :address, type: String
+    attribute :name, type: String
+    attribute :address, type: String
     attribute :age, type: :Integer
 
     validates :name, presence: true
@@ -205,7 +210,8 @@ describe CouchbaseOrm::Persistence do
         expect(model.save!).to be(model)
 
         # coercion will fail here
-        expect{ model.age = "a23" }.to raise_error(ArgumentError)
+        model.age = "a23"
+        expect{ model.save! }.to raise_error(CouchbaseOrm::Error::RecordInvalid)
 
         model.destroy
     end
@@ -224,7 +230,7 @@ describe CouchbaseOrm::Persistence do
 
         model.reload
         expect(model.changed?).to be(false)
-        expect(model.id).to be(id)
+        expect(model.id).to eq(id)
 
         model.destroy
         expect(model.destroyed?).to be(true)
