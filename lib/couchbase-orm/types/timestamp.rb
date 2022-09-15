@@ -6,7 +6,7 @@ module CouchbaseOrm
               return Time.at(value) if value.is_a?(Integer)
               return Time.at(value.to_i) if value.is_a?(String) && value =~ /^[0-9]+$/
               return value.utc if value.is_a?(Time)
-              super(value)
+              super(value).utc
             end
         
             def serialize(value)
