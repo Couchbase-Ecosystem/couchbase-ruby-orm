@@ -123,17 +123,15 @@ module CouchbaseOrm
 
             def run_query(keys, values, query_fn, custom_order: nil, descending: false, limit: nil, **options)
                 if query_fn
-                    result = query_fn.call(bucket, values, cluster, Couchbase::Options::Query.new(**options))
-                    N1qlProxy.new(result)
+                    N1qlProxy.new(query_fn.call(bucket, values, cluster, Couchbase::Options::Query.new(**options)))
                 else
                     bucket_name = bucket.name
                     where = build_where(keys, values)
                     order = custom_order || build_order(keys, descending)
                     limit = build_limit(limit)
-                    raise "select must be a string" unless select.is_a?(String)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows"
+                    CouchbaseOrm.logger.debug { "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows" }
                     N1qlProxy.new(result)
                 end
             end
