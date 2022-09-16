@@ -62,6 +62,17 @@ shared_examples "has_many example" do |parameter|
 
         expect(docs).to match_array(['bob', 'jane'])
     end
+
+    it "should work with new objects not yet saved" do
+        existing_object = @object_test_class.create! name: :bob
+        expect(existing_object.send(:"rating_#{@context}_tests")).to be_empty
+
+        @rating_test_class.create! rating: :good, "object_#{@context}_test": existing_object
+    
+        new_object = @object_test_class.new name: :jane
+        expect(new_object.send(:"rating_#{@context}_tests")).to be_empty
+    end
+
 end
 
 describe CouchbaseOrm::HasMany do

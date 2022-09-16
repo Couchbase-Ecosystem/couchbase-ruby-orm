@@ -50,7 +50,8 @@ module CouchbaseOrm
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
                     opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
                     values = convert_values(method_opts[:emit_key], opts.delete(:key)) if opts[:key]
-                    current_query = run_query(method_opts[:emit_key], values, query_fn, custom_order: custom_order, **opts.except(:include_docs))
+                    current_query = run_query(method_opts[:emit_key], values, query_fn, custom_order: custom_order, **opts.except(:include_docs, :key))
+
                     if result_modifier
                         opts[:include_docs] = true
                         current_query.results &result_modifier
