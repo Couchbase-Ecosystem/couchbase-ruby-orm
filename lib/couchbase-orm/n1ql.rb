@@ -73,7 +73,7 @@ module CouchbaseOrm
                 n1ql n1ql_method, emit_key: attr
 
                 define_singleton_method find_method do |value|
-                    send n1ql_method, key: value
+                    send n1ql_method, key: [value]
                 end
             end
 
@@ -93,21 +93,37 @@ module CouchbaseOrm
 
                     CouchbaseOrm.logger.debug { "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}" }
 
-                    # then quote and sanitize
-                    if value.class == String
-                        "'#{N1ql.sanitize(value)}'"
-                    elsif value.nil?
-                        nil
-                    else
-                        N1ql.sanitize(value).to_s
-                    end
+                    value
+                end
+            end
+
+            def quote(value)
+                if value.is_a? String
+                    "'#{N1ql.sanitize(value)}'"
+                elsif value.is_a? Array
+                    "[#{value.map{|v|quote(v)}.join(', ')}]"
+                elsif value.nil?
+                    nil
+                else
+                    N1ql.sanitize(value).to_s
+                end
+            end
+
+            def build_match(key, value)
+                case 
+                when value.nil?
+                    "ISNULL(#{key})"
+                when value.is_a?(Array)
+                    "#{key} IN #{quote(value)}"
+                else
+                    "#{key} = #{quote(value)}"
                 end
             end
 
             def build_where(keys, values)
                 where = values == NO_VALUE ? '' : keys.zip(Array.wrap(values))
                             .reject { |key, value| key.nil? && value.nil? }  
-                            .map { |key, value| value.nil?  ? "ISNULL(#{key})" : "#{key} = #{value}" }
+                            .map { |key, value| build_match(key, value) }
                             .join(" AND ")
                 "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end
