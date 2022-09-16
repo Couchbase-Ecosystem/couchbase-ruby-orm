@@ -5,15 +5,6 @@ require File.expand_path("../support", __FILE__)
 class BaseTest < CouchbaseOrm::Base
     attribute :name, :string
     attribute :job, :string
-    attribute(:prescribing_date, type: String, read_fn: proc { |value| encode_date(value) }) # timestamp without time zone,
-
-    class << self
-        def encode_date(value)
-            return DateTime.strptime(value, '%Y-%m-%d') if value.present? && value.is_a?(String) && value.length == 10
-            return DateTime.strptime(value, '%Y-%m-%d %H:%M:%s %z') if value.present? && value.is_a?(String)
-            value
-        end
-    end
 end
 
 class CompareTest < CouchbaseOrm::Base
@@ -24,15 +15,9 @@ class TimestampTest < CouchbaseOrm::Base
     attribute :created_at, :datetime
 end
 
-class TypeNamedTest < CouchbaseOrm::Base
-    attribute :count
-end
-
 describe CouchbaseOrm::Base do
     it "should be comparable to other objects" do
-        base = BaseTest.create!(name: 'joe', prescribing_date: Time.now)
-        base.reload
-        base.update({ prescribing_date: '2022-07-01' })
+        base = BaseTest.create!(name: 'joe')
         base2 = BaseTest.create!(name: 'joe')
         base3 = BaseTest.create!(ActiveSupport::HashWithIndifferentAccess.new(name: 'joe'))
 
@@ -80,7 +65,7 @@ describe CouchbaseOrm::Base do
         base = BaseTest.create!(name: 'joe')
 
         base_id = base.id
-        expect(base.to_json).to eq({ id: base_id, name: 'joe', job: nil, prescribing_date: nil }.to_json)
+        expect(base.to_json).to eq({ id: base_id, name: 'joe', job: nil }.to_json)
         expect(base.to_json(only: :name)).to eq({ name: 'joe' }.to_json)
 
         base.destroy
