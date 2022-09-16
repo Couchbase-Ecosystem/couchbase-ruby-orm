@@ -59,8 +59,8 @@ describe CouchbaseOrm::N1ql do
     end
 
     it "should return matching results" do
-        inst_bob = N1QLTest.create! name: :bob, rating: :awesome
-        inst_jane = N1QLTest.create! name: :jane, rating: :awesome
+        N1QLTest.create! name: :bob, rating: :awesome
+        N1QLTest.create! name: :jane, rating: :awesome
         N1QLTest.create! name: :greg, rating: :bad
         N1QLTest.create! name: :mel, rating: :good
 
@@ -70,18 +70,31 @@ describe CouchbaseOrm::N1ql do
 
         expect(Set.new(docs)).to eq(Set.new(%w[bob jane]))
 
-        docs = N1QLTest.by_rating_reverse(key: 1).collect { |ob|
-            ob.name
-        }
-
-        expect(docs).to eq(%w[jane bob])
-
         docs = N1QLTest.by_custom_rating().collect { |ob|
             ob.name
         }
 
         expect(Set.new(docs)).to eq(Set.new(%w[bob jane mel]))
+    end
 
+    it "should return matching results with reverse order" do
+        N1QLTest.create! name: :bob, rating: :awesome
+        N1QLTest.create! name: :jane, rating: :awesome
+        N1QLTest.create! name: :greg, rating: :bad
+        N1QLTest.create! name: :mel, rating: :good
+
+        docs = N1QLTest.by_rating_reverse(key: 1).collect { |ob|
+            ob.name
+        }
+
+        expect(docs).to eq(%w[jane bob])
+    end
+
+    it "should return matching results without full documents" do
+        inst_bob = N1QLTest.create! name: :bob, rating: :awesome
+        inst_jane = N1QLTest.create! name: :jane, rating: :awesome
+        N1QLTest.create! name: :greg, rating: :bad
+        N1QLTest.create! name: :mel, rating: :good
 
         docs = N1QLTest.by_rating_without_docs(key: 1)
 
