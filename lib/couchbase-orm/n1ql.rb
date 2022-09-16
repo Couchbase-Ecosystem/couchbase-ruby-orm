@@ -7,7 +7,7 @@ require 'active_support/core_ext/object/try'
 module CouchbaseOrm
     module N1ql
         extend ActiveSupport::Concern
-
+        NO_VALUE = :no_value_specified
         # sanitize for injection query
         def self.sanitize(value)
             if value.is_a?(String)
@@ -47,9 +47,9 @@ module CouchbaseOrm
                 @indexes ||= {}
                 @indexes[name] = method_opts
 
-                singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
+                singleton_class.__send__(:define_method, name) do |key: NO_VALUE, **opts, &result_modifier|
                     opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
-                    values = convert_values(method_opts[:emit_key], opts.delete(:key)) if opts[:key]
+                    values = key == NO_VALUE ? NO_VALUE : convert_values(method_opts[:emit_key], key)
                     current_query = run_query(method_opts[:emit_key], values, query_fn, **opts.except(:include_docs, :key))
                     if result_modifier
                         opts[:include_docs] = true
@@ -96,6 +96,8 @@ module CouchbaseOrm
                     # then quote and sanitize
                     if value.class == String
                         "'#{N1ql.sanitize(value)}'"
+                    elsif value.nil?
+                        nil
                     else
                         N1ql.sanitize(value).to_s
                     end
@@ -103,9 +105,9 @@ module CouchbaseOrm
             end
 
             def build_where(keys, values)
-                where = keys.each_with_index
-                            .reject { |key, i| values.try(:[], i).nil? }
-                            .map { |key, i| "#{key} = #{values[i] }" }
+                where = values == NO_VALUE ? '' : keys.zip(Array.wrap(values))
+                            .reject { |key, value| key.nil? && value.nil? }  
+                            .map { |key, value| value.nil?  ? "ISNULL(#{key})" : "#{key} = #{value}" }
                             .join(" AND ")
                 "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end

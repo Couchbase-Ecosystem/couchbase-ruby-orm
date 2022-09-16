@@ -1,6 +1,7 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
-
+require "logger"
 require "active_support/lazy_load_hooks"
+
 ActiveSupport.on_load(:i18n) do
     I18n.load_path << File.expand_path("couchbase-orm/locale/en.yml", __dir__)
 end

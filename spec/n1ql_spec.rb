@@ -35,6 +35,28 @@ describe CouchbaseOrm::N1ql do
         expect(docs).to eq(%w[bob])
     end
 
+    it "should query by non-nil value" do
+        _anonymous = N1QLTest.create!
+        bob = N1QLTest.create! name: :bob
+
+        expect(N1QLTest.by_name(key: 'bob').to_a).to eq [bob]
+    end
+
+    it "should query by nil value" do
+        anonymous = N1QLTest.create!
+        _bob = N1QLTest.create! name: :bob
+
+        expect(N1QLTest.by_name(key: nil).to_a).to eq [anonymous]
+    end
+
+    it "should query all when key is not set" do
+        anonymous = N1QLTest.create!
+        bob = N1QLTest.create! name: :bob
+
+        expect(N1QLTest.by_name.to_a).to eq [anonymous, bob]
+    end
+
+
     it "should work with other keys" do
         N1QLTest.create! name: :bob, rating: :good
         N1QLTest.create! name: :jane, rating: :awesome
