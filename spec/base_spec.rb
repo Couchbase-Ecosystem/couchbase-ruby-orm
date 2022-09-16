@@ -34,7 +34,21 @@ describe CouchbaseOrm::Base do
     base = BaseTest.create!(name: 'joe', prescribing_date: Time.now)
     base.reload
     base.update({ prescribing_date: '2022-07-01' })
+    base2 = BaseTest.create!(name: 'joe')
+    base3 = BaseTest.create!(ActiveSupport::HashWithIndifferentAccess.new(name: 'joe'))
 
+    expect(base).to eq(base)
+    expect(base).to be(base)
+    expect(base).not_to eq(base2)
+
+    same_base = BaseTest.find(base.id)
+    expect(base).to eq(same_base)
+    expect(base).not_to be(same_base)
+    expect(base2).not_to eq(same_base)
+
+    base.delete
+    base2.delete
+    base3.delete
   end
 
   it "should be inspectable" do
