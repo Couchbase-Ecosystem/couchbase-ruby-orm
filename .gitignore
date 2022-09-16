@@ -1,5 +1,4 @@
 *.sw?
-.rbenv-vars
 .DS_Store
 .rbenv-vars
 coverage
