@@ -113,9 +113,8 @@ module CouchbaseOrm
                     end
                 end
 
-                unless presence == false && attrs.length == 1 && record[attrs[0]].nil?
-                    record.class.collection.upsert(record.send(bucket_key_method), record.id)
-                end
+                record.class.collection.upsert(record.send(bucket_key_method), record.id)
+
                 instance_variable_set(original_bucket_key_var, nil)
             end
 

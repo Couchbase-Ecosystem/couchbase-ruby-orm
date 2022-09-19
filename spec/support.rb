@@ -14,6 +14,12 @@ SimpleCov.start do
     minimum_coverage 94
 end
 
+if ENV["COUCHBASE_FLUSH"]
+    CouchbaseOrm.logger.warn "Flushing Couchbase bucket '#{CouchbaseOrm::Connection.bucket.name}'"
+    CouchbaseOrm::Connection.cluster.buckets.flush_bucket(CouchbaseOrm::Connection.bucket.name)
+    raise "BucketFlushed"
+end
+
 shared_examples_for "ActiveModel" do
     include Minitest::Assertions
     include ActiveModel::Lint::Tests

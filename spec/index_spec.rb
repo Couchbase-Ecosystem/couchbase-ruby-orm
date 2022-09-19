@@ -70,7 +70,7 @@ describe CouchbaseOrm::Index do
 
     it "should work with nil values" do
         joe = IndexTest.create!
-        expect(IndexTest.find_by_email(nil)).to eq(nil)
+        expect(IndexTest.find_by_email(nil)).to eq(joe)
 
         joe.email = 'joe@aca.com'
         joe.save!
@@ -79,7 +79,7 @@ describe CouchbaseOrm::Index do
         joe.email = nil
         joe.save!
         expect(IndexTest.find_by_email('joe@aca.com')).to eq(nil)
-        expect(IndexTest.find_by_email(nil)).to eq(nil)
+        expect(IndexTest.find_by_email(nil)).to eq(joe)
 
         joe.destroy
     end
@@ -107,7 +107,7 @@ describe CouchbaseOrm::Index do
 
     it "should not overwrite index's that do not belong to the current model" do
         joe = NoUniqueIndexTest.create!
-        expect(NoUniqueIndexTest.find_by_email(nil)).to eq(nil)
+        expect(NoUniqueIndexTest.find_by_email(nil)).to eq(joe)
 
         joe.email = 'joe@aca.com'
         joe.save!
