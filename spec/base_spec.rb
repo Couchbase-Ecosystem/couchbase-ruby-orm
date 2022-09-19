@@ -93,7 +93,7 @@ describe CouchbaseOrm::Base do
             # A saved model should have no changes
             base = BaseTest.create!(name: 'joe')
             expect(base.changes.empty?).to be(true)
-            expect(base.previous_changes.empty?).to be(false)
+            expect(base.previous_changes.empty?).to be(true)
 
             # Attributes are copied from the existing model
             base = BaseTest.new(base)

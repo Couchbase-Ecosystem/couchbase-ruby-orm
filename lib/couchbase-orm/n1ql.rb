@@ -141,7 +141,7 @@ module CouchbaseOrm
 
             def run_query(keys, values, query_fn, custom_order: nil, descending: false, limit: nil, **options)
                 if query_fn
-                    N1qlProxy.new(query_fn.call(bucket, values, cluster, Couchbase::Options::Query.new(**options)))
+                    N1qlProxy.new(query_fn.call(bucket, values, Couchbase::Options::Query.new(**options)))
                 else
                     bucket_name = bucket.name
                     where = build_where(keys, values)
