@@ -23,7 +23,6 @@ require 'couchbase-orm/base'
 module Rails #:nodoc:
     module Couchbase #:nodoc:
         class Railtie < Rails::Railtie #:nodoc:
-
             config.couchbase_orm = ActiveSupport::OrderedOptions.new
             config.couchbase_orm.ensure_design_documents = true
 

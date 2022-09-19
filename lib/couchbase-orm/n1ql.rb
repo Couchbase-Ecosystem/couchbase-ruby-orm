@@ -35,7 +35,7 @@ module CouchbaseOrm
             #    # ...
             #  end
             # TODO: add range keys [:startkey, :endkey]
-            def n1ql(name, query_fn: nil, emit_key: [], **options)
+            def n1ql(name, query_fn: nil, emit_key: [], custom_order: nil, **options)
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
                     raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && !attribute_names.include?(key.to_s)
@@ -50,7 +50,7 @@ module CouchbaseOrm
                 singleton_class.__send__(:define_method, name) do |key: NO_VALUE, **opts, &result_modifier|
                     opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
                     values = key == NO_VALUE ? NO_VALUE : convert_values(method_opts[:emit_key], key)
-                    current_query = run_query(method_opts[:emit_key], values, query_fn, **opts.except(:include_docs, :key))
+                    current_query = run_query(method_opts[:emit_key], values, query_fn, custom_order: custom_order, **opts.except(:include_docs, :key))
                     if result_modifier
                         opts[:include_docs] = true
                         current_query.results &result_modifier
@@ -81,7 +81,7 @@ module CouchbaseOrm
 
             def convert_values(keys, values)
                 raise ArgumentError, "Empty keys but values are present, can't type cast" if keys.empty? && Array.wrap(values).any?
-                keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|                    
+                keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|
                     # cast value to type
                     value = if value_before_type_cast.is_a?(Array)
                         value_before_type_cast.map do |v|
@@ -110,7 +110,7 @@ module CouchbaseOrm
             end
 
             def build_match(key, value)
-                case 
+                case
                 when value.nil?
                     "ISNULL(#{key})"
                 when value.is_a?(Array)
@@ -122,7 +122,7 @@ module CouchbaseOrm
 
             def build_where(keys, values)
                 where = values == NO_VALUE ? '' : keys.zip(Array.wrap(values))
-                            .reject { |key, value| key.nil? && value.nil? }  
+                            .reject { |key, value| key.nil? && value.nil? }
                             .map { |key, value| build_match(key, value) }
                             .join(" AND ")
                 "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
@@ -139,13 +139,13 @@ module CouchbaseOrm
                 limit ? "limit #{limit}" : ""
             end
 
-            def run_query(keys, values, query_fn, descending: false, limit: nil, **options)
+            def run_query(keys, values, query_fn, custom_order: nil, descending: false, limit: nil, **options)
                 if query_fn
                     N1qlProxy.new(query_fn.call(bucket, values, Couchbase::Options::Query.new(**options)))
                 else
                     bucket_name = bucket.name
                     where = build_where(keys, values)
-                    order = build_order(keys, descending)
+                    order = custom_order || build_order(keys, descending)
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))

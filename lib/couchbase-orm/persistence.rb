@@ -127,7 +127,7 @@ module CouchbaseOrm
                 options[:cas] = @__metadata__.cas if with_cas
                 CouchbaseOrm.logger.debug "Data - Destroy #{id}"
                 self.class.collection.remove(id, **options)
-                
+
                 self.id = nil
 
                 clear_changes_information
@@ -225,11 +225,11 @@ module CouchbaseOrm
         protected
 
         def serialized_attributes
-            attributes.map { |k, v| 
-                [k, self.class.attribute_types[k].serialize(v)] 
+            attributes.map { |k, v|
+                [k, self.class.attribute_types[k].serialize(v)]
             }.to_h
         end
-        
+
         def _update_record(*_args, with_cas: false, **options)
             return false unless perform_validations(:update, options)
             return true unless changed?
