@@ -231,13 +231,13 @@ describe CouchbaseOrm::Base do
         expect(N1qlTypeTest.find_by_name("joe").to_a).to eq [t]
     end
 
-    pending "should be able to query by nil value" do
+    it "should be able to query by nil value" do
         t = N1qlTypeTest.create!()
         _t2 = N1qlTypeTest.create!(name: "john")
         expect(N1qlTypeTest.find_by_name(nil).to_a).to eq [t]
     end
     
-    pending "should be able to query by array value" do
+    it "should be able to query by array value" do
         t = N1qlTypeTest.create!(name: "laura")
         t2 = N1qlTypeTest.create!(name: "joe")
         _t3 = N1qlTypeTest.create!(name: "john")
