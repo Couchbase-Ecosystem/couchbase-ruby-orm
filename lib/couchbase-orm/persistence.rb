@@ -7,8 +7,6 @@ module CouchbaseOrm
     module Persistence
         extend ActiveSupport::Concern
 
-        include Encrypt
-
         included do
             attribute :id, :string
         end
@@ -210,8 +208,6 @@ module CouchbaseOrm
             assign_attributes(resp.content.except("id")) # API return a nil id
             @__metadata__.cas = resp.cas
 
-            decode_encrypted_attributes(attributes)
-
             reset_associations
             clear_changes_information
             self
@@ -240,7 +236,6 @@ module CouchbaseOrm
 
             run_callbacks :update do
                 run_callbacks :save do
-                    encode_encrypted_attributes(attributes)
                     options[:cas] = @__metadata__.cas if with_cas
                     CouchbaseOrm.logger.debug { "_update_record - replace #{id} #{serialized_attributes.to_s.truncate(200)}" }
                     resp = self.class.collection.replace(id, serialized_attributes.except(:id).merge(type: self.class.design_document), Couchbase::Options::Replace.new(**options))
@@ -261,7 +256,6 @@ module CouchbaseOrm
                     assign_attributes(id: self.class.uuid_generator.next(self)) unless self.id
                     CouchbaseOrm.logger.debug { "_create_record - Upsert #{id} #{serialized_attributes.to_s.truncate(200)}" }
 
-                    encode_encrypted_attributes(attributes)
                     resp = self.class.collection.upsert(self.id, serialized_attributes.except(:id).merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
 
                     # Ensure the model is up to date

@@ -120,7 +120,6 @@ module CouchbaseOrm
         include Associations
         include Views
         include N1ql
-        include Encrypt
 
         extend Join
         extend Enum
@@ -226,9 +225,6 @@ module CouchbaseOrm
                 clear_changes_information
                 super(attributes)
             end
-
-            decode_encrypted_attributes(attributes)
-
             yield self if block_given?
 
             run_callbacks :initialize

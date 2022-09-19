@@ -7,7 +7,6 @@ ActiveSupport.on_load(:i18n) do
 end
 
 module CouchbaseOrm
-    autoload :Encrypt,      'couchbase-orm/encrypt'
     autoload :Error,       'couchbase-orm/error'
     autoload :Connection,  'couchbase-orm/connection'
     autoload :IdGenerator, 'couchbase-orm/id_generator'
