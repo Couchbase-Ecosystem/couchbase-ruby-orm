@@ -14,10 +14,10 @@ class N1QLTest < CouchbaseOrm::Base
     n1ql :by_name, emit_key: [:name, :rating]
     n1ql :by_lastname, emit_key: [:lastname]
     n1ql :by_rating, emit_key: :rating
-    n1ql :by_custom_rating, query_fn: proc { |bucket, _values, options|
+    n1ql :by_custom_rating, query_fn: proc { |bucket, _values, cluster, options|
         cluster.query("SELECT raw meta().id FROM `#{bucket.name}` where type = 'n1_ql_test' AND rating IN [1,2] ORDER BY name ASC", options)
     }
-    n1ql :by_custom_rating_values, emit_key: [:rating], query_fn: proc { |bucket, values, options|
+    n1ql :by_custom_rating_values, emit_key: [:rating], query_fn: proc { |bucket, values, cluster, options|
         cluster.query("SELECT raw meta().id FROM `#{bucket.name}` where type = 'n1_ql_test' AND rating IN #{values[0]} ORDER BY name ASC", options)
     }
     n1ql :by_rating_reverse, emit_key: :rating, custom_order: "name DESC"
