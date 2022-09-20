@@ -112,7 +112,7 @@ module CouchbaseOrm
             def build_match(key, value)
                 case
                 when value.nil?
-                    "ISNULL(#{key})"
+                    "#{key} IS NOT VALUED"
                 when value.is_a?(Array)
                     "#{key} IN #{quote(value)}"
                 else
