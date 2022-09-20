@@ -50,10 +50,18 @@ describe CouchbaseOrm::N1ql do
     end
 
     it "should query by nil value" do
-        anonymous = N1QLTest.create!
+        anonymous = N1QLTest.create! lastname: "Anonymous"
+        anonymous_no_property = N1QLTest.create! lastname: "Anonymous without name property"
+
+        CouchbaseOrm::Connection.bucket.default_collection.mutate_in(anonymous_no_property.id, [
+            Couchbase::MutateInSpec.remove("name"),
+        ])
+
+        anonymous_no_property.reload
+
         _bob = N1QLTest.create! name: :bob
 
-        expect(N1QLTest.by_name(key: nil).to_a).to eq [anonymous]
+        expect(N1QLTest.by_name(key: nil).to_a).to match_array [anonymous, anonymous_no_property]
     end
 
     it "should query all when key is not set" do
