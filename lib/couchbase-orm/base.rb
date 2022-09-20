@@ -16,6 +16,7 @@ require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/types'
+require 'couchbase-orm/relation'
 require 'couchbase-orm/proxies/bucket_proxy'
 require 'couchbase-orm/proxies/collection_proxy'
 require 'couchbase-orm/utilities/join'
@@ -46,26 +47,22 @@ module CouchbaseOrm
                 attribute_names
             end
 
+            def abstract_class?
+                false
+            end
+
+            def connected?
+                true
+            end
+
+            def table_exists?
+                true
+            end
+
             if ActiveModel::VERSION::MAJOR < 6
                 def attribute_names
                     attribute_types.keys
                 end
-
-                def abstract_class?
-                    false
-                end
-
-                def connected?
-                    true
-                end
-
-                def table_exists?
-                    true
-                end
-
-                # def partial_writes?
-                #     partial_updates? && partial_inserts?
-                # end
             end
         end
 
@@ -120,6 +117,7 @@ module CouchbaseOrm
         include Associations
         include Views
         include N1ql
+        include Relation
 
         extend Join
         extend Enum
