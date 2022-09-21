@@ -7,7 +7,6 @@ class N1QLTest < CouchbaseOrm::Base
     attribute :lastname, type: String
     enum rating: [:awesome, :good, :okay, :bad], default: :okay
 
-    n1ql :all
     n1ql :by_custom_rating, emit_key: [:name, :rating], query_fn: proc { |bucket, _values|
         cluster.query("SELECT raw meta().id FROM `#{bucket.name}` WHERE rating IN [1, 2] ORDER BY name ASC")
     }
@@ -32,6 +31,10 @@ end
 describe CouchbaseOrm::N1ql do
     before(:each) do
         N1QLTest.all.each(&:destroy)
+    end
+    
+    it "should not allow n1ql to override existing methods" do
+        expect { N1QLTest.n1ql :all }.to raise_error(ArgumentError)
     end
 
     it "should perform a query and return the n1ql" do

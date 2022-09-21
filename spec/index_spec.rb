@@ -4,7 +4,6 @@ require File.expand_path("../support", __FILE__)
 
 
 class IndexTest < CouchbaseOrm::Base
-    n1ql :all
     attribute :email, type: String
     attribute :name,  type: String, default: :joe
     ensure_unique :email, presence: false

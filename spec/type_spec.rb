@@ -21,8 +21,6 @@ class TypeTest < CouchbaseOrm::Base
     attribute :precision_time, :datetime3decimal
     attribute :active, :boolean
 
-    n1ql :all
-
     index :age, presence: false
     index :renewal_date, presence: false
     index :some_time, presence: false
@@ -38,8 +36,6 @@ class N1qlTypeTest < CouchbaseOrm::Base
     attribute :some_time, :timestamp
     attribute :precision_time, :datetime3decimal
     attribute :active, :boolean
-
-    n1ql :all
 
     index_n1ql :name, validate: false
     index_n1ql :age, validate: false

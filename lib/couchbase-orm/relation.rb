@@ -65,6 +65,8 @@ module CouchbaseOrm
 
             alias :to_a :to_ary
 
+            delegate :each, :map, :collect, :to => :to_ary
+
             def delete_all
                 ids = query.to_a
                 CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
@@ -94,7 +96,7 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(limit: limit))
             end
 
-            def r_all
+            def all
                 CouchbaseOrm_Relation.new(**initializer_arguments)
             end
 
@@ -117,11 +119,11 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(model: self, limit: limit)
             end
 
-            def r_all
+            def all
                 CouchbaseOrm_Relation.new(model: self)
             end
 
-            delegate :ids, :delete_all, :count, to: :r_all
+            delegate :ids, :delete_all, :count, to: :all
         end
     end
 end

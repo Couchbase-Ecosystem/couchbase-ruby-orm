@@ -8,7 +8,6 @@ class RelationModel < CouchbaseOrm::Base
     attribute :last_name, :string
     attribute :active, :boolean
     attribute :age, :integer
-    n1ql :all
 end
 
 describe CouchbaseOrm::Relation do
@@ -23,7 +22,7 @@ describe CouchbaseOrm::Relation do
     end
 
     it "should return a relation" do
-        expect(RelationModel.r_all).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
+        expect(RelationModel.all).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
     end
 
     it "should query with conditions" do
@@ -129,15 +128,15 @@ describe CouchbaseOrm::Relation do
     it "Should query all" do
         m1 = RelationModel.create!(active: true)
         m2 = RelationModel.create!(active: false)
-        expect(RelationModel.r_all).to match_array([m1, m2])
+        expect(RelationModel.all).to match_array([m1, m2])
     end
 
     it "should query all with condition and order"  do
         m1 = RelationModel.create!(active: true, age: 10)
         m2 = RelationModel.create!(active: true, age: 20)
         _m3 = RelationModel.create!(active: false, age: 30)
-        expect(RelationModel.where(active: true).order(age: :desc).r_all).to match_array([m2, m1])
-        expect(RelationModel.r_all.where(active: true).order(age: :asc)).to match_array([m1, m2])
+        expect(RelationModel.where(active: true).order(age: :desc).all).to match_array([m2, m1])
+        expect(RelationModel.all.where(active: true).order(age: :asc)).to match_array([m1, m2])
     end
 end
 

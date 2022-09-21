@@ -27,7 +27,6 @@ module CouchbaseOrm
             #
             # @example Define some N1QL queries for a model
             #  class Post < CouchbaseOrm::Base
-            #    n1ql :all
             #    n1ql :by_rating, emit_key: :rating
             #  end
             #
@@ -36,6 +35,8 @@ module CouchbaseOrm
             #  end
             # TODO: add range keys [:startkey, :endkey]
             def n1ql(name, query_fn: nil, emit_key: [], custom_order: nil, **options)
+                raise ArgumentError, "#{self} already respond_to? #{name}" if name == :all # self.respond_to?(name)
+
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
                     raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && !attribute_names.include?(key.to_s)

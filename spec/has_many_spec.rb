@@ -103,7 +103,6 @@ describe CouchbaseOrm::HasMany do
     context 'with n1ql' do
         class ObjectRatingN1qlTest < CouchbaseOrm::Base
             join :object_n1ql_test, :rating_n1ql_test
-            n1ql :all
         end
 
         class RatingN1qlTest < CouchbaseOrm::Base
@@ -111,13 +110,11 @@ describe CouchbaseOrm::HasMany do
             belongs_to :object_n1ql_test
 
             has_many :object_n1ql_tests, through: :object_rating_n1ql_test, type: :n1ql
-            n1ql :all
         end
 
         class ObjectN1qlTest < CouchbaseOrm::Base
             attribute :name, type: String
             has_many :rating_n1ql_tests, dependent: :destroy, type: :n1ql
-            n1ql :all
         end
 
         include_examples("has_many example", context: :n1ql)
