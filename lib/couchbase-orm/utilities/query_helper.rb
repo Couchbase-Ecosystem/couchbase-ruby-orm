@@ -8,6 +8,8 @@ module CouchbaseOrm
                 case
                 when value.nil?
                     "#{key} IS NOT VALUED"
+                when value.is_a?(Array) && value.include?(nil)
+                    "(#{build_match(key, nil)} OR #{build_match(key, value.compact)})"
                 when value.is_a?(Array)
                     "#{key} IN #{quote(value)}"
                 else

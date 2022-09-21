@@ -138,5 +138,33 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.where(active: true).order(age: :desc).all).to match_array([m2, m1])
         expect(RelationModel.all.where(active: true).order(age: :asc)).to match_array([m1, m2])
     end
+
+    it "should query true boolean" do
+        m1 = RelationModel.create!(active: true)
+        _m2 = RelationModel.create!(active: false)
+        _m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.where(active: true)).to match_array([m1])
+    end
+
+    it "should query false boolean" do
+        _m1 = RelationModel.create!(active: true)
+        m2 = RelationModel.create!(active: false)
+        _m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.where(active: false)).to match_array([m2])
+    end
+
+    it "should query nil boolean" do
+        _m1 = RelationModel.create!(active: true)
+        _m2 = RelationModel.create!(active: false)
+        m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.where(active: nil)).to match_array([m3])
+    end
+
+    it "should query nil and false boolean" do
+        _m1 = RelationModel.create!(active: true)
+        m2 = RelationModel.create!(active: false)
+        m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.where(active: [false, nil])).to match_array([m2, m3])
+    end
 end
 
