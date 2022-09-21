@@ -69,7 +69,6 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds, _not: true)))
             end
 
-
             def order(*lorder, **horder)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(order: merge_order(*lorder, **horder)))
             end
