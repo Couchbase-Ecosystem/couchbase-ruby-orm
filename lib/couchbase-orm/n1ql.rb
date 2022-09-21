@@ -82,41 +82,7 @@ module CouchbaseOrm
             def convert_values(keys, values)
                 raise ArgumentError, "Empty keys but values are present, can't type cast" if keys.empty? && Array.wrap(values).any?
                 keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|
-                    # cast value to type
-                    value = if value_before_type_cast.is_a?(Array)
-                        value_before_type_cast.map do |v|
-                            attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(v))
-                        end
-                    else
-                        attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(value_before_type_cast))
-                    end
-
-                    CouchbaseOrm.logger.debug { "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}" }
-
-                    value
-                end
-            end
-
-            def quote(value)
-                if value.is_a? String
-                    "'#{N1ql.sanitize(value)}'"
-                elsif value.is_a? Array
-                    "[#{value.map{|v|quote(v)}.join(', ')}]"
-                elsif value.nil?
-                    nil
-                else
-                    N1ql.sanitize(value).to_s
-                end
-            end
-
-            def build_match(key, value)
-                case
-                when value.nil?
-                    "#{key} IS NOT VALUED"
-                when value.is_a?(Array)
-                    "#{key} IN #{quote(value)}"
-                else
-                    "#{key} = #{quote(value)}"
+                    serialize_value(key, value_before_type_cast)
                 end
             end
 

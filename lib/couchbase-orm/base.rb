@@ -24,6 +24,7 @@ require 'couchbase-orm/utilities/enum'
 require 'couchbase-orm/utilities/index'
 require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
+require 'couchbase-orm/utilities/query_helper'
 
 
 module CouchbaseOrm
@@ -116,6 +117,7 @@ module CouchbaseOrm
         include ::ActiveRecord::Timestamp # must be included after Persistence
         include Associations
         include Views
+        include QueryHelper
         include N1ql
         include Relation
 
