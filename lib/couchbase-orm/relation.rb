@@ -18,21 +18,6 @@ module CouchbaseOrm
                 "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit}"
             end
 
-            def build_order
-                order = @order.map do |key, value|
-                    "#{key} #{value}"
-                end.join(", ")
-                order.empty? ? "meta().id" : order
-            end
-            
-            def build_where
-                ([[:type, @model.design_document]] + @where).map do |key, value, opt|
-                    opt == :not ? 
-                        @model.build_not_match(key, value) : 
-                        @model.build_match(key, value)
-                end.join(" AND ")
-            end
-
             def build_limit
                 @limit ? "limit #{@limit}" : ""
             end
@@ -70,14 +55,11 @@ module CouchbaseOrm
             delegate :each, :map, :collect, :to => :to_ary
 
             def delete_all
-                CouchbaseOrm::logger.debug("Delete all: #{self}")
+                CouchbaseOrm::logger.debug{ "Delete all: #{self}" }
                 ids = query.to_a
                 CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
-            
-            def merge_where(conds, _not = false)
-                @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
-            end
+
 
             def where(**conds)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
@@ -87,13 +69,6 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds, _not: true)))
             end
 
-            def merge_order(*lorder, **horder)
-                raise ArgumentError, "invalid order passed by list: #{lorder.inspect}, must be symbols" unless lorder.all? { |o| o.is_a? Symbol }
-                raise ArgumentError, "Invalid order passed by hash: #{horder.inspect}, must be symbol -> :asc|:desc" unless horder.all? { |k, v| k.is_a?(Symbol) && [:asc, :desc].include?(v) }
-                @order
-                    .merge(Array.wrap(lorder).map{ |o| [o, :asc] }.to_h)
-                    .merge(horder)
-            end
 
             def order(*lorder, **horder)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(order: merge_order(*lorder, **horder)))
@@ -109,6 +84,37 @@ module CouchbaseOrm
 
             def initializer_arguments
                 { model: @model, order: @order, where: @where, limit: @limit }
+            end
+
+            private
+
+            def merge_order(*lorder, **horder)
+                raise ArgumentError, "invalid order passed by list: #{lorder.inspect}, must be symbols" unless lorder.all? { |o| o.is_a? Symbol }
+                raise ArgumentError, "Invalid order passed by hash: #{horder.inspect}, must be symbol -> :asc|:desc" unless horder.all? { |k, v| k.is_a?(Symbol) && [:asc, :desc].include?(v) }
+                @order
+                    .merge(Array.wrap(lorder).map{ |o| [o, :asc] }.to_h)
+                    .merge(horder)
+            end
+
+                        
+            def merge_where(conds, _not = false)
+                @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
+            end
+
+
+            def build_order
+                order = @order.map do |key, value|
+                    "#{key} #{value}"
+                end.join(", ")
+                order.empty? ? "meta().id" : order
+            end
+            
+            def build_where
+                ([[:type, @model.design_document]] + @where).map do |key, value, opt|
+                    opt == :not ? 
+                        @model.build_not_match(key, value) : 
+                        @model.build_match(key, value)
+                end.join(" AND ")
             end
         end
 
