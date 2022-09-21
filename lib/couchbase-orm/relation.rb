@@ -60,7 +60,6 @@ module CouchbaseOrm
                 CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
 
-
             def where(**conds)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
             end
@@ -94,12 +93,10 @@ module CouchbaseOrm
                     .merge(Array.wrap(lorder).map{ |o| [o, :asc] }.to_h)
                     .merge(horder)
             end
-
-                        
+     
             def merge_where(conds, _not = false)
                 @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
             end
-
 
             def build_order
                 order = @order.map do |key, value|
