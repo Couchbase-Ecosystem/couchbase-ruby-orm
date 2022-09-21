@@ -139,11 +139,33 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.all.where(active: true).order(age: :asc)).to match_array([m1, m2])
     end
 
+    it "should return a relation when using not" do
+        expect(RelationModel.not(active: true)).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
+        expect(RelationModel.all.not(active: true)).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
+    end
+
+    it "should have a to_ary method" do
+        expect(RelationModel.not(active: true)).to respond_to(:to_ary)
+        expect(RelationModel.all.not(active: true)).to respond_to(:to_ary)
+    end
+
+    it "should have a each method" do
+        expect(RelationModel.not(active: true)).to respond_to(:each)
+        expect(RelationModel.all.not(active: true)).to respond_to(:each)
+    end
+
     it "should query true boolean" do
         m1 = RelationModel.create!(active: true)
         _m2 = RelationModel.create!(active: false)
         _m3 = RelationModel.create!(active: nil)
         expect(RelationModel.where(active: true)).to match_array([m1])
+    end
+
+    it "should not query true boolean" do
+        _m1 = RelationModel.create!(active: true)
+        m2 = RelationModel.create!(active: false)
+        _m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.not(active: true)).to match_array([m2]) # keep ActiveRecord compatibility by not returning _m3 
     end
 
     it "should query false boolean" do
@@ -153,6 +175,13 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.where(active: false)).to match_array([m2])
     end
 
+    it "should not query false boolean" do
+        m1 = RelationModel.create!(active: true)
+        _m2 = RelationModel.create!(active: false)
+        _m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.not(active: false)).to match_array([m1]) # keep ActiveRecord compatibility by not returning _m3 
+    end
+
     it "should query nil boolean" do
         _m1 = RelationModel.create!(active: true)
         _m2 = RelationModel.create!(active: false)
@@ -160,11 +189,25 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.where(active: nil)).to match_array([m3])
     end
 
+    it "should not query nil boolean" do
+        m1 = RelationModel.create!(active: true)
+        m2 = RelationModel.create!(active: false)
+        _m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.not(active: nil)).to match_array([m1, m2])
+    end
+
     it "should query nil and false boolean" do
         _m1 = RelationModel.create!(active: true)
         m2 = RelationModel.create!(active: false)
         m3 = RelationModel.create!(active: nil)
         expect(RelationModel.where(active: [false, nil])).to match_array([m2, m3])
+    end
+
+    it "should not query nil and false boolean" do
+        m1 = RelationModel.create!(active: true)
+        _m2 = RelationModel.create!(active: false)
+        _m3 = RelationModel.create!(active: nil)
+        expect(RelationModel.not(active: [false, nil])).to match_array([m1])
     end
 end
 

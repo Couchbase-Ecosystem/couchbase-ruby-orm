@@ -17,6 +17,19 @@ module CouchbaseOrm
                 end
             end
 
+            def build_not_match(key, value)
+                case
+                when value.nil?
+                    "#{key} IS VALUED"
+                when value.is_a?(Array) && value.include?(nil)
+                    "(#{build_not_match(key, nil)} AND #{build_not_match(key, value.compact)})"
+                when value.is_a?(Array)
+                    "#{key} NOT IN #{quote(value)}"
+                else
+                    "#{key} != #{quote(value)}"
+                end
+            end
+
             def serialize_value(key, value_before_type_cast)
                 value = 
                     if value_before_type_cast.is_a?(Array)

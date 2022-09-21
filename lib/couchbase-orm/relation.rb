@@ -3,14 +3,14 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         class CouchbaseOrm_Relation
-            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil)
-                CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} order:#{order.inspect} limit: #{limit}"
+            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false)
+                CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit}"
                 @model = model
                 @limit = limit
                 @where = []
                 @order = {}
                 @order = merge_order(**order) if order
-                @where = merge_where(where) if where
+                @where = merge_where(where, _not) if where
                 CouchbaseOrm::logger.debug "- #{to_s}"
             end
 
@@ -26,8 +26,10 @@ module CouchbaseOrm
             end
             
             def build_where
-                ([[:type, @model.design_document]] + @where).map do |key, value|
-                    @model.build_match(key, value)
+                ([[:type, @model.design_document]] + @where).map do |key, value, opt|
+                    opt == :not ? 
+                        @model.build_not_match(key, value) : 
+                        @model.build_match(key, value)
                 end.join(" AND ")
             end
 
@@ -43,7 +45,7 @@ module CouchbaseOrm
                 "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
             end
 
-            def  query
+            def query
                 CouchbaseOrm::logger.debug("Query: #{self}")
                 n1ql_query = to_n1ql
                 result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: :request_plus))
@@ -60,7 +62,7 @@ module CouchbaseOrm
             end
 
             def to_ary
-                query.results { |res| @model.find(res) }
+                query.results { |res| @model.find(res) }.to_ary
             end
 
             alias :to_a :to_ary
@@ -73,12 +75,16 @@ module CouchbaseOrm
                 CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
             
-            def merge_where(conds)
-                @where + conds.to_a
+            def merge_where(conds, _not = false)
+                @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
             end
 
             def where(**conds)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
+            end
+
+            def not(**conds)
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds, _not: true)))
             end
 
             def merge_order(*lorder, **horder)
@@ -107,8 +113,12 @@ module CouchbaseOrm
         end
 
         module ClassMethods
-            def where(**args)
-                CouchbaseOrm_Relation.new(model: self, where: args)
+            def where(**conds)
+                CouchbaseOrm_Relation.new(model: self, where: conds)
+            end
+
+            def not(**conds)
+                CouchbaseOrm_Relation.new(model: self, where: conds, _not: true)
             end
 
             def order(*ordersl, **ordersh)
