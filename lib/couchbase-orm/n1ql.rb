@@ -35,7 +35,7 @@ module CouchbaseOrm
             #  end
             # TODO: add range keys [:startkey, :endkey]
             def n1ql(name, query_fn: nil, emit_key: [], custom_order: nil, **options)
-                raise ArgumentError, "#{self} already respond_to? #{name}" if name == :all # self.respond_to?(name)
+                raise ArgumentError, "#{self} already respond_to? #{name}" if self.respond_to?(name)
 
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|

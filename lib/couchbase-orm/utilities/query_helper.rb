@@ -16,15 +16,16 @@ module CouchbaseOrm
             end
 
             def serialize_value(key, value_before_type_cast)
-                CouchbaseOrm.logger.debug { "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}" }
-
-                if value_before_type_cast.is_a?(Array)
-                    value_before_type_cast.map do |v|
-                        attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(v))
+                value = 
+                    if value_before_type_cast.is_a?(Array)
+                        value_before_type_cast.map do |v|
+                            attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(v))
+                        end
+                    else
+                        attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(value_before_type_cast))
                     end
-                else
-                    attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(value_before_type_cast))
-                end
+                CouchbaseOrm.logger.debug { "convert_values: #{key} => #{value_before_type_cast.inspect} => #{value.inspect} #{value.class} #{attribute_types[key.to_s]}" }
+                value
             end
 
             def quote(value)

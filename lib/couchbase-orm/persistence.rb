@@ -90,7 +90,6 @@ module CouchbaseOrm
         # By default, #save! always runs validations. If any of them fail
         # CouchbaseOrm::Error::RecordInvalid gets raised, and the record won't be saved.
         def save!(**options)
-            CouchbaseOrm.logger.debug { "Will save! : #{id} -> #{attributes.to_s.truncate(200)}" }
             self.class.fail_validate!(self) unless self.save(**options)
             self
         end

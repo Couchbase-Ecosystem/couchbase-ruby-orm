@@ -80,8 +80,8 @@ end
 
 describe CouchbaseOrm::Base do
     before(:each) do
-        TypeTest.all.each(&:destroy)
-        N1qlTypeTest.all.each(&:destroy)
+        TypeTest.delete_all
+        N1qlTypeTest.delete_all
     end
 
     it "should be createable" do

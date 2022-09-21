@@ -247,7 +247,6 @@ module CouchbaseOrm
         end
 
         def []=(key, value)
-            CouchbaseOrm.logger.debug { "Set attribute #{key} to #{value}" }
             send(:"#{key}=", value)
         end
 
