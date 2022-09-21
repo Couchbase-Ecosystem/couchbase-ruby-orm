@@ -18,10 +18,6 @@ module CouchbaseOrm
                 "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit}"
             end
 
-            def build_limit
-                @limit ? "limit #{@limit}" : ""
-            end
-
             def to_n1ql
                 bucket_name = @model.bucket.name
                 where = build_where
@@ -80,11 +76,15 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments)
             end
 
+            private
+
+            def build_limit
+                @limit ? "limit #{@limit}" : ""
+            end
+
             def initializer_arguments
                 { model: @model, order: @order, where: @where, limit: @limit }
             end
-
-            private
 
             def merge_order(*lorder, **horder)
                 raise ArgumentError, "invalid order passed by list: #{lorder.inspect}, must be symbols" unless lorder.all? { |o| o.is_a? Symbol }
