@@ -3,7 +3,7 @@
 require File.expand_path("../support", __FILE__)
 require 'set'
 
-class ViewTest < CouchbaseOrm::Base
+class ViewTest < CouchbaseOrm::Document
     attribute :name, type: String
     enum rating: [:awesome, :good, :okay, :bad], default: :okay
 

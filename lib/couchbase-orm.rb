@@ -11,6 +11,8 @@ module CouchbaseOrm
     autoload :Connection,  'couchbase-orm/connection'
     autoload :IdGenerator, 'couchbase-orm/id_generator'
     autoload :Base,        'couchbase-orm/base'
+    autoload :Document,        'couchbase-orm/base'
+    autoload :NestedDocument,   'couchbase-orm/base'
     autoload :HasMany,     'couchbase-orm/utilities/has_many'
 
     def self.logger
@@ -30,7 +32,7 @@ module CouchbaseOrm
             query_id = id
         end
 
-        result = query_id.is_a?(Array) ? CouchbaseOrm::Base.bucket.default_collection.get_multi(query_id) : CouchbaseOrm::Base.bucket.default_collection.get(query_id)
+        result = query_id.is_a?(Array) ? CouchbaseOrm::Document.bucket.default_collection.get_multi(query_id) : CouchbaseOrm::Document.bucket.default_collection.get(query_id)
 
         result = Array.wrap(result) if was_array
 
@@ -46,7 +48,7 @@ module CouchbaseOrm
     def self.try_load_create_model(result, id)
         ddoc = result&.content["type"]
         return nil unless ddoc
-        ::CouchbaseOrm::Base.descendants.each do |model|
+        ::CouchbaseOrm::Document.descendants.each do |model|
             if model.design_document == ddoc
                 return model.new(result, id: id)
             end

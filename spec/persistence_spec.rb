@@ -3,19 +3,19 @@
 require File.expand_path("../support", __FILE__)
 
 
-class BasicModel < CouchbaseOrm::Base
+class BasicModel < CouchbaseOrm::Document
     attribute :name
     attribute :address
     attribute :age
 end
 
-class ModelWithDefaults < CouchbaseOrm::Base
+class ModelWithDefaults < CouchbaseOrm::Document
     attribute :name, default: proc { 'bob' }
     attribute :address
     attribute :age, default: 23
 end
 
-class ModelWithCallbacks < CouchbaseOrm::Base
+class ModelWithCallbacks < CouchbaseOrm::Document
     attribute :name
     attribute :address
     attribute :age
@@ -35,7 +35,7 @@ class ModelWithCallbacks < CouchbaseOrm::Base
     def set_age; self.age = 30; end
 end
 
-class ModelWithValidations < CouchbaseOrm::Base
+class ModelWithValidations < CouchbaseOrm::Document
     attribute :name, type: String
     attribute :address, type: String
     attribute :age, type: :Integer

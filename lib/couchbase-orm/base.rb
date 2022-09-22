@@ -109,9 +109,76 @@ module CouchbaseOrm
         include ::ActiveRecord::Core
         include ActiveRecordCompat
 
+        extend Enum
+
         define_model_callbacks :initialize, :only => :after
         define_model_callbacks :create, :destroy, :save, :update
 
+        Metadata = Struct.new(:cas)
+
+        class MismatchTypeError < RuntimeError; end
+
+        # Add support for libcouchbase response objects
+        def initialize(model = nil, ignore_doc_type: false, **attributes)
+            CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
+            @__metadata__   = Metadata.new
+
+            super()
+
+            if model
+                case model
+                when Couchbase::Collection::GetResult
+                    doc = HashWithIndifferentAccess.new(model.content) || raise('empty response provided')
+                    type = doc.delete(:type)
+                    doc.delete(:id)
+
+                    if type && !ignore_doc_type && type.to_s != self.class.design_document
+                        raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
+                    end
+
+                    self.id = attributes[:id] if attributes[:id].present?
+                    @__metadata__.cas = model.cas
+
+                    assign_attributes(doc)
+                when CouchbaseOrm::Base
+                    clear_changes_information
+                    super(model.attributes.except(:id, 'type'))
+                else
+                    clear_changes_information
+                    assign_attributes(**attributes.merge(Hash(model)).symbolize_keys)
+                end
+            else
+                clear_changes_information
+                super(attributes)
+            end
+            yield self if block_given?
+
+            run_callbacks :initialize
+        end
+
+        def [](key)
+            send(key)
+        end
+
+        def []=(key, value)
+            send(:"#{key}=", value)
+        end
+
+        protected
+
+        def serialized_attributes
+            attributes.map { |k, v|
+                v = id if k == "id" # Fixme: review comment about that
+                [k, self.class.attribute_types[k].serialize(v)]
+            }.to_h
+        end
+    end
+
+    class NestedDocument < Base
+
+    end
+
+    class Document < Base
         include Persistence
         include ::ActiveRecord::AttributeMethods::Dirty
         include ::ActiveRecord::Timestamp # must be included after Persistence
@@ -126,10 +193,6 @@ module CouchbaseOrm
         extend EnsureUnique
         extend HasMany
         extend Index
-
-
-        Metadata = Struct.new(:key, :cas)
-
 
         class << self
             def connect(**options)
@@ -190,47 +253,6 @@ module CouchbaseOrm
             alias_method :has_key?, :exists?
         end
 
-        class MismatchTypeError < RuntimeError; end
-
-        # Add support for libcouchbase response objects
-        def initialize(model = nil, ignore_doc_type: false, **attributes)
-            CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
-            @__metadata__   = Metadata.new
-
-            super()
-
-            if model
-                case model
-                when Couchbase::Collection::GetResult
-                    doc = HashWithIndifferentAccess.new(model.content) || raise('empty response provided')
-                    type = doc.delete(:type)
-                    doc.delete(:id)
-
-                    if type && !ignore_doc_type && type.to_s != self.class.design_document
-                        raise CouchbaseOrm::Error::TypeMismatchError.new("document type mismatch, #{type} != #{self.class.design_document}", self)
-                    end
-
-                    self.id = attributes[:id] if attributes[:id].present?
-                    @__metadata__.cas = model.cas
-
-                    assign_attributes(doc)
-                when CouchbaseOrm::Base
-                    clear_changes_information
-                    super(model.attributes.except(:id, 'type'))
-                else
-                    clear_changes_information
-                    assign_attributes(**attributes.merge(Hash(model)).symbolize_keys)
-                end
-            else
-                clear_changes_information
-                super(attributes)
-            end
-            yield self if block_given?
-
-            run_callbacks :initialize
-        end
-
-
         # Document ID is a special case as it is not stored in the document
         def id
             @id
@@ -240,14 +262,6 @@ module CouchbaseOrm
             raise 'ID cannot be changed' if @__metadata__.cas && value
             attribute_will_change!(:id)
             @id = value.to_s.presence
-        end
-
-        def [](key)
-            send(key)
-        end
-
-        def []=(key, value)
-            send(:"#{key}=", value)
         end
 
         # Public: Allows for access to ActiveModel functionality.

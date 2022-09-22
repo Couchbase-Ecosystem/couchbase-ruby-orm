@@ -2,20 +2,20 @@
 
 require File.expand_path("../support", __FILE__)
 
-class BaseTest < CouchbaseOrm::Base
+class BaseTest < CouchbaseOrm::Document
     attribute :name, :string
     attribute :job, :string
 end
 
-class CompareTest < CouchbaseOrm::Base
+class CompareTest < CouchbaseOrm::Document
     attribute :age, :integer
 end
 
-class TimestampTest < CouchbaseOrm::Base
+class TimestampTest < CouchbaseOrm::Document
     attribute :created_at, :datetime
 end
 
-describe CouchbaseOrm::Base do
+describe CouchbaseOrm::Document do
     it "should be comparable to other objects" do
         base = BaseTest.create!(name: 'joe')
         base2 = BaseTest.create!(name: 'joe')

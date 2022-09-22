@@ -2,7 +2,7 @@ require File.expand_path("../support", __FILE__)
 
 require "active_model"
 
-class SubTypeTest < CouchbaseOrm::Base
+class SubTypeTest < CouchbaseOrm::NestedDocument
     attribute :name
     attribute :tags, :array, type: :string
     attribute :milestones, :array, type: :date
@@ -11,7 +11,7 @@ class SubTypeTest < CouchbaseOrm::Base
     attribute :child, :nested, type: SubTypeTest
 end
 
-class TypeNestedTest < CouchbaseOrm::Base
+class TypeNestedTest < CouchbaseOrm::Document
     attribute :main, :nested, type: SubTypeTest
     attribute :others, :array, type: SubTypeTest
 end
@@ -90,9 +90,15 @@ describe CouchbaseOrm::Types::Nested do
             ]
         })
     end
+    
+    it "should not have a save method" do
+        expect(SubTypeTest.new).to_not respond_to(:save)
+    end
+
     it "should not cast a list" do
         expect{CouchbaseOrm::Types::Nested.new(type: SubTypeTest).cast([1,2,3])}.to raise_error(ArgumentError)
     end
+    
     it "should not serialize a list" do
         expect{CouchbaseOrm::Types::Nested.new(type: SubTypeTest).serialize([1,2,3])}.to raise_error(ArgumentError)
     end

@@ -2,7 +2,7 @@ require File.expand_path("../support", __FILE__)
 
 require "active_model"
 
-class TypeArrayTest < CouchbaseOrm::Base
+class TypeArrayTest < CouchbaseOrm::Document
     attribute :name
     attribute :tags, :array, type: :string
     attribute :milestones, :array, type: :date
@@ -10,7 +10,7 @@ class TypeArrayTest < CouchbaseOrm::Base
     attribute :things
 end
 
-describe CouchbaseOrm::Base do
+describe CouchbaseOrm::Document do
     it "should be able to store and retrieve an array of strings" do
         obj = TypeArrayTest.new
         obj.tags = ["foo", "bar"]

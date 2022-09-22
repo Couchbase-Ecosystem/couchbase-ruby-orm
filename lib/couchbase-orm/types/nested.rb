@@ -6,6 +6,7 @@ module CouchbaseOrm
             def initialize(type:)
                 raise ArgumentError, "type is nil" if type.nil?
                 raise ArgumentError, "type is not a class : #{type.inspect}" unless type.is_a?(Class)
+                
                 @model_class = type
                 super()
             end
@@ -21,7 +22,7 @@ module CouchbaseOrm
             def serialize(value)
                 return nil if value.nil?
                 return value.send(:serialized_attributes).except("id") if value.is_a?(@model_class)
-                
+
                 raise ArgumentError, "Nested: #{value.inspect} is not supported for serialization"
             end
         end

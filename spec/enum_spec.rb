@@ -2,12 +2,12 @@
 
 require File.expand_path("../support", __FILE__)
 
-class EnumTest < CouchbaseOrm::Base
+class EnumTest < CouchbaseOrm::Document
     enum rating: [:awesome, :good, :okay, :bad], default: :okay
     enum color: [:red, :green, :blue]
 end
 
-describe CouchbaseOrm::Base do
+describe CouchbaseOrm::Document do
     it "should create an attribute" do
         base  = EnumTest.create!(rating: :good, color: :red)
         expect(base.attribute_names).to eq(["id", "rating", "color"])

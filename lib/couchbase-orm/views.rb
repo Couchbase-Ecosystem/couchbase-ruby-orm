@@ -14,7 +14,7 @@ module CouchbaseOrm
             # @param [Hash] options options passed to the {Couchbase::View}
             #
             # @example Define some views for a model
-            #  class Post < CouchbaseOrm::Base
+            #  class Post < CouchbaseOrm::Document
             #    view :all
             #    view :by_rating, emit_key: :rating
             #  end

@@ -77,12 +77,12 @@ end
 
 describe CouchbaseOrm::HasMany do
     context 'with view' do
-        class ObjectRatingViewTest < CouchbaseOrm::Base
+        class ObjectRatingViewTest < CouchbaseOrm::Document
             join :object_view_test, :rating_view_test
             view :view_all
         end
 
-        class RatingViewTest < CouchbaseOrm::Base
+        class RatingViewTest < CouchbaseOrm::Document
             enum rating: [:awesome, :good, :okay, :bad], default: :okay
             belongs_to :object_view_test
 
@@ -90,7 +90,7 @@ describe CouchbaseOrm::HasMany do
             view :view_all
         end
 
-        class ObjectViewTest < CouchbaseOrm::Base
+        class ObjectViewTest < CouchbaseOrm::Document
             attribute :name, type: String
             has_many :rating_view_tests, dependent: :destroy
 
@@ -101,13 +101,13 @@ describe CouchbaseOrm::HasMany do
     end
 
     context 'with n1ql' do
-        class ObjectRatingN1qlTest < CouchbaseOrm::Base
+        class ObjectRatingN1qlTest < CouchbaseOrm::Document
             join :object_n1ql_test, :rating_n1ql_test
 
             n1ql :n1ql_all
         end
 
-        class RatingN1qlTest < CouchbaseOrm::Base
+        class RatingN1qlTest < CouchbaseOrm::Document
             enum rating: [:awesome, :good, :okay, :bad], default: :okay
             belongs_to :object_n1ql_test
 
@@ -116,7 +116,7 @@ describe CouchbaseOrm::HasMany do
             n1ql :n1ql_all
         end
 
-        class ObjectN1qlTest < CouchbaseOrm::Base
+        class ObjectN1qlTest < CouchbaseOrm::Document
             attribute :name, type: String
 
             has_many :rating_n1ql_tests, dependent: :destroy, type: :n1ql

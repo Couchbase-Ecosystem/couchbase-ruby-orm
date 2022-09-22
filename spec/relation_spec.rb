@@ -3,7 +3,7 @@
 require File.expand_path("../support", __FILE__)
 
 
-class RelationModel < CouchbaseOrm::Base
+class RelationModel < CouchbaseOrm::Document
     attribute :name, :string
     attribute :last_name, :string
     attribute :active, :boolean

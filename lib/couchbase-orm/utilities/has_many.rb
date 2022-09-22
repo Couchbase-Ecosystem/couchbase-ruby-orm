@@ -23,7 +23,7 @@ module CouchbaseOrm
                         # Open the class early - load order will have to be changed to prevent this.
                         # Warning notice required as a misspelling will not raise an error
                         Object.class_eval <<-EKLASS
-                            class #{class_name} < CouchbaseOrm::Base
+                            class #{class_name} < CouchbaseOrm::Document
                                 attribute :#{foreign_key}
                             end
                         EKLASS

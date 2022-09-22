@@ -57,10 +57,10 @@ This works fine in production however by default in development models are lazy 
 ```ruby
     require 'couchbase-orm'
 
-    class Post < CouchbaseOrm::Base
-      attribute :title, type: String
-      attribute :body,  type: String
-      attribute :draft, type: Boolean
+    class Post < CouchbaseOrm::Document
+      attribute :title, :string
+      attribute :body,  :string
+      attribute :draft, :boolean
     end
 
     p = Post.new(id: 'hello-world',
@@ -86,10 +86,10 @@ You can also let the library generate the unique identifier for you:
 You can define connection options on per model basis:
 
 ```ruby
-    class Post < CouchbaseOrm::Base
-      attribute :title, type: String
-      attribute :body,  type: String
-      attribute :draft, type: Boolean
+    class Post < CouchbaseOrm::Document
+      attribute :title, :string
+      attribute :body,  :string
+      attribute :draft, :boolean
 
       connect bucket: 'blog', password: ENV['BLOG_BUCKET_PASSWORD']
     end
@@ -115,8 +115,9 @@ Views are defined in the model and typically just emit an attribute that
 can then be used for filtering results or ordering.
 
 ```ruby
-    class Comment < CouchbaseOrm::Base
-      attribute :author, :body, type: String
+    class Comment < CouchbaseOrm::Document
+      attribute :author :string
+      attribute :body, :string
       view :all # => emits :id and will return all comments
       view :by_author, emit_key: :author
 
@@ -158,8 +159,9 @@ Ex : Compound keys allows to decide the order of the results, and you can revers
 Like views, it's possible to use N1QL to process some requests used for filtering results or ordering.
 
 ```ruby
-    class Comment < CouchbaseOrm::Base
-      attribute :author, :body, type: String
+    class Comment < CouchbaseOrm::Document
+      attribute :author, :string
+      attribute :body, :string
       n1ql :by_author, emit_key: :author
 
       # Generates two functions:
@@ -188,15 +190,15 @@ Comment.bucket.n1ql.select('RAW meta(ui).id').from('bucket').where('author="my_v
 There are common active record helpers available for use `belongs_to` and `has_many`
 
 ```ruby
-    class Comment < CouchbaseOrm::Base
+    class Comment < CouchbaseOrm::Document
         belongs_to :author
     end
 
-    class Author < CouchbaseOrm::Base
+    class Author < CouchbaseOrm::Document
         has_many :comments, dependent: :destroy
 
         # You can ensure an attribute is unique for this model
-        attribute :email, type: String
+        attribute :email, :string
         ensure_unique :email
     end
 ```
@@ -204,11 +206,11 @@ There are common active record helpers available for use `belongs_to` and `has_m
 By default, `has_many` uses a view for association, but you can define a `type` option to specify an association using N1QL instead:
 
 ```ruby
-    class Comment < CouchbaseOrm::Base
+    class Comment < CouchbaseOrm::Document
         belongs_to :author
     end
 
-    class Author < CouchbaseOrm::Base
+    class Author < CouchbaseOrm::Document
         has_many :comments, type: :n1ql, dependent: :destroy
     end
 ```
