@@ -90,4 +90,10 @@ describe CouchbaseOrm::Types::Nested do
             ]
         })
     end
+    it "should not cast a list" do
+        expect{CouchbaseOrm::Types::Nested.new(type: SubTypeTest).cast([1,2,3])}.to raise_error(ArgumentError)
+    end
+    it "should not serialize a list" do
+        expect{CouchbaseOrm::Types::Nested.new(type: SubTypeTest).serialize([1,2,3])}.to raise_error(ArgumentError)
+    end
 end
