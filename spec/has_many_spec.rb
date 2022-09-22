@@ -13,15 +13,15 @@ shared_examples "has_many example" do |parameter|
         @object_test_class.ensure_design_document!
         @object_rating_test_class.ensure_design_document!
 
-        @rating_test_class.all.each(&:destroy)
-        @object_test_class.all.each(&:destroy)
-        @object_rating_test_class.all.each(&:destroy)
+        @rating_test_class.delete_all
+        @object_test_class.delete_all
+        @object_rating_test_class.delete_all
     end
 
     after :each do
-        @rating_test_class.all.each(&:destroy)
-        @object_test_class.all.each(&:destroy)
-        @object_rating_test_class.all.each(&:destroy)
+        @rating_test_class.delete_all
+        @object_test_class.delete_all
+        @object_rating_test_class.delete_all
     end
 
     it "should return matching results" do
@@ -42,7 +42,7 @@ shared_examples "has_many example" do |parameter|
 
         first.destroy
         expect { @rating_test_class.find rate.id }.to raise_error(Couchbase::Error::DocumentNotFound)
-        expect(@rating_test_class.all.count).to be(1)
+        expect(@rating_test_class.send(:"#{@context}_all").count).to be(1)
     end
 
     it "should work through a join model" do
@@ -79,7 +79,7 @@ describe CouchbaseOrm::HasMany do
     context 'with view' do
         class ObjectRatingViewTest < CouchbaseOrm::Base
             join :object_view_test, :rating_view_test
-            view :all
+            view :view_all
         end
 
         class RatingViewTest < CouchbaseOrm::Base
@@ -87,14 +87,14 @@ describe CouchbaseOrm::HasMany do
             belongs_to :object_view_test
 
             has_many :object_view_tests, through: :object_rating_view_test
-            view :all
+            view :view_all
         end
 
         class ObjectViewTest < CouchbaseOrm::Base
             attribute :name, type: String
             has_many :rating_view_tests, dependent: :destroy
 
-            view :all
+            view :view_all
         end
 
         include_examples("has_many example", context: :view)
@@ -103,7 +103,8 @@ describe CouchbaseOrm::HasMany do
     context 'with n1ql' do
         class ObjectRatingN1qlTest < CouchbaseOrm::Base
             join :object_n1ql_test, :rating_n1ql_test
-            n1ql :all
+
+            n1ql :n1ql_all
         end
 
         class RatingN1qlTest < CouchbaseOrm::Base
@@ -111,13 +112,16 @@ describe CouchbaseOrm::HasMany do
             belongs_to :object_n1ql_test
 
             has_many :object_n1ql_tests, through: :object_rating_n1ql_test, type: :n1ql
-            n1ql :all
+        
+            n1ql :n1ql_all
         end
 
         class ObjectN1qlTest < CouchbaseOrm::Base
             attribute :name, type: String
+
             has_many :rating_n1ql_tests, dependent: :destroy, type: :n1ql
-            n1ql :all
+
+            n1ql :n1ql_all
         end
 
         include_examples("has_many example", context: :n1ql)

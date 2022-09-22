@@ -23,6 +23,8 @@ module CouchbaseOrm
             #    # ...
             #  end
             def view(name, map: nil, emit_key: nil, reduce: nil, **options)
+                raise ArgumentError, "#{self} already respond_to? #{name}" if self.respond_to?(name)
+                
                 if emit_key.class == Array
                     emit_key.each do |key|
                         raise "unknown emit_key attribute for view :#{name}, emit_key: :#{key}" if key && !attribute_names.include?(key.to_s)

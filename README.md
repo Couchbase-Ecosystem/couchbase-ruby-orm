@@ -160,7 +160,6 @@ Like views, it's possible to use N1QL to process some requests used for filterin
 ```ruby
     class Comment < CouchbaseOrm::Base
       attribute :author, :body, type: String
-      n1ql :all # => emits :id and will return all comments
       n1ql :by_author, emit_key: :author
 
       # Generates two functions:

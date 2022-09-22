@@ -16,6 +16,7 @@ require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/types'
+require 'couchbase-orm/relation'
 require 'couchbase-orm/proxies/bucket_proxy'
 require 'couchbase-orm/proxies/collection_proxy'
 require 'couchbase-orm/utilities/join'
@@ -23,6 +24,7 @@ require 'couchbase-orm/utilities/enum'
 require 'couchbase-orm/utilities/index'
 require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
+require 'couchbase-orm/utilities/query_helper'
 
 
 module CouchbaseOrm
@@ -46,26 +48,22 @@ module CouchbaseOrm
                 attribute_names
             end
 
+            def abstract_class?
+                false
+            end
+
+            def connected?
+                true
+            end
+
+            def table_exists?
+                true
+            end
+
             if ActiveModel::VERSION::MAJOR < 6
                 def attribute_names
                     attribute_types.keys
                 end
-
-                def abstract_class?
-                    false
-                end
-
-                def connected?
-                    true
-                end
-
-                def table_exists?
-                    true
-                end
-
-                # def partial_writes?
-                #     partial_updates? && partial_inserts?
-                # end
             end
         end
 
@@ -119,7 +117,9 @@ module CouchbaseOrm
         include ::ActiveRecord::Timestamp # must be included after Persistence
         include Associations
         include Views
+        include QueryHelper
         include N1ql
+        include Relation
 
         extend Join
         extend Enum
@@ -247,7 +247,6 @@ module CouchbaseOrm
         end
 
         def []=(key, value)
-            CouchbaseOrm.logger.debug { "Set attribute #{key} to #{value}" }
             send(:"#{key}=", value)
         end
 

@@ -7,11 +7,10 @@ class ViewTest < CouchbaseOrm::Base
     attribute :name, type: String
     enum rating: [:awesome, :good, :okay, :bad], default: :okay
 
-    view :all
-    view :by_rating, emit_key: :rating
+    view :vall
 
     # This generates both:
-    # view :by_rating, emit_key: :rating    # same as above
+    # view :by_rating, emit_key: :rating
     # def self.find_by_rating(rating); end  # also provide this helper function
     index_view :rating
 end
@@ -19,17 +18,21 @@ end
 
 describe CouchbaseOrm::Views do
     before(:each) do
-        ViewTest.all.each(&:destroy)
+        ViewTest.delete_all
     rescue Couchbase::Error::DesignDocumentNotFound
         # ignore (FIXME: check before merge) mainly because if there is nothing in all we should not have an error
     end
 
     after(:each) do
-        ViewTest.all.each(&:destroy)
+        ViewTest.delete_all
     rescue Couchbase::Error::InternalServerFailure
         # ignore (FIXME: check before merge)
     rescue Couchbase::Error::DesignDocumentNotFound
         # ignore (FIXME: check before merge) (7.1)
+    end
+
+    it "should not allow n1ql to override existing methods" do
+        expect { ViewTest.view :all }.to raise_error(ArgumentError)
     end
 
     it "should save a new design document" do
@@ -48,14 +51,14 @@ describe CouchbaseOrm::Views do
     end
     
     it "should return an empty array when there is no objects" do
-        expect(ViewTest.all).to eq([])
+        expect(ViewTest.vall).to eq([])
     end
 
     it "should perform a map-reduce and return the view" do
         ViewTest.ensure_design_document!
         ViewTest.create! name: :bob, rating: :good
 
-        docs = ViewTest.all.collect { |ob|
+        docs = ViewTest.vall.collect { |ob|
             ob.destroy
             ob.name
         }
