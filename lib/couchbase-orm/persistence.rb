@@ -225,6 +225,8 @@ module CouchbaseOrm
 
         def serialized_attributes
             attributes.map { |k, v|
+                v = id if k == "id"
+                CouchbaseOrm.logger.debug { "Data - Serialize #{k} #{v} with #{self.class.attribute_types[k]}" }
                 [k, self.class.attribute_types[k].serialize(v)]
             }.to_h
         end

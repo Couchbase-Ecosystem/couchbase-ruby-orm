@@ -84,6 +84,10 @@ describe CouchbaseOrm::Base do
         N1qlTypeTest.delete_all
     end
 
+    it "should be typed" do
+        expect(N1qlTypeTest.attribute_types["name"]).to be_a(ActiveModel::Type::String)
+    end
+
     it "should be createable" do
         t = TypeTest.create!
         expect(t).to be_a(TypeTest)
