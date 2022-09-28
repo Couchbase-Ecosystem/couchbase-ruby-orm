@@ -3,27 +3,27 @@
 require File.expand_path("../support", __FILE__)
 
 
-class Parent < CouchbaseOrm::Document
+class Parent < CouchbaseOrm::Base
     attribute :name
 end
 
-class RandomOtherType < CouchbaseOrm::Document
+class RandomOtherType < CouchbaseOrm::Base
     attribute :name
 end
 
-class Child < CouchbaseOrm::Document
+class Child < CouchbaseOrm::Base
     attribute :name
 
     belongs_to :parent, dependent: :destroy
 end
 
-class Assembly < CouchbaseOrm::Document
+class Assembly < CouchbaseOrm::Base
     attribute :name
 
     has_and_belongs_to_many :parts, autosave: true
 end
 
-class Part < CouchbaseOrm::Document
+class Part < CouchbaseOrm::Base
     attribute :name
 
     has_and_belongs_to_many :assemblies, dependent: :destroy, autosave: true

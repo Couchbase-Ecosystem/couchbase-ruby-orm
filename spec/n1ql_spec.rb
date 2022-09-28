@@ -2,7 +2,7 @@
 
 require File.expand_path("../support", __FILE__)
 
-class N1QLTest < CouchbaseOrm::Document
+class N1QLTest < CouchbaseOrm::Base
     attribute :name, type: String
     attribute :lastname, type: String
     enum rating: [:awesome, :good, :okay, :bad], default: :okay

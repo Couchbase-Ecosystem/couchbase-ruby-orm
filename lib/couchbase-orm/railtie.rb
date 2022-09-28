@@ -74,7 +74,7 @@ module Rails #:nodoc:
             config.after_initialize do |app|
                 if config.couchbase_orm.ensure_design_documents
                     begin
-                        ::CouchbaseOrm::Document.descendants.each do |model|
+                        ::CouchbaseOrm::Base.descendants.each do |model|
                             model.ensure_design_document!
                         end
                     rescue ::MTLibcouchbase::Error::Timedout, ::MTLibcouchbase::Error::ConnectError, ::MTLibcouchbase::Error::NetworkError

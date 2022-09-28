@@ -5,7 +5,7 @@ module CouchbaseOrm
             attr_reader :model_class
 
             def initialize(type: nil)
-                if type.is_a?(Class) && type < CouchbaseOrm::Base
+                if type.is_a?(Class) && type < CouchbaseOrm::NestedDocument
                     @model_class = type
                     @type_class = CouchbaseOrm::Types::Nested.new(type: @model_class)
                 else

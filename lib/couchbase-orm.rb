@@ -32,7 +32,7 @@ module CouchbaseOrm
             query_id = id
         end
 
-        result = query_id.is_a?(Array) ? CouchbaseOrm::Document.bucket.default_collection.get_multi(query_id) : CouchbaseOrm::Document.bucket.default_collection.get(query_id)
+        result = query_id.is_a?(Array) ? CouchbaseOrm::Base.bucket.default_collection.get_multi(query_id) : CouchbaseOrm::Base.bucket.default_collection.get(query_id)
 
         result = Array.wrap(result) if was_array
 

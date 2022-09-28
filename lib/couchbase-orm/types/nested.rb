@@ -1,3 +1,15 @@
+class NestedValidator < ActiveModel::EachValidator
+    def validate_each(record, attribute, value)
+        if value.is_a?(Array)
+            record.errors.add attribute, (options[:message] || "is invalid") unless value.map(&:valid?).all?
+        else
+            record.errors.add attribute, (options[:message] || "is invalid") unless
+        value.nil? || value.valid?
+        end
+
+    end
+end
+
 module CouchbaseOrm
     module Types
         class Nested < ActiveModel::Type::Value

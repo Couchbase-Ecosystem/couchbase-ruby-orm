@@ -11,7 +11,7 @@ end
 
 ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
 
-class TypeTest < CouchbaseOrm::Document
+class TypeTest < CouchbaseOrm::Base
     attribute :name, :string
     attribute :age,  :integer
     attribute :size, :float
@@ -27,7 +27,7 @@ class TypeTest < CouchbaseOrm::Document
     index :precision_time, presence: false
 end
 
-class N1qlTypeTest < CouchbaseOrm::Document
+class N1qlTypeTest < CouchbaseOrm::Base
     attribute :name, :string
     attribute :age,  :integer
     attribute :size, :float
@@ -78,7 +78,7 @@ describe CouchbaseOrm::Types::Date do
     end
 end
 
-describe CouchbaseOrm::Document do
+describe CouchbaseOrm::Base do
     before(:each) do
         TypeTest.delete_all
         N1qlTypeTest.delete_all

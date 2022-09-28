@@ -3,20 +3,20 @@
 require File.expand_path("../support", __FILE__)
 
 
-class IndexTest < CouchbaseOrm::Document
+class IndexTest < CouchbaseOrm::Base
     attribute :email, type: String
     attribute :name,  type: String, default: :joe
     ensure_unique :email, presence: false
 end
 
-class NoUniqueIndexTest < CouchbaseOrm::Document
+class NoUniqueIndexTest < CouchbaseOrm::Base
     attribute :email, type: String
     attribute :name,  type: String, default: :joe
 
     index :email, presence: false
 end
 
-class IndexEnumTest < CouchbaseOrm::Document
+class IndexEnumTest < CouchbaseOrm::Base
     enum visibility: [:group, :authority, :public], default: :authority
     enum color: [:red, :green, :blue]
 end

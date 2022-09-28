@@ -3,7 +3,7 @@
 require 'couchbase-orm'
 require 'thread'
 
-class IdTestModel < CouchbaseOrm::Document; end
+class IdTestModel < CouchbaseOrm::Base; end
 
 describe CouchbaseOrm::IdGenerator do
     it "should not generate ID clashes" do

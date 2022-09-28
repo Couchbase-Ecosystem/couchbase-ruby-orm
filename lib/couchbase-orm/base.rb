@@ -97,7 +97,7 @@ module CouchbaseOrm
         end
     end
 
-    class Base
+    class Document
         include ::ActiveModel::Model
         include ::ActiveModel::Dirty
         include ::ActiveModel::Attributes
@@ -140,7 +140,7 @@ module CouchbaseOrm
                     @__metadata__.cas = model.cas
 
                     assign_attributes(doc)
-                when CouchbaseOrm::Base
+                when CouchbaseOrm::Document
                     clear_changes_information
                     super(model.attributes.except(:id, 'type'))
                 else
@@ -174,14 +174,16 @@ module CouchbaseOrm
         end
     end
 
-    class NestedDocument < Base
+    class NestedDocument < Document
 
     end
 
-    class Document < Base
+    class Base < Document
+        include ::ActiveRecord::Validations
         include Persistence
         include ::ActiveRecord::AttributeMethods::Dirty
         include ::ActiveRecord::Timestamp # must be included after Persistence
+
         include Associations
         include Views
         include QueryHelper

@@ -26,7 +26,7 @@ module CouchbaseOrm
             # @param [Hash] options options passed to the {Couchbase::N1QL}
             #
             # @example Define some N1QL queries for a model
-            #  class Post < CouchbaseOrm::Document
+            #  class Post < CouchbaseOrm::Base
             #    n1ql :by_rating, emit_key: :rating
             #  end
             #
