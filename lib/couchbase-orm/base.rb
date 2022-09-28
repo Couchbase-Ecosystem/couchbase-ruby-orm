@@ -59,6 +59,14 @@ module CouchbaseOrm
             def table_exists?
                 true
             end
+            
+            def _reflect_on_association(attribute)
+                false
+            end
+
+            def type_for_attribute(attribute)
+                attribute_types[attribute]
+            end
 
             if ActiveModel::VERSION::MAJOR < 6
                 def attribute_names
@@ -140,7 +148,7 @@ module CouchbaseOrm
                     @__metadata__.cas = model.cas
 
                     assign_attributes(doc)
-                when CouchbaseOrm::Document
+                when CouchbaseOrm::Base
                     clear_changes_information
                     super(model.attributes.except(:id, 'type'))
                 else

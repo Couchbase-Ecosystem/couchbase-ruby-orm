@@ -48,7 +48,7 @@ module CouchbaseOrm
     def self.try_load_create_model(result, id)
         ddoc = result&.content["type"]
         return nil unless ddoc
-        ::CouchbaseOrm::Document.descendants.each do |model|
+        ::CouchbaseOrm::Base.descendants.each do |model|
             if model.design_document == ddoc
                 return model.new(result, id: id)
             end

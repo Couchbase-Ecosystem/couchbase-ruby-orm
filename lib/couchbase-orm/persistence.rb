@@ -221,14 +221,6 @@ module CouchbaseOrm
         end
 
 
-        protected
-
-        def serialized_attributes
-            attributes.map { |k, v|
-                v = id if k == "id"
-                [k, self.class.attribute_types[k].serialize(v)]
-            }.to_h
-        end
 
         def _update_record(*_args, with_cas: false, **options)
             return false unless perform_validations(:update, options)
