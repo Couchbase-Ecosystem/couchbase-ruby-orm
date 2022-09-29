@@ -103,7 +103,8 @@ context of rails application. You can also enforce types using ruby
 
 ```ruby
     class Comment < Couchbase::Model
-      attribute :author, :body, type: String
+      attribute :author, :string
+      attribute :body, :string
 
       validates_presence_of :author, :body
     end
@@ -215,6 +216,41 @@ By default, `has_many` uses a view for association, but you can define a `type` 
     end
 ```
 
+## Nested
+
+Attributes can be of type nested, they must specify a type of NestedDocument. The NestedValidation triggers nested validation on parent validation. 
+
+```ruby
+    class Address < CouchbaseOrm::NestedDocument
+      attribute :road, :string
+      attribute :city, :string
+      validates :road, :city, presence: true
+    end
+
+    class Author < CouchbaseOrm::Base
+        attribute :address, :nested, type: Address
+        validates :address, nested: true
+    end
+```
+
+## Array
+
+Attributes can be of type array, they must contain something that can be serialized and deserialized to/from JSON. You can enforce the type of array elements. The type can be a NestedDocument
+
+```ruby
+    class Book < CouchbaseOrm::NestedDocument
+      attribute :name, :string
+      validates :name, presence: true
+    end 
+
+    class Author < CouchbaseOrm::Base
+        attribute things, :array
+        attribute flags, :array, type: :string
+        attribute books, :array, type: Book
+
+        validates :books, nested: true
+    end
+```
 
 ## Performance Comparison with Couchbase-Ruby-Model
 
