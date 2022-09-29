@@ -16,6 +16,7 @@ module CouchbaseOrm
 
             def cast(values)
               return [] if values.nil?
+
               raise ArgumentError, "#{values.inspect} must be an array" unless values.is_a?(::Array)
               
               values.map(&@type_class.method(:cast))
@@ -23,6 +24,7 @@ module CouchbaseOrm
         
             def serialize(values)
                 return [] if values.nil?
+
                 values.map(&@type_class.method(:serialize))
             end
         end
