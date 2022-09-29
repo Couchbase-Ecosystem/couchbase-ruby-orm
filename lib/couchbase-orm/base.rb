@@ -176,7 +176,6 @@ module CouchbaseOrm
 
         def serialized_attributes
             attributes.map { |k, v|
-                v = id if k == "id" # Fixme: review comment about that
                 [k, self.class.attribute_types[k].serialize(v)]
             }.to_h
         end
@@ -263,15 +262,10 @@ module CouchbaseOrm
             alias_method :has_key?, :exists?
         end
 
-        # Document ID is a special case as it is not stored in the document
-        def id
-            @id
-        end
-
         def id=(value)
-            raise 'ID cannot be changed' if @__metadata__.cas && value
+            raise RuntimeError, 'ID cannot be changed' if @__metadata__.cas && value
             attribute_will_change!(:id)
-            @id = value.to_s.presence
+            _write_attribute("id", value)
         end
 
         # Public: Allows for access to ActiveModel functionality.

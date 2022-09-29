@@ -186,7 +186,7 @@ module CouchbaseOrm
             else
                 # Fallback to writing the whole document
                 CouchbaseOrm.logger.debug { "Data - Replace #{id} #{attributes.to_s.truncate(200)}" }
-                self.class.collection.replace(id, attributes.except(:id).merge(type: self.class.design_document), **options)
+                self.class.collection.replace(id, attributes.except("id").merge(type: self.class.design_document), **options)
             end
 
             # Ensure the model is up to date
@@ -230,7 +230,7 @@ module CouchbaseOrm
                 run_callbacks :save do
                     options[:cas] = @__metadata__.cas if with_cas
                     CouchbaseOrm.logger.debug { "_update_record - replace #{id} #{serialized_attributes.to_s.truncate(200)}" }
-                    resp = self.class.collection.replace(id, serialized_attributes.except(:id).merge(type: self.class.design_document), Couchbase::Options::Replace.new(**options))
+                    resp = self.class.collection.replace(id, serialized_attributes.except("id").merge(type: self.class.design_document), Couchbase::Options::Replace.new(**options))
 
                     # Ensure the model is up to date
                     @__metadata__.cas = resp.cas
@@ -247,8 +247,7 @@ module CouchbaseOrm
                 run_callbacks :save do
                     assign_attributes(id: self.class.uuid_generator.next(self)) unless self.id
                     CouchbaseOrm.logger.debug { "_create_record - Upsert #{id} #{serialized_attributes.to_s.truncate(200)}" }
-
-                    resp = self.class.collection.upsert(self.id, serialized_attributes.except(:id).merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
+                    resp = self.class.collection.upsert(self.id, serialized_attributes.except("id").merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
 
                     # Ensure the model is up to date
                     @__metadata__.cas = resp.cas
