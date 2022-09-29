@@ -81,7 +81,7 @@ module CouchbaseOrm
             private
 
             def convert_values(keys, values)
-                raise ArgumentError, "Empty keys but values are present, can't type cast" if keys.empty? && Array.wrap(values).any?
+                return values if keys.empty? && Array.wrap(values).any?
                 keys.zip(Array.wrap(values)).map do |key, value_before_type_cast|
                     serialize_value(key, value_before_type_cast)
                 end
