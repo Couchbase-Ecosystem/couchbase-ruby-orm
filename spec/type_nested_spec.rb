@@ -107,6 +107,7 @@ describe CouchbaseOrm::Types::Nested do
 
 
         class SubWithValidation < CouchbaseOrm::NestedDocument
+            attribute :id, :string
             attribute :name
             attribute :label
             attribute :child, :nested, type: SubWithValidation
@@ -118,6 +119,14 @@ describe CouchbaseOrm::Types::Nested do
             attribute :child, :nested, type: SubWithValidation
             attribute :children, :array, type: SubWithValidation
             validates :child, :children, nested: true
+        end
+        
+        it "should generate an id" do
+            expect(SubWithValidation.new.id).to be_present
+        end
+
+        it "should not override the param id" do
+            expect(SubWithValidation.new(id: "foo").id).to eq "foo"
         end
 
         it "should validate the nested object" do
