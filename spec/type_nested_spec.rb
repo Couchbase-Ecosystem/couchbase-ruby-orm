@@ -104,8 +104,6 @@ describe CouchbaseOrm::Types::Nested do
     end
 
     describe "Validations" do
-
-
         class SubWithValidation < CouchbaseOrm::NestedDocument
             attribute :id, :string
             attribute :name
@@ -123,6 +121,16 @@ describe CouchbaseOrm::Types::Nested do
         
         it "should generate an id" do
             expect(SubWithValidation.new.id).to be_present
+        end
+
+        it "should not regenerate the id after reloading parent" do
+            obj = WithValidationParent.new
+            obj.child = SubWithValidation.new(name: "foo")
+            obj.save!
+            expect(obj.child.id).to be_present
+            old_id = obj.child.id
+            obj.reload
+            expect(obj.child.id).to eq(old_id)
         end
 
         it "should not override the param id" do

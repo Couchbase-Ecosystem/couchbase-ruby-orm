@@ -126,7 +126,6 @@ module CouchbaseOrm
 
         class MismatchTypeError < RuntimeError; end
 
-        # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
             CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
             @__metadata__   = Metadata.new

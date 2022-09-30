@@ -34,7 +34,7 @@ module CouchbaseOrm
             def serialize(value)
                 return nil if value.nil?
                 value = @model_class.new(value) if value.is_a?(Hash)
-                return value.send(:serialized_attributes).except("id") if value.is_a?(@model_class)
+                return value.send(:serialized_attributes) if value.is_a?(@model_class)
 
                 raise ArgumentError, "Nested: #{value.inspect} (#{value.class}) is not supported for serialization"
             end
