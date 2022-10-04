@@ -38,6 +38,18 @@ module CouchbaseOrm
                 query.to_a
             end
 
+            def first
+                result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: :request_plus))
+                first_id = result.rows.to_a.first
+                @model.find(first_id) if first_id
+            end
+
+            def last
+                result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: :request_plus))
+                last_id = result.rows.to_a.last
+                @model.find(last_id) if last_id
+            end
+
             def count
                 query.count
             end

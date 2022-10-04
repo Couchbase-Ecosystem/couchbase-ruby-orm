@@ -139,6 +139,20 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.all.where(active: true).order(age: :asc)).to match_array([m1, m2])
     end
 
+    it "should query first" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(active: true).order(age: :desc).first).to eq m2
+    end
+
+    it "should query last" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(active: true).order(age: :asc).last).to eq m2
+    end
+
     it "should return a relation when using not" do
         expect(RelationModel.not(active: true)).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
         expect(RelationModel.all.not(active: true)).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
