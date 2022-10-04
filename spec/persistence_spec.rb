@@ -2,6 +2,7 @@
 
 require File.expand_path("../support", __FILE__)
 
+require "action_controller"
 
 class BasicModel < CouchbaseOrm::Base
     attribute :name
@@ -234,6 +235,18 @@ describe CouchbaseOrm::Persistence do
 
         model.destroy
         expect(model.destroyed?).to be(true)
+    end
+
+    it "should update with action controler parameters" do
+        model = BasicModel.create!
+        params = ActionController::Parameters.new({
+              name: 'Francesco',
+              age:  22,
+              foo: 'bar'
+          })
+        model.update!(params.permit(:name, :age))
+        model.reload
+        expect(model.age).to eq(22)
     end
 
     it "should update attributes" do

@@ -146,7 +146,8 @@ module CouchbaseOrm
         end
 
         def assign_attributes(hash)
-            super(hash.with_indifferent_access.except("type"))
+            hash = hash.with_indifferent_access if hash.is_a?(Hash)
+            super(hash.except("type"))
         end
 
         # Updates the attributes of the model from the passed-in hash and saves the
