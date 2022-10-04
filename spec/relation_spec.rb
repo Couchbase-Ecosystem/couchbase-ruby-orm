@@ -30,6 +30,7 @@ describe CouchbaseOrm::Relation do
         RelationModel.create! name: :alice, active: true, age: 20
         RelationModel.create! name: :john, active: false, age: 30
         expect(RelationModel.where(active: true).count).to eq(2)
+        expect(RelationModel.where(active: true).size).to eq(2)
 
         expect(RelationModel.where(active: true).to_a.map(&:name)).to match_array(%w[bob alice])
         expect(RelationModel.where(active: true).where(age: 10).to_a.map(&:name)).to match_array(%w[bob])
@@ -144,6 +145,13 @@ describe CouchbaseOrm::Relation do
         m2 = RelationModel.create!(active: true, age: 20)
         _m3 = RelationModel.create!(active: false, age: 30)
         expect(RelationModel.where(active: true).order(age: :desc).first).to eq m2
+    end
+
+    it "should query array first" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(active: true).order(age: :desc)[0]).to eq m2
     end
 
     it "should query last" do

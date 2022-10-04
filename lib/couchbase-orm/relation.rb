@@ -54,6 +54,8 @@ module CouchbaseOrm
                 query.count
             end
 
+            alias :size :count
+
             def to_ary
                 query.results { |res| @model.find(res) }.to_ary
             end
@@ -61,6 +63,10 @@ module CouchbaseOrm
             alias :to_a :to_ary
 
             delegate :each, :map, :collect, :to => :to_ary
+
+            def [](*args)
+                to_ary[*args]
+            end
 
             def delete_all
                 CouchbaseOrm::logger.debug{ "Delete all: #{self}" }
