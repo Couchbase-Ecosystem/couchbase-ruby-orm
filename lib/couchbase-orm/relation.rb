@@ -54,10 +54,23 @@ module CouchbaseOrm
                 query.count
             end
 
+            def pluck(*fields)
+                map do |model|
+                    if fields.length == 1
+                        model.send(fields.first)
+                    else
+                        fields.map do |field|
+                            model.send(field)
+                        end
+                    end
+                end
+            end
+
             alias :size :count
+            alias :length :count
 
             def to_ary
-                query.results { |res| @model.find(res) }.to_ary
+                query.results { |ids| @model.find(ids) }.to_ary
             end
 
             alias :to_a :to_ary

@@ -176,6 +176,21 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.all.not(active: true)).to respond_to(:each)
     end
 
+    it "should pluck one element" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        _m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.order(:age).pluck(:age)).to match_array([10, 20, 30])
+    end
+
+    it "should pluck several elements" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        _m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.order(:age).pluck(:age, :active)).to match_array([[10, true], [20, true], [30, false]])
+    end
+
+
     it "should query true boolean" do
         m1 = RelationModel.create!(active: true)
         _m2 = RelationModel.create!(active: false)
