@@ -183,6 +183,16 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.order(:age).pluck(:age)).to match_array([10, 20, 30])
     end
 
+    it "should find one element" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.all.find do |m|
+            m.age == 20
+        end).to eq m2
+    end
+
+
     it "should pluck several elements" do
         _m1 = RelationModel.create!(active: true, age: 10)
         _m2 = RelationModel.create!(active: true, age: 20)

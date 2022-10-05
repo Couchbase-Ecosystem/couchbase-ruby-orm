@@ -75,7 +75,7 @@ module CouchbaseOrm
 
             alias :to_a :to_ary
 
-            delegate :each, :map, :collect, :find :to => :to_ary
+            delegate :each, :map, :collect, :find, :to => :to_ary
 
             def [](*args)
                 to_ary[*args]
