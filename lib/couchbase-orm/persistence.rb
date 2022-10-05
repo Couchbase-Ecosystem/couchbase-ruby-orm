@@ -57,19 +57,19 @@ module CouchbaseOrm
         # Returns true if this object hasn't been saved yet -- that is, a record
         # for the object doesn't exist in the database yet; otherwise, returns false.
         def new_record?
-            @__metadata__.cas.nil? && id.nil?
+            @__metadata__.cas.nil?
         end
         alias_method :new?, :new_record?
 
         # Returns true if this object has been destroyed, otherwise returns false.
         def destroyed?
-            !!(@__metadata__.cas && id.blank?)
+            @destroyed
         end
 
         # Returns true if the record is persisted, i.e. it's not a new record and it was
         # not destroyed, otherwise returns false.
         def persisted?
-            id.present?
+            !new_record? && !destroyed?
         end
         alias_method :exists?, :persisted?
 
@@ -106,6 +106,7 @@ module CouchbaseOrm
 
             self.id = nil
             clear_changes_information
+            @destroyed = true
             self.freeze
             self
         end
@@ -130,6 +131,7 @@ module CouchbaseOrm
                 self.id = nil
 
                 clear_changes_information
+                @destroyed = true
                 freeze
             end
         end
