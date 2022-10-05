@@ -269,6 +269,31 @@ describe CouchbaseOrm::Persistence do
         expect(model.destroyed?).to be(true)
     end
 
+    it "should not allow to update unkown attributes" do
+        model = BasicModel.new
+        
+        expect{ model.update_attributes({
+            name: 'bob',
+            age: 34,
+            foo: 'bar'
+        }) }.to raise_error(ActiveModel::UnknownAttributeError) 
+    end
+
+    it "should not allow to create with unkown attributes" do
+        expect{ BasicModel.create({
+            name: 'bob',
+            age: 34,
+            foo: 'bar'
+        }) }.to raise_error(ActiveModel::UnknownAttributeError) 
+    end
+
+    it "should not allow to update with unkown attributes" do
+        model = BasicModel.create!(name: 'bob', age: 34)
+        expect{ model.update({
+            foo: 'bar'
+        }) }.to raise_error(ActiveModel::UnknownAttributeError) 
+    end
+
     describe BasicModel do
         it_behaves_like "ActiveModel"
     end

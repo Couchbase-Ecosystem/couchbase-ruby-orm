@@ -14,6 +14,7 @@ end
 class TypeNestedTest < CouchbaseOrm::Base
     attribute :main, :nested, type: SubTypeTest
     attribute :others, :array, type: SubTypeTest
+    attribute :flags, :array, type: :boolean
 end
 
 describe CouchbaseOrm::Types::Nested do
@@ -63,6 +64,7 @@ describe CouchbaseOrm::Types::Nested do
         expect(obj.send(:serialized_attributes)).to eq ({
             "id" => obj.id,
             "main" => nil,
+            "flags" => [],
             "others" => [
                 {
                     "name" => "foo",
@@ -101,6 +103,25 @@ describe CouchbaseOrm::Types::Nested do
     
     it "should not serialize a list" do
         expect{CouchbaseOrm::Types::Nested.new(type: SubTypeTest).serialize([1,2,3])}.to raise_error(ArgumentError)
+    end
+
+    it "should save a object with nested changes"  do
+        obj = TypeNestedTest.new
+        obj.main = SubTypeTest.new(name: "foo")
+        obj.others = [SubTypeTest.new(name: "foo"), SubTypeTest.new(name: "bar")]
+        obj.flags = [false, true]
+        obj.save!
+        obj.main.name = "bar"
+        obj.others[0].name = "bar"
+        obj.others[1].name = "baz"
+        obj.flags[0] = true
+
+        obj.save!
+        obj = TypeNestedTest.find(obj.id)
+        expect(obj.main.name).to eq "bar"
+        expect(obj.others[0].name).to eq "bar"
+        expect(obj.others[1].name).to eq "baz"
+        expect(obj.flags).to eq [true, true]
     end
 
     describe "Validations" do

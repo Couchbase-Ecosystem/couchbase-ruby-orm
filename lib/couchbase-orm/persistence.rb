@@ -227,7 +227,7 @@ module CouchbaseOrm
 
         def _update_record(*_args, with_cas: false, **options)
             return false unless perform_validations(:update, options)
-            return true unless changed?
+            return true unless changed? || self.class.attribute_types.any? { |_, type| type.is_a?(CouchbaseOrm::Types::Nested) || type.is_a?(CouchbaseOrm::Types::Array)  }
 
             run_callbacks :update do
                 run_callbacks :save do
