@@ -2,8 +2,6 @@
 
 module CouchbaseOrm
     module Encrypt
-        TANKER_ENCRYPTED_PREFIX = 'tanker_encrypted_'
-
         def encode_encrypted_attributes
             attributes.map do |key, value|
                 if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
