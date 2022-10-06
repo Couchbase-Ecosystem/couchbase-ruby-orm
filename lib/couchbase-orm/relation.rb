@@ -54,6 +54,10 @@ module CouchbaseOrm
                 query.count
             end
 
+            def empty?
+                limit(1).count == 0
+            end
+
             def pluck(*fields)
                 map do |model|
                     if fields.length == 1
@@ -167,7 +171,7 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(model: self)
             end
 
-            delegate :ids, :delete_all, :count, to: :all
+            delegate :ids, :delete_all, :count, :empty?, to: :all
         end
     end
 end

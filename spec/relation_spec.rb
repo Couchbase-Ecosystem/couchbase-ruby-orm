@@ -256,5 +256,14 @@ describe CouchbaseOrm::Relation do
         _m3 = RelationModel.create!(active: nil)
         expect(RelationModel.not(active: [false, nil])).to match_array([m1])
     end
+
+    it "is empty" do
+        expect(RelationModel.empty?).to eq(true)
+    end
+
+    it "is not empty with a created model" do
+        RelationModel.create!(active: true)
+        expect(RelationModel.empty?).to eq(false)
+    end
 end
 
