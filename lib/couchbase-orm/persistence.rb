@@ -7,6 +7,8 @@ module CouchbaseOrm
     module Persistence
         extend ActiveSupport::Concern
 
+        include Encrypt
+
         included do
             attribute :id, :string
         end
@@ -209,6 +211,7 @@ module CouchbaseOrm
             resp = self.class.collection.get!(id)
             assign_attributes(resp.content.except("id")) # API return a nil id
             @__metadata__.cas = resp.cas
+            decode_encrypted_attributes(attributes)
 
             reset_associations
             clear_changes_information

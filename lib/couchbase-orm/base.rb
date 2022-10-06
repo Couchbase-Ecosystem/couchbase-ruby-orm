@@ -146,18 +146,19 @@ module CouchbaseOrm
                     self.id = attributes[:id] if attributes[:id].present?
                     @__metadata__.cas = model.cas
 
-                    assign_attributes(doc)
+                    assign_attributes(decode_encrypted_attributes(doc))
                 when CouchbaseOrm::Base
                     clear_changes_information
                     super(model.attributes.except(:id, 'type'))
                 else
                     clear_changes_information
-                    assign_attributes(**attributes.merge(Hash(model)).symbolize_keys)
+                    assign_attributes(decode_encrypted_attributes(**attributes.merge(Hash(model)).symbolize_keys))
                 end
             else
                 clear_changes_information
                 super(attributes)
             end
+
             yield self if block_given?
 
             run_callbacks :initialize
@@ -174,8 +175,13 @@ module CouchbaseOrm
         protected
 
         def serialized_attributes
-            attributes.map { |k, v|
-                [k, self.class.attribute_types[k].serialize(v)]
+            encode_encrypted_attributes.map { |k, v|
+                value = self.class.attribute_types[k].serialize(v)
+                if self.class.attribute_types[k].is_a?(CouchbaseOrm::Types::Encrypted)
+                    ["encrypted#{k}", value]
+                else
+                    [k, value]
+                end
             }.to_h
         end
     end
@@ -200,6 +206,7 @@ module CouchbaseOrm
         include QueryHelper
         include N1ql
         include Relation
+        include Encrypt
 
         extend Join
         extend Enum
