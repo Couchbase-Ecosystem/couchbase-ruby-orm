@@ -6,7 +6,7 @@ module CouchbaseOrm
             attributes.map do |key, value|
                 if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
                     ["encrypted$#{key}", {
-                        alg: 'CB_MOBILE_CUSTOM',
+                        alg: self.class.attribute_types[key.to_s].alg,
                         ciphertext: value
                     }]
                 else
