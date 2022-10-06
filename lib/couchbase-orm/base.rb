@@ -116,6 +116,7 @@ module CouchbaseOrm
 
         include ::ActiveRecord::Core
         include ActiveRecordCompat
+        include Encrypt
 
         extend Enum
 
@@ -176,12 +177,7 @@ module CouchbaseOrm
 
         def serialized_attributes
             encode_encrypted_attributes.map { |k, v|
-                value = self.class.attribute_types[k].serialize(v)
-                if self.class.attribute_types[k].is_a?(CouchbaseOrm::Types::Encrypted)
-                    ["encrypted#{k}", value]
-                else
-                    [k, value]
-                end
+                [k, self.class.attribute_types[k].serialize(v)]
             }.to_h
         end
     end
@@ -206,7 +202,6 @@ module CouchbaseOrm
         include QueryHelper
         include N1ql
         include Relation
-        include Encrypt
 
         extend Join
         extend Enum

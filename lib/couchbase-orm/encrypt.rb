@@ -4,26 +4,28 @@ module CouchbaseOrm
     module Encrypt
         TANKER_ENCRYPTED_PREFIX = 'tanker_encrypted_'
 
-        def encode_encrypted_attributes(attributes)
-            attributes.clone.each do |key, value|
-                if self.class.attribute_types[key].is_a?(CouchbaseOrm::Types::Encrypted)
-                    attributes["encrypted$#{key}"] = {
+        def encode_encrypted_attributes
+            attributes.map do |key, value|
+                if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
+                    ["encrypted$#{key}", {
                         alg: 'CB_MOBILE_CUSTOM',
                         ciphertext: value
-                    }
-                    attributes.delete(key)
+                    }]
+                else
+                    [key,value]
                 end
-            end
+            end.to_h
         end
 
         def decode_encrypted_attributes(attributes)
-            attributes.clone.each do |key, value|
+            attributes.map do |key, value|
                 key = key.to_s
                 if key.start_with?('encrypted$')
-                    attributes.delete(key)
-                    attributes[key.gsub('encrypted$', '')] = value[:ciphertext]
+                    [key.gsub('encrypted$', ''), value.with_indifferent_access[:ciphertext]]
+                else
+                    [key, value]
                 end
-            end
+            end.to_h
         end
     end
 end
