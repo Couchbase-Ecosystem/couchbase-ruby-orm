@@ -5,12 +5,14 @@ require "active_model"
 class SubTypeEncryptedTest < CouchbaseOrm::NestedDocument
     attribute :name, :string
     attribute :secret, :encrypted
+    attribute :secret2, :encrypted, encode_base64: false
 end
 
 class TypeEncryptedTest < CouchbaseOrm::Base
     attribute :main, :nested, type: SubTypeEncryptedTest
     attribute :others, :array, type: SubTypeEncryptedTest
     attribute :secret, :encrypted
+    attribute :secret2, :encrypted, encode_base64: false
 end
 
 class SpecificAlgoTest < CouchbaseOrm::Base
@@ -23,25 +25,28 @@ describe CouchbaseOrm::Types::Encrypted do
     let(:base64_secret) { Base64.strict_encode64(the_secret) }
 
     it "prefix attribute on serialization" do
-        obj = TypeEncryptedTest.new(secret: the_secret)
+        obj = TypeEncryptedTest.new(secret: the_secret, secret2: "a secret")
         expect_serialized_secret(obj)
     end
 
     it "prefix attribute on nested objects" do
-        obj = TypeEncryptedTest.new(main: SubTypeEncryptedTest.new(secret: the_secret))
+        obj = TypeEncryptedTest.new(main: SubTypeEncryptedTest.new(secret: the_secret, secret2: "a secret"))
         expect_serialized_secret(obj.main)
     end
 
     it "prefix attribute on array objects" do
-        obj = TypeEncryptedTest.new(others: [SubTypeEncryptedTest.new(secret: the_secret)])
+        obj = TypeEncryptedTest.new(others: [SubTypeEncryptedTest.new(secret: the_secret, secret2: "a secret")])
         expect_serialized_secret(obj.others.first)
     end
 
     def expect_serialized_secret(obj)
         expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: base64_secret})
         expect(obj.send(:serialized_attributes)).to_not have_key "secret"
+        expect(obj.send(:serialized_attributes)["encrypted$secret2"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: "a secret"})
+        expect(obj.send(:serialized_attributes)).to_not have_key "secret2"
         expect(JSON.parse(obj.to_json)["secret"]).to eq base64_secret
         expect(obj.for_json["secret"]).to eq base64_secret
+        expect(obj.for_json["secret2"]).to eq "a secret"
     end
 
     it "prefix with custom algo" do

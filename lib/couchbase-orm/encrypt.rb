@@ -4,16 +4,17 @@ module CouchbaseOrm
     module Encrypt
         def encode_encrypted_attributes
             attributes.filter_map do |key, value|
-                if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
+                type = self.class.attribute_types[key.to_s]
+                if type.is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
                     json_value = if value.is_a?(String)
-                        Base64.strict_encode64(value)
+                        type.encode_base64 ? Base64.strict_encode64(value) : value
                     else
                         raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute"
                     end
 
                     ["encrypted$#{key}", {
-                        alg: self.class.attribute_types[key.to_s].alg,
+                        alg: type.alg,
                         ciphertext: json_value
                     }]
                 else
@@ -26,7 +27,10 @@ module CouchbaseOrm
             attributes.map do |key, value|
                 key = key.to_s
                 if key.start_with?('encrypted$')
-                    [key.gsub('encrypted$', ''), Base64.decode64(value.with_indifferent_access[:ciphertext]).force_encoding(Encoding::UTF_8)]
+                    key = key.gsub('encrypted$', '')
+                    value = value.with_indifferent_access[:ciphertext]
+                    type = self.class.attribute_types[key]
+                    [key, type.encode_base64 ? Base64.decode64(value).force_encoding(Encoding::UTF_8) : value]
                 else
                     [key, value]
                 end
@@ -40,10 +44,11 @@ module CouchbaseOrm
 
         def for_json
             attributes.map do |key, value|
-                if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
+                type = self.class.attribute_types[key.to_s]
+                if type.is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
                     json_value = if value.is_a?(String)
-                        Base64.strict_encode64(value)
+                        type.encode_base64 ? Base64.strict_encode64(value) : value
                     else
                         raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute"
                     end
