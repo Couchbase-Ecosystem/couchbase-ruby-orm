@@ -41,6 +41,7 @@ describe CouchbaseOrm::Types::Encrypted do
         expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: base64_secret})
         expect(obj.send(:serialized_attributes)).to_not have_key "secret"
         expect(JSON.parse(obj.to_json)["secret"]).to eq base64_secret
+        expect(obj.for_json["secret"]).to eq base64_secret
     end
 
     it "prefix with custom algo" do

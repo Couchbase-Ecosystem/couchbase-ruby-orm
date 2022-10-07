@@ -35,6 +35,10 @@ module CouchbaseOrm
 
 
         def to_json(*args, **kwargs)
+            for_json.to_json(*args, **kwargs)
+        end
+
+        def for_json
             attributes.map do |key, value|
                 if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
@@ -47,7 +51,8 @@ module CouchbaseOrm
                 else
                     [key, value]
                 end
-            end.to_h.with_indifferent_access.to_json(*args, **kwargs)
+            end.to_h.with_indifferent_access
         end
+
     end
 end
