@@ -32,5 +32,22 @@ module CouchbaseOrm
                 end
             end.to_h
         end
+
+
+        def to_json(*args, **kwargs)
+            attributes.map do |key, value|
+                if self.class.attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Encrypted)
+                    next unless value
+                    json_value = if value.is_a?(String)
+                        Base64.strict_encode64(value)
+                    else
+                        raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute"
+                    end
+                    [key, json_value]
+                else
+                    [key, value]
+                end
+            end.to_h.with_indifferent_access.to_json(*args, **kwargs)
+        end
     end
 end
