@@ -45,8 +45,7 @@ module CouchbaseOrm
         def as_json(*args, **kwargs)
             super(*args, **kwargs).map do |key, value|
                 type = self.class.attribute_types[key.to_s]
-                if type.is_a?(CouchbaseOrm::Types::Encrypted)
-                    next unless value
+                if type.is_a?(CouchbaseOrm::Types::Encrypted) && value
                     json_value = if value.is_a?(String)
                         type.encode_base64 ? Base64.strict_encode64(value) : value
                     else
