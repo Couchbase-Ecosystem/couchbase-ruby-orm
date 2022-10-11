@@ -148,6 +148,12 @@ describe CouchbaseOrm::Base do
         base.destroy
     end
 
+    it "cannot change the id of a loaded object" do
+        base = BaseTest.create!(name: 'joe')
+        expect(base.id).to_not be_nil
+        expect{base.id = "foo"}.to raise_error(RuntimeError, 'ID cannot be changed')
+    end
+
     if ActiveModel::VERSION::MAJOR >= 6
         it "should have timestamp attributes for create in model" do
             expect(TimestampTest.timestamp_attributes_for_create_in_model).to eq(["created_at"])

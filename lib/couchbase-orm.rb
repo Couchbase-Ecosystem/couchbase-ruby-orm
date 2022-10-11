@@ -11,6 +11,8 @@ module CouchbaseOrm
     autoload :Connection,  'couchbase-orm/connection'
     autoload :IdGenerator, 'couchbase-orm/id_generator'
     autoload :Base,        'couchbase-orm/base'
+    autoload :Document,        'couchbase-orm/base'
+    autoload :NestedDocument,   'couchbase-orm/base'
     autoload :HasMany,     'couchbase-orm/utilities/has_many'
 
     def self.logger

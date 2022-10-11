@@ -58,9 +58,9 @@ This works fine in production however by default in development models are lazy 
     require 'couchbase-orm'
 
     class Post < CouchbaseOrm::Base
-      attribute :title, type: String
-      attribute :body,  type: String
-      attribute :draft, type: Boolean
+      attribute :title, :string
+      attribute :body,  :string
+      attribute :draft, :boolean
     end
 
     p = Post.new(id: 'hello-world',
@@ -87,9 +87,9 @@ You can define connection options on per model basis:
 
 ```ruby
     class Post < CouchbaseOrm::Base
-      attribute :title, type: String
-      attribute :body,  type: String
-      attribute :draft, type: Boolean
+      attribute :title, :string
+      attribute :body,  :string
+      attribute :draft, :boolean
 
       connect bucket: 'blog', password: ENV['BLOG_BUCKET_PASSWORD']
     end
@@ -103,7 +103,8 @@ context of rails application. You can also enforce types using ruby
 
 ```ruby
     class Comment < Couchbase::Model
-      attribute :author, :body, type: String
+      attribute :author, :string
+      attribute :body, :string
 
       validates_presence_of :author, :body
     end
@@ -116,7 +117,8 @@ can then be used for filtering results or ordering.
 
 ```ruby
     class Comment < CouchbaseOrm::Base
-      attribute :author, :body, type: String
+      attribute :author :string
+      attribute :body, :string
       view :all # => emits :id and will return all comments
       view :by_author, emit_key: :author
 
@@ -159,7 +161,8 @@ Like views, it's possible to use N1QL to process some requests used for filterin
 
 ```ruby
     class Comment < CouchbaseOrm::Base
-      attribute :author, :body, type: String
+      attribute :author, :string
+      attribute :body, :string
       n1ql :by_author, emit_key: :author
 
       # Generates two functions:
@@ -196,7 +199,7 @@ There are common active record helpers available for use `belongs_to` and `has_m
         has_many :comments, dependent: :destroy
 
         # You can ensure an attribute is unique for this model
-        attribute :email, type: String
+        attribute :email, :string
         ensure_unique :email
     end
 ```
@@ -213,6 +216,41 @@ By default, `has_many` uses a view for association, but you can define a `type` 
     end
 ```
 
+## Nested
+
+Attributes can be of type nested, they must specify a type of NestedDocument. The NestedValidation triggers nested validation on parent validation. 
+
+```ruby
+    class Address < CouchbaseOrm::NestedDocument
+      attribute :road, :string
+      attribute :city, :string
+      validates :road, :city, presence: true
+    end
+
+    class Author < CouchbaseOrm::Base
+        attribute :address, :nested, type: Address
+        validates :address, nested: true
+    end
+```
+
+## Array
+
+Attributes can be of type array, they must contain something that can be serialized and deserialized to/from JSON. You can enforce the type of array elements. The type can be a NestedDocument
+
+```ruby
+    class Book < CouchbaseOrm::NestedDocument
+      attribute :name, :string
+      validates :name, presence: true
+    end 
+
+    class Author < CouchbaseOrm::Base
+        attribute things, :array
+        attribute flags, :array, type: :string
+        attribute books, :array, type: Book
+
+        validates :books, nested: true
+    end
+```
 
 ## Performance Comparison with Couchbase-Ruby-Model
 
