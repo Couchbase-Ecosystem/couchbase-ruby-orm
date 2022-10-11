@@ -39,11 +39,11 @@ module CouchbaseOrm
 
 
         def to_json(*args, **kwargs)
-            for_json.to_json(*args, **kwargs)
+            as_json.to_json(*args, **kwargs)
         end
 
-        def for_json
-            attributes.map do |key, value|
+        def as_json(*args, **kwargs)
+            super(*args, **kwargs).map do |key, value|
                 type = self.class.attribute_types[key.to_s]
                 if type.is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
