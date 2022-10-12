@@ -3,7 +3,7 @@ module CouchbaseOrm
         class Encrypted < ActiveModel::Type::Value  
             attr_reader :alg, :encode_base64
 
-            def initialize(alg: "CB_MOBILE_CUSTOM", encode_base64: true)
+            def initialize(alg: "CB_MOBILE_CUSTOM", encode_base64: false)
                 @alg = alg
                 @encode_base64 = encode_base64
                 super()

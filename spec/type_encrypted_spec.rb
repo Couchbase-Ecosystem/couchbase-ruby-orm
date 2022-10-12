@@ -4,14 +4,14 @@ require "active_model"
 
 class SubTypeEncryptedTest < CouchbaseOrm::NestedDocument
     attribute :name, :string
-    attribute :secret, :encrypted
+    attribute :secret, :encrypted, encode_base64: true
     attribute :secret2, :encrypted, encode_base64: false
 end
 
 class TypeEncryptedTest < CouchbaseOrm::Base
     attribute :main, :nested, type: SubTypeEncryptedTest
     attribute :others, :array, type: SubTypeEncryptedTest
-    attribute :secret, :encrypted
+    attribute :secret, :encrypted, encode_base64: true
     attribute :secret2, :encrypted, encode_base64: false
 end
 
