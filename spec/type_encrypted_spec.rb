@@ -51,7 +51,7 @@ describe CouchbaseOrm::Types::Encrypted do
 
     it "prefix with custom algo" do
         obj = SpecificAlgoTest.new(secret: the_secret)
-        expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"3DES", ciphertext: base64_secret})
+        expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"3DES", ciphertext: the_secret})
         expect(obj.send(:serialized_attributes)).to_not include "secret"
     end
 
