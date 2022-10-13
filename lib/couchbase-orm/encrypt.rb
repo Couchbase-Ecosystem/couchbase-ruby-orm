@@ -3,7 +3,7 @@
 module CouchbaseOrm
     module Encrypt
         def encode_encrypted_attributes
-            attributes.filter_map do |key, value|
+            attributes.map do |key, value|
                 type = self.class.attribute_types[key.to_s]
                 if type.is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
@@ -20,7 +20,7 @@ module CouchbaseOrm
                 else
                     [key,value]
                 end
-            end.to_h
+            end.compact.to_h
         end
 
         def decode_encrypted_attributes(attributes)
