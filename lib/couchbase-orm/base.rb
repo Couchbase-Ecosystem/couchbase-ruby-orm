@@ -183,7 +183,7 @@ module CouchbaseOrm
     end
 
     class NestedDocument < Document
-        def initialize(...)
+        def initialize(*args, **kwargs)
             super
             if respond_to?(:id) && id.nil?
                 assign_attributes(id: SecureRandom.hex)
