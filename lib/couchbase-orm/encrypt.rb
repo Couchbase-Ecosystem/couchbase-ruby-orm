@@ -7,15 +7,10 @@ module CouchbaseOrm
                 type = self.class.attribute_types[key.to_s]
                 if type.is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
-                    json_value = if value.is_a?(String)
-                        type.encode_base64 ? Base64.strict_encode64(value) : value
-                    else
-                        raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute"
-                    end
-
+                    raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute" unless value.is_a?(String)
                     ["encrypted$#{key}", {
                         alg: type.alg,
-                        ciphertext: json_value
+                        ciphertext: value
                     }]
                 else
                     [key,value]
@@ -29,11 +24,8 @@ module CouchbaseOrm
                 if key.start_with?('encrypted$')
                     key = key.gsub('encrypted$', '')
                     value = value.with_indifferent_access[:ciphertext]
-                    type = self.class.attribute_types[key]
-                    [key, type.encode_base64 ? Base64.decode64(value).force_encoding(Encoding::UTF_8) : value]
-                else
-                    [key, value]
                 end
+                [key, value]
             end.to_h
         end
 
@@ -46,15 +38,9 @@ module CouchbaseOrm
             super(*args, **kwargs).map do |key, value|
                 type = self.class.attribute_types[key.to_s]
                 if type.is_a?(CouchbaseOrm::Types::Encrypted) && value
-                    json_value = if value.is_a?(String)
-                        type.encode_base64 ? Base64.strict_encode64(value) : value
-                    else
-                        raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute"
-                    end
-                    [key, json_value]
-                else
-                    [key, value]
+                    raise "Can not serialize value #{value} of type '#{value.class}' for encrypted attribute" unless value.is_a?(String)
                 end
+                [key, value]
             end.to_h.with_indifferent_access
         end
 
