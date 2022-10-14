@@ -95,6 +95,34 @@ You can also let the library generate the unique identifier for you:
     end
 ``` -->
 
+## Typing
+
+The following types have been tested :
+- :string
+- :integer
+- :float
+- :boolean
+- :date
+- :datetime (stored as iso8601)
+- :timestamp (stored as integer)
+- :encrypted
+  - see https://docs.couchbase.com/couchbase-lite/current/c/field-level-encryption.html
+  - You must store a string that can be encoded in json (not binary data), use base64 if needed
+- :array (see below)
+- :nested (see below)
+
+You can register other types in ActiveModel registry :
+
+```
+class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
+  def serialize(value)
+    value&.iso8601(3)
+  end
+end
+
+ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
+```
+
 ## Validations
 
 There are all methods from ActiveModel::Validations accessible in
@@ -203,7 +231,16 @@ amc_sf_comments = amc_comments.where(category: 'S-F')
 # pluck is available, but will query all object fields first
 
 Comment.pluck(:title, :ratings)
+
+# To load the ids without loading the models
+
+Comment.where(author: "David Eddings").ids
+
+# To delete all the models
+
+Comment.where(ratings: 0).delete_all
 ```
+
 
 ## Associations and Indexes
 
