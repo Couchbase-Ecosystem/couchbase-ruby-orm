@@ -83,7 +83,7 @@ You can also let the library generate the unique identifier for you:
     p.id        #=> "post-abcDE34"
 ```
 
-You can define connection options on per model basis:
+<!-- You can define connection options on per model basis:
 
 ```ruby
     class Post < CouchbaseOrm::Base
@@ -93,7 +93,7 @@ You can define connection options on per model basis:
 
       connect bucket: 'blog', password: ENV['BLOG_BUCKET_PASSWORD']
     end
-```
+``` -->
 
 ## Validations
 
@@ -180,10 +180,29 @@ Like views, it's possible to use N1QL to process some requests used for filterin
     end
 ```
 
-Whatever the record, it's possible to execute a N1QL request with:
+## Basic Active Record like query engine
 
 ```ruby
-Comment.bucket.n1ql.select('RAW meta(ui).id').from('bucket').where('author="my_value"').order_by('view_count DESC').results
+class Comment < CouchbaseOrm::Base
+      attribute :title, :string
+      attribute :author, :string
+      attribute :category, :string
+      attribute :ratings, :number
+end
+
+Comment.where(author: "Anne McCaffrey", category: ['S-F', 'Fantasy']).not(ratings: 0).order(:title).limit(10)
+
+# Relation can be composed as in AR:
+
+amc_comments = Comment.where(author: "Anne McCaffrey")
+
+amc_comments.count
+
+amc_sf_comments = amc_comments.where(category: 'S-F')
+
+# pluck is available, but will query all object fields first
+
+Comment.pluck(:title, :ratings)
 ```
 
 ## Associations and Indexes
