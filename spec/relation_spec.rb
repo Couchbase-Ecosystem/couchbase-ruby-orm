@@ -45,6 +45,15 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.where(active: true).where(name: 'bob').count).to eq(1)
     end
 
+    it "should find_by conditions" do
+        RelationModel.create! name: :bob, active: true, age: 10
+        m = RelationModel.create! name: :bob, active: false, age: 10
+        RelationModel.create! name: :alice, active: true, age: 20
+        RelationModel.create! name: :alice, active: false, age: 20
+
+        expect(RelationModel.where(name: 'bob').find_by(active: false)).to eq(m)
+        expect(RelationModel.find_by(name: 'bob', active: false)).to eq(m)
+    end
 
     it "should count without loading models" do
         RelationModel.create! name: :bob, active: true, age: 10

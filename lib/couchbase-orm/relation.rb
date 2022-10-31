@@ -95,6 +95,10 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
             end
 
+            def find_by(**conds)
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds))).first
+            end
+
             def not(**conds)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds, _not: true)))
             end
@@ -171,7 +175,7 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(model: self)
             end
 
-            delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, to: :all
+            delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
         end
     end
 end
