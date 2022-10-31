@@ -79,7 +79,7 @@ module CouchbaseOrm
 
             alias :to_a :to_ary
 
-            delegate :each, :map, :collect, :find, :select, :reduce, :to => :to_ary
+            delegate :each, :map, :collect, :find, :filter, :reduce, :to => :to_ary
 
             def [](*args)
                 to_ary[*args]
@@ -171,7 +171,7 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(model: self)
             end
 
-            delegate :ids, :delete_all, :count, :empty?, :select, :reduce, to: :all
+            delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, to: :all
         end
     end
 end

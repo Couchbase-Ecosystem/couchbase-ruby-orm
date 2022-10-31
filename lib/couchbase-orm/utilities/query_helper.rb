@@ -5,6 +5,7 @@ module CouchbaseOrm
         module ClassMethods
 
             def build_match(key, value)
+                key = "meta().id" if key.to_s == "id"
                 case
                 when value.nil?
                     "#{key} IS NOT VALUED"
@@ -18,6 +19,7 @@ module CouchbaseOrm
             end
 
             def build_not_match(key, value)
+                key = "meta().id" if key.to_s == "id"
                 case
                 when value.nil?
                     "#{key} IS VALUED"

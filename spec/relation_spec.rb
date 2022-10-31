@@ -136,8 +136,15 @@ describe CouchbaseOrm::Relation do
         m1 = RelationModel.create!(active: true, age: 10)
         m2 = RelationModel.create!(active: true, age: 20)
         _m3 = RelationModel.create!(active: false, age: 30)
-        expect(RelationModel.where(active: true).order(age: :desc).all).to match_array([m2, m1])
-        expect(RelationModel.all.where(active: true).order(age: :asc)).to match_array([m1, m2])
+        expect(RelationModel.where(active: true).order(age: :desc).all.to_a).to eq([m2, m1])
+        expect(RelationModel.all.where(active: true).order(age: :asc).to_a).to eq([m1, m2])
+    end
+
+    it "should query by id" do
+        m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(id: [m1.id, m2.id])).to match_array([m1, m2])
     end
 
     it "should query first" do
