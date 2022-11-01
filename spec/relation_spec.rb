@@ -281,5 +281,13 @@ describe CouchbaseOrm::Relation do
         RelationModel.create!(active: true)
         expect(RelationModel.empty?).to eq(false)
     end
+
+    it "should query by gte and lte" do
+        _m1 = RelationModel.create!(age: 10)
+        m2 = RelationModel.create!(age: 20)
+        m3 = RelationModel.create!(age: 30)
+        _m4 = RelationModel.create!(age: 40)
+        expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
+    end
 end
 
