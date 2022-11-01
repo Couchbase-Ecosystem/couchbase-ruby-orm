@@ -164,7 +164,6 @@ describe CouchbaseOrm::Types::Nested do
             expect(obj).to_not be_valid
             expect(obj.errors[:child]).to eq ["is invalid"]
             expect(obj.child.errors[:name]).to eq ["can't be blank"]
-
         end
 
         it "should validate the nested objects in an array" do

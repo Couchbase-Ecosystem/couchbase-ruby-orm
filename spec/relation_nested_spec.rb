@@ -46,8 +46,6 @@ describe CouchbaseOrm::Relation do
             NestedModel.new(name: "sub4", size: 4)
         ]
         parent.save!
-        puts parent.as_json
-        puts RelationParentModel.where(subs: {size: {_gte: 3, _lt: 4}}).to_n1ql
         expect(RelationParentModel.where(subs: {size: {_gte: 3, _lt: 4}}).first).to eq parent
     end
 
@@ -56,10 +54,11 @@ describe CouchbaseOrm::Relation do
         parent = RelationParentModel.create(name: "parent")
         parent.sub = NestedModel.new(name: "sub")
         parent.save!
-
+        expect(RelationParentModel.where('sub.name': 'sub').first).to eq parent
         expect(RelationParentModel.where(sub: {name: 'sub'}).first).to eq parent
         expect(RelationParentModel.where(sub: {name: ['sub', 'subX']}).first).to eq parent
         expect(RelationParentModel.where(sub: {name: ['subX']}).first).to be_nil
+
     end
 
     it "should query by grand child attribute" do
