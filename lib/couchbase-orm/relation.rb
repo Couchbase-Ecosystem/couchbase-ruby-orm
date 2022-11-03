@@ -128,6 +128,14 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments)
             end
 
+            def scoping
+                scopes = (Thread.current[@model.name] ||= [])
+                scopes.push(self)
+                result = yield
+                scopes.pop
+                result
+            end
+
             private
 
             def build_limit
@@ -171,31 +179,25 @@ module CouchbaseOrm
                 end.join(", ")
             end
 
+            def method_missing(method, *args, &block)
+                if @model.respond_to?(method)
+                    scoping {
+                        @model.public_send(method, *args, &block)
+                    }
+                else
+                    super
+                end
+            end
         end
 
         module ClassMethods
-            def where(**conds)
-                CouchbaseOrm_Relation.new(model: self, where: conds)
-            end
-
-            def not(**conds)
-                CouchbaseOrm_Relation.new(model: self, where: conds, _not: true)
-            end
-
-            def order(*ordersl, **ordersh)
-                order = ordersh.reverse_merge(ordersl.map{ |o| [o, :asc] }.to_h)
-                CouchbaseOrm_Relation.new(model: self, order: order)
-            end
-
-            def limit(limit)
-                CouchbaseOrm_Relation.new(model: self, limit: limit)
-            end
-
-            def all
-                CouchbaseOrm_Relation.new(model: self)
+            def relation
+                Thread.current[self.name]&.last || CouchbaseOrm_Relation.new(model: self)
             end
 
             delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
+
+            delegate :where, :not, :order, :limit, :all, to: :relation
         end
     end
 end

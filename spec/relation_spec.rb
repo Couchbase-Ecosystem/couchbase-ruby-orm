@@ -8,6 +8,14 @@ class RelationModel < CouchbaseOrm::Base
     attribute :last_name, :string
     attribute :active, :boolean
     attribute :age, :integer
+
+    def self.adult
+        where(age: {_gte: 18})
+    end
+
+    def self.active
+        where(active: true)
+    end
 end
 
 describe CouchbaseOrm::Relation do
@@ -215,7 +223,6 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.order(:age).pluck(:age, :active)).to match_array([[10, true], [20, true], [30, false]])
     end
 
-
     it "should query true boolean" do
         m1 = RelationModel.create!(active: true)
         _m2 = RelationModel.create!(active: false)
@@ -299,6 +306,29 @@ describe CouchbaseOrm::Relation do
         expect(m2.reload.age).to eq(50)
         expect(m3.reload.age).to eq(50)
         expect(m4.reload.age).to eq(40)
+    end
+
+    describe "scopes" do
+        it "should chain scopes" do
+            _m1 = RelationModel.create!(age: 10, active: true)
+            _m2 = RelationModel.create!(age: 20, active: false)
+            m3 = RelationModel.create!(age: 30, active: true)
+            m4 = RelationModel.create!(age: 40, active: true)
+
+            expect(RelationModel.all.adult.all.active.all).to match_array([m3, m4])
+            expect(RelationModel.where(active: true).adult).to match_array([m3, m4])
+        end
+
+        it "should be scoped only in current thread" do
+            m1 = RelationModel.create!(active: true)
+            m2 = RelationModel.create!(active: false)
+            RelationModel.active.scoping do
+                expect(RelationModel.all).to match_array([m1])
+                Thread.start do
+                    expect(RelationModel.all).to match_array([m1, m2])
+                end.join
+            end
+        end
     end
 end
 
