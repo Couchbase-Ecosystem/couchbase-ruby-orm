@@ -311,13 +311,13 @@ describe CouchbaseOrm::Relation do
         expect(m3.reload.age).to eq(50)
         expect(m4.reload.age).to eq(40)
     end
+
     describe "scopes" do
         it "should chain scopes" do
             _m1 = RelationModel.create!(age: 10, active: true)
             _m2 = RelationModel.create!(age: 20, active: false)
             m3 = RelationModel.create!(age: 30, active: true)
             m4 = RelationModel.create!(age: 40, active: true)
-
 
             expect(RelationModel.all.adult.all.active.all).to match_array([m3, m4])
             expect(RelationModel.where(active: true).adult).to match_array([m3, m4])
@@ -326,11 +326,11 @@ describe CouchbaseOrm::Relation do
         it "should be thread safe" do
             m1 = RelationModel.create!(age: 10, active: true)
             m2 = RelationModel.create!(age: 20, active: false)
-            RelationModel.active.test do
+            RelationModel.active.scoping do
                 expect(RelationModel.all).to match_array([m1])
                 Thread.start do
                     expect(RelationModel.all).to match_array([m1, m2])
-                end
+                end.join
             end
         end
     end

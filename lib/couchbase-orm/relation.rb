@@ -128,6 +128,14 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments)
             end
 
+            def scoping
+                scopes = (Thread.current[@model.name] ||= [])
+                scopes.push(self)
+                result = yield
+                scopes.pop
+                result
+            end
+
             private
 
             def build_limit
@@ -171,14 +179,6 @@ module CouchbaseOrm
                 end.join(", ")
             end
 
-            def scoping
-                scopes = (Thread.current[@model.name] ||= [])
-                scopes.push(self)
-                result = yield
-                scopes.pop
-                result
-            end
-
             def method_missing(method, *args, &block)
                 if @model.respond_to?(method)
                     scoping {
@@ -195,27 +195,9 @@ module CouchbaseOrm
                 Thread.current[self.name]&.last || CouchbaseOrm_Relation.new(model: self)
             end
 
-            def where(**conds)
-                relation.where(**conds)
-            end
-
-            def not(**conds)
-                relation.not(**conds)
-            end
-
-            def order(*ordersl, **ordersh)
-                relation.order(*ordersl, **ordersh)
-            end
-
-            def limit(limit)
-                relation.limit(limit)
-            end
-
-            def all
-                relation.all
-            end
-
             delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
+
+            delegate :where, :not, :order, :limit, :all, to: :relation
         end
     end
 end
