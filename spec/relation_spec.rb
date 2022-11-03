@@ -319,7 +319,7 @@ describe CouchbaseOrm::Relation do
             expect(RelationModel.where(active: true).adult).to match_array([m3, m4])
         end
 
-        it "should be thread safe" do
+        it "should be scoped only in current thread" do
             m1 = RelationModel.create!(active: true)
             m2 = RelationModel.create!(active: false)
             RelationModel.active.scoping do
