@@ -208,7 +208,6 @@ describe CouchbaseOrm::Relation do
         end).to eq m2
     end
 
-
     it "should pluck several elements" do
         _m1 = RelationModel.create!(active: true, age: 10)
         _m2 = RelationModel.create!(active: true, age: 20)
@@ -288,6 +287,18 @@ describe CouchbaseOrm::Relation do
         m3 = RelationModel.create!(age: 30)
         _m4 = RelationModel.create!(age: 40)
         expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
+    end
+
+    it "should update_all" do
+        m1 = RelationModel.create!(age: 10)
+        m2 = RelationModel.create!(age: 20)
+        m3 = RelationModel.create!(age: 30)
+        m4 = RelationModel.create!(age: 40)
+        RelationModel.where(age: {_lte: 30, _gt:10}).update_all(age: 50)
+        expect(m1.reload.age).to eq(10)
+        expect(m2.reload.age).to eq(50)
+        expect(m3.reload.age).to eq(50)
+        expect(m4.reload.age).to eq(40)
     end
 end
 

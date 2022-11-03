@@ -26,12 +26,25 @@ module CouchbaseOrm
                 "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
             end
 
-            def query
-                CouchbaseOrm::logger.debug("Query: #{self}")
-                n1ql_query = to_n1ql
+            def execute(n1ql_query)
                 result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: :request_plus))
                 CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} return #{result.rows.to_a.length} rows" }
                 N1qlProxy.new(result)
+            end
+
+            def query
+                CouchbaseOrm::logger.debug("Query: #{self}")
+                n1ql_query = to_n1ql
+                execute(n1ql_query)
+            end
+            
+            def update_all(**cond)
+                bucket_name = @model.bucket.name
+                where = build_where
+                limit = build_limit
+                update = build_update(**cond)
+                n1ql_query = "update `#{bucket_name}` set #{update} where #{where} #{limit}"
+                execute(n1ql_query)
             end
 
             def ids
@@ -151,6 +164,13 @@ module CouchbaseOrm
                         @model.build_match(key, value)
                 end.join(" AND ")
             end
+
+            def build_update(**cond)
+                cond.map do |key,value|
+                    "#{key} = #{@model.quote(value)}"
+                end.join(", ")
+            end
+
         end
 
         module ClassMethods
