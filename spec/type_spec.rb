@@ -1,5 +1,5 @@
 require File.expand_path("../support", __FILE__)
-
+require "timecop"
 require "active_model"
 require "couchbase-orm/types"
 
@@ -18,13 +18,18 @@ class TypeTest < CouchbaseOrm::Base
     attribute :renewal_date, :date
     attribute :subscribed_at, :datetime
     attribute :some_time, :timestamp
-    attribute :precision_time, :datetime3decimal
+    attribute :precision3_time, :datetime3decimal
+    attribute :precision6_time, :datetime, precision: 6
+
+    attribute :created_at, :datetime, precision: 6
+    attribute :updated_at, :datetime, precision: 6
+
     attribute :active, :boolean
 
     index :age, presence: false
     index :renewal_date, presence: false
     index :some_time, presence: false
-    index :precision_time, presence: false
+    index :precision3_time, presence: false
 end
 
 class N1qlTypeTest < CouchbaseOrm::Base
@@ -34,7 +39,7 @@ class N1qlTypeTest < CouchbaseOrm::Base
     attribute :renewal_date, :date
     attribute :subscribed_at, :datetime
     attribute :some_time, :timestamp
-    attribute :precision_time, :datetime3decimal
+    attribute :precision3_time, :datetime3decimal
     attribute :active, :boolean
 
     index_n1ql :name, validate: false
@@ -44,7 +49,7 @@ class N1qlTypeTest < CouchbaseOrm::Base
     index_n1ql :renewal_date, validate: false
     index_n1ql :some_time, validate: false
     index_n1ql :subscribed_at, validate: false
-    index_n1ql :precision_time, validate: false
+    index_n1ql :precision3_time, validate: false
     n1ql :by_both_dates, emit_key: [:renewal_date, :subscribed_at], presence: false
 end
 
@@ -177,17 +182,17 @@ describe CouchbaseOrm::Base do
 
     it "should be able to query by custom type" do
         now = Time.now
-        t = TypeTest.create!(precision_time: now)
-        _t2 = TypeTest.create!(precision_time: now + 1)
-        expect(TypeTest.find_by_precision_time(now)).to eq t
+        t = TypeTest.create!(precision3_time: now)
+        _t2 = TypeTest.create!(precision3_time: now + 1)
+        expect(TypeTest.find_by_precision3_time(now)).to eq t
     end
 
     it "should be able to query by custom type and type cast" do
         now = Time.now
         now_s = now.utc.iso8601(3)
-        t = TypeTest.create!(precision_time: now_s)
-        expect(TypeTest.find_by_precision_time(now)).to eq t
-        expect(TypeTest.find_by_precision_time(now_s)).to eq t
+        t = TypeTest.create!(precision3_time: now_s)
+        expect(TypeTest.find_by_precision3_time(now)).to eq t
+        expect(TypeTest.find_by_precision3_time(now_s)).to eq t
     end
 
     it "should be able to set attributes with a hash with indifferent access" do
@@ -279,9 +284,9 @@ describe CouchbaseOrm::Base do
 
     it "should be able to query by custom type" do
         now = Time.now
-        t = N1qlTypeTest.create!(precision_time: now)
-        _t2 = N1qlTypeTest.create!(precision_time: now + 1)
-        expect(N1qlTypeTest.find_by_precision_time(now).to_a).to eq [t]
+        t = N1qlTypeTest.create!(precision3_time: now)
+        _t2 = N1qlTypeTest.create!(precision3_time: now + 1)
+        expect(N1qlTypeTest.find_by_precision3_time(now).to_a).to eq [t]
     end
 
     it "should be able to query by boolean" do
@@ -294,5 +299,19 @@ describe CouchbaseOrm::Base do
         t = N1qlTypeTest.create!(size: 1.5)
         _t2 = N1qlTypeTest.create!(size: 2.5)
         expect(N1qlTypeTest.find_by_size(1.5).to_a).to eq [t]
+    end
+
+    it "should set datetime with precision" do
+        time = Time.at(1667499592.5170466123)
+        Timecop.freeze(time) do
+            test = TypeTest.create!(precision3_time: 1667499592.5170466123, some_time: 1667499592.5170466123, precision6_time: Time.now)
+
+            expect(test.created_at).to eq(time.floor(6))
+            expect(test.updated_at).to eq(time.floor(6))
+
+            expect(test.some_time).to eq(time.floor)
+            expect(test.precision3_time).to eq(time.floor(3))
+            expect(test.precision6_time).to eq(time.floor(6))
+        end
     end
 end
