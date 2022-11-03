@@ -16,10 +16,6 @@ class RelationModel < CouchbaseOrm::Base
     def self.active
         where(active: true)
     end
-
-    def self.test(&block)
-        yield
-    end
 end
 
 describe CouchbaseOrm::Relation do
@@ -324,8 +320,8 @@ describe CouchbaseOrm::Relation do
         end
 
         it "should be thread safe" do
-            m1 = RelationModel.create!(age: 10, active: true)
-            m2 = RelationModel.create!(age: 20, active: false)
+            m1 = RelationModel.create!(active: true)
+            m2 = RelationModel.create!(active: false)
             RelationModel.active.scoping do
                 expect(RelationModel.all).to match_array([m1])
                 Thread.start do
