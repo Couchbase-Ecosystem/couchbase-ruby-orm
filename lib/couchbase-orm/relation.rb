@@ -171,28 +171,48 @@ module CouchbaseOrm
                 end.join(", ")
             end
 
+            def scoping
+                scopes = (Thread.current[@model.name] ||= [])
+                scopes.push(self)
+                result = yield
+                scopes.pop
+                result
+            end
+
+            def method_missing(method, *args, &block)
+                if @model.respond_to?(method)
+                    scoping {
+                        @model.public_send(method, *args, &block)
+                    }
+                else
+                    super
+                end
+            end
         end
 
         module ClassMethods
+            def relation
+                Thread.current[self.name]&.last || CouchbaseOrm_Relation.new(model: self)
+            end
+
             def where(**conds)
-                CouchbaseOrm_Relation.new(model: self, where: conds)
+                relation.where(**conds)
             end
 
             def not(**conds)
-                CouchbaseOrm_Relation.new(model: self, where: conds, _not: true)
+                relation.not(**conds)
             end
 
             def order(*ordersl, **ordersh)
-                order = ordersh.reverse_merge(ordersl.map{ |o| [o, :asc] }.to_h)
-                CouchbaseOrm_Relation.new(model: self, order: order)
+                relation.order(*ordersl, **ordersh)
             end
 
             def limit(limit)
-                CouchbaseOrm_Relation.new(model: self, limit: limit)
+                relation.limit(limit)
             end
 
             def all
-                CouchbaseOrm_Relation.new(model: self)
+                relation.all
             end
 
             delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
