@@ -195,7 +195,7 @@ module CouchbaseOrm
                 Thread.current[self.name]&.last || CouchbaseOrm_Relation.new(model: self)
             end
 
-            delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
+            delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
             delegate :where, :not, :order, :limit, :all, to: :relation
         end
