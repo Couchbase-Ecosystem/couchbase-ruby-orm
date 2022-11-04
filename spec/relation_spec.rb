@@ -279,6 +279,18 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.not(active: [false, nil])).to match_array([m1])
     end
 
+    it "should query by string" do
+        m1 = RelationModel.create!(age: 20, active: true)
+        m2 = RelationModel.create!(age: 10, active: false)
+        m3 = RelationModel.create!(age: 20, active: false)
+
+        expect(RelationModel.where("active = true").count).to eq(1)
+        expect(RelationModel.where("active = true")).to match_array([m1])
+        expect(RelationModel.where("active = false")).to match_array([m2, m3])
+        expect(RelationModel.where(age: 20).where("active = false")).to match_array([m3])
+        expect(RelationModel.where("active = false").where(age: 20)).to match_array([m3])
+    end
+
     it "is empty" do
         expect(RelationModel.empty?).to eq(true)
     end

@@ -104,8 +104,8 @@ module CouchbaseOrm
                 CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
 
-            def where(**conds)
-                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
+            def where(string_cond=nil, **conds)
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)+string_where(string_cond)))
             end
 
             def find_by(**conds)
@@ -158,6 +158,11 @@ module CouchbaseOrm
                 @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
             end
 
+            def string_where(string_cond, _not = false)
+                return [] unless string_cond
+                [(_not ? [nil, string_cond, :not] : [nil, string_cond])]
+            end
+
             def build_order
                 order = @order.map do |key, value|
                     "#{key} #{value}"
@@ -167,9 +172,13 @@ module CouchbaseOrm
             
             def build_where
                 ([[:type, @model.design_document]] + @where).map do |key, value, opt|
-                    opt == :not ? 
-                        @model.build_not_match(key, value) : 
-                        @model.build_match(key, value)
+                    if key
+                        opt == :not ? 
+                            @model.build_not_match(key, value) : 
+                            @model.build_match(key, value)
+                    else
+                        value
+                    end
                 end.join(" AND ")
             end
 
