@@ -7,13 +7,18 @@ class NestedRelationModel < CouchbaseOrm::NestedDocument
   attribute :age, :integer
 end
 
+class PathRelationModel < CouchbaseOrm::NestedDocument
+    attribute :pathelement, :nested, type: PathRelationModel
+    attribute :children, :array, type: NestedRelationModel
+end
+
 class RelationModel < CouchbaseOrm::Base
     attribute :name, :string
     attribute :last_name, :string
     attribute :active, :boolean
     attribute :age, :integer
     attribute :children, :array, type: NestedRelationModel
-
+    attribute :pathelement, :nested, type: PathRelationModel
     def self.adult
         where(age: {_gte: 18})
     end
@@ -350,6 +355,20 @@ describe CouchbaseOrm::Relation do
             expect(m1.reload.children.map(&:age)).to eq([10, 20])
             expect(m2.reload.children.map(&:age)).to eq([50, 20])
             expect(m3.reload.children.map(&:age)).to eq([50, 20])
+        end
+
+        it "should update nested attributes with a path in a for clause" do
+            m1 = RelationModel.create!(
+                pathelement: PathRelationModel.new(
+                    pathelement: PathRelationModel.new(
+                        children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")]
+                    )
+                )
+            )
+
+            RelationModel.update_all(child: {age: 50, _for: 'pathelement.pathelement.children', _when: {'child.name': "Tom"}})
+
+            expect(m1.reload.pathelement.pathelement.children.map(&:age)).to eq([50, 20])
         end
     end
 
