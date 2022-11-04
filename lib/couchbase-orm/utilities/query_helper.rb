@@ -34,29 +34,32 @@ module CouchbaseOrm
                         matches << "#{key} <= #{quote(v)}"
                     when :_ne
                         matches << "#{key} != #{quote(v)}"
-                    when :_in
-                        matches << "#{key} IN #{quote(v)}"
-                    when :_nin
-                        matches << "#{key} NOT IN #{quote(v)}"
-                    when :_like
-                        matches << "#{key} LIKE #{quote(v)}"
-                    when :_nlike
-                        matches << "#{key} NOT LIKE #{quote(v)}"
-                    when :_between
-                        matches << "#{key} BETWEEN #{quote(v[0])} AND #{quote(v[1])}"
-                    when :_nbetween
-                        matches << "#{key} NOT BETWEEN #{quote(v[0])} AND #{quote(v[1])}"
-                    when :_exists
-                        matches << "#{key} IS #{v ? "" : "NOT "}VALUED"
-                    when :_regex
-                        matches << "#{key} REGEXP #{quote(v)}"
-                    when :_nregex
-                        matches << "#{key} NOT REGEXP #{quote(v)}"
-                    when :_match
-                        matches << "#{key} MATCH #{quote(v)}"
-                    when :_nmatch
-                        matches << "#{key} NOT MATCH #{quote(v)}"
-                    # TODO
+                    
+                    # TODO v2
+                    # when :_in
+                    #     matches << "#{key} IN #{quote(v)}"
+                    # when :_nin
+                    #     matches << "#{key} NOT IN #{quote(v)}"
+                    # when :_like
+                    #     matches << "#{key} LIKE #{quote(v)}"
+                    # when :_nlike
+                    #     matches << "#{key} NOT LIKE #{quote(v)}"
+                    # when :_between
+                    #     matches << "#{key} BETWEEN #{quote(v[0])} AND #{quote(v[1])}"
+                    # when :_nbetween
+                    #     matches << "#{key} NOT BETWEEN #{quote(v[0])} AND #{quote(v[1])}"
+                    # when :_exists
+                    #     matches << "#{key} IS #{v ? "" : "NOT "}VALUED"
+                    # when :_regex
+                    #     matches << "#{key} REGEXP #{quote(v)}"
+                    # when :_nregex
+                    #     matches << "#{key} NOT REGEXP #{quote(v)}"
+                    # when :_match
+                    #     matches << "#{key} MATCH #{quote(v)}"
+                    # when :_nmatch
+                    #     matches << "#{key} NOT MATCH #{quote(v)}"
+                    
+                    # TODO v3
                     # when :_any
                     #     matches << "#{key} ANY #{quote(v)}"
                     # when :_nany

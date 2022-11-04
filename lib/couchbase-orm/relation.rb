@@ -172,7 +172,11 @@ module CouchbaseOrm
             end
             
             def build_where
-                ([[:type, @model.design_document]] + @where).map do |key, value, opt|
+                build_conds([[:type, @model.design_document]] + @where)
+            end
+
+            def build_conds(conds)
+                conds.map do |key, value, opt|
                     if key
                         opt == :not ? 
                             @model.build_not_match(key, value) : 
@@ -184,8 +188,27 @@ module CouchbaseOrm
             end
 
             def build_update(**cond)
-                cond.map do |key,value|
-                    "#{key} = #{@model.quote(value)}"
+                cond.map do |key, value|
+                    for_clause=""
+                    if value.is_a?(Hash) && value[:_for]
+                        path_clause = value.delete(:_for)
+                        var_clause = path_clause.to_s.split(".").last.singularize
+                        
+                        _when = value.delete(:_when)
+                        when_clause = _when ? build_conds(_when.to_a) : ""
+                        
+                        _set = value.delete(:_set)                       
+                        value = _set if _set
+
+                        for_clause = " for #{var_clause} in #{path_clause} when #{when_clause} end"
+                    end
+                    if value.is_a?(Hash)
+                        value.map do |k, v|
+                            "#{key}.#{k} = #{v}"
+                        end.join(", ") + for_clause
+                    else
+                        "#{key} = #{@model.quote(value)}#{for_clause}"
+                    end
                 end.join(", ")
             end
 

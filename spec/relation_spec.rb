@@ -2,12 +2,17 @@
 
 require File.expand_path("../support", __FILE__)
 
+class NestedRelationModel < CouchbaseOrm::NestedDocument
+  attribute :name, :string
+  attribute :age, :integer
+end
 
 class RelationModel < CouchbaseOrm::Base
     attribute :name, :string
     attribute :last_name, :string
     attribute :active, :boolean
     attribute :age, :integer
+    attribute :children, :array, type: NestedRelationModel
 
     def self.adult
         where(age: {_gte: 18})
@@ -300,24 +305,40 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.empty?).to eq(false)
     end
 
-    it "should query by gte and lte" do
-        _m1 = RelationModel.create!(age: 10)
-        m2 = RelationModel.create!(age: 20)
-        m3 = RelationModel.create!(age: 30)
-        _m4 = RelationModel.create!(age: 40)
-        expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
+    describe "operators" do
+        it "should query by gte and lte" do
+            _m1 = RelationModel.create!(age: 10)
+            m2 = RelationModel.create!(age: 20)
+            m3 = RelationModel.create!(age: 30)
+            _m4 = RelationModel.create!(age: 40)
+            expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
+        end
     end
 
-    it "should update_all" do
-        m1 = RelationModel.create!(age: 10)
-        m2 = RelationModel.create!(age: 20)
-        m3 = RelationModel.create!(age: 30)
-        m4 = RelationModel.create!(age: 40)
-        RelationModel.where(age: {_lte: 30, _gt:10}).update_all(age: 50)
-        expect(m1.reload.age).to eq(10)
-        expect(m2.reload.age).to eq(50)
-        expect(m3.reload.age).to eq(50)
-        expect(m4.reload.age).to eq(40)
+    describe "update_all" do
+        it "should update matching documents" do
+            m1 = RelationModel.create!(age: 10)
+            m2 = RelationModel.create!(age: 20)
+            m3 = RelationModel.create!(age: 30)
+            m4 = RelationModel.create!(age: 40)
+            RelationModel.where(age: {_lte: 30, _gt:10}).update_all(age: 50)
+            expect(m1.reload.age).to eq(10)
+            expect(m2.reload.age).to eq(50)
+            expect(m3.reload.age).to eq(50)
+            expect(m4.reload.age).to eq(40)
+        end
+
+        it "should update nested attributes with a for clause" do
+            m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m3 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            
+            RelationModel.where(age: 20).update_all(child: {age: 50, _for: :children, _when: {'child.name': "Tom"}})
+            
+            expect(m1.reload.children.map(&:age)).to eq([10, 20])
+            expect(m2.reload.children.map(&:age)).to eq([50, 20])
+            expect(m3.reload.children.map(&:age)).to eq([50, 20])
+        end
     end
 
     describe "scopes" do
