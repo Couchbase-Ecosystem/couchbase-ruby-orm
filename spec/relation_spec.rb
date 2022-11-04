@@ -328,7 +328,19 @@ describe CouchbaseOrm::Relation do
             expect(m4.reload.age).to eq(40)
         end
 
-        it "should update nested attributes with a for clause" do
+        it "should update nested attributes with a for clause (when hash style)" do
+            m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m3 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            
+            RelationModel.where(age: 20).update_all(child: {age: 50, _for: :children, _when: {child: {name: "Tom"}}})
+            
+            expect(m1.reload.children.map(&:age)).to eq([10, 20])
+            expect(m2.reload.children.map(&:age)).to eq([50, 20])
+            expect(m3.reload.children.map(&:age)).to eq([50, 20])
+        end
+
+        it "should update nested attributes with a for clause (when path style)" do
             m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
             m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
             m3 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
