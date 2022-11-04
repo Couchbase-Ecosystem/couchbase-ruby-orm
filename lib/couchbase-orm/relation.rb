@@ -160,7 +160,8 @@ module CouchbaseOrm
 
             def string_where(string_cond, _not = false)
                 return [] unless string_cond
-                [(_not ? [nil, string_cond, :not] : [nil, string_cond])]
+                cond = "(#{string_cond})"
+                [(_not ? [nil, cond, :not] : [nil, cond])]
             end
 
             def build_order
