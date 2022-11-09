@@ -132,6 +132,7 @@ module CouchbaseOrm
                 scopes = (Thread.current[@model.name] ||= [])
                 scopes.push(self)
                 result = yield
+            ensure
                 scopes.pop
                 result
             end

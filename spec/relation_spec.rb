@@ -373,6 +373,15 @@ describe CouchbaseOrm::Relation do
     end
 
     describe "scopes" do
+        it "should return block value" do
+            RelationModel.create!(active: true)
+            RelationModel.create!(active: false)
+            count = RelationModel.active.scoping do
+                RelationModel.count
+            end
+            expect(count).to eq 1
+        end
+        
         it "should chain scopes" do
             _m1 = RelationModel.create!(age: 10, active: true)
             _m2 = RelationModel.create!(age: 20, active: false)
@@ -391,6 +400,29 @@ describe CouchbaseOrm::Relation do
                 Thread.start do
                     expect(RelationModel.all).to match_array([m1, m2])
                 end.join
+            end
+        end
+
+        it "should propagate error" do
+            expect{RelationModel.active.scoping do
+                raise "error"
+            end}.to raise_error(RuntimeError)
+        end
+
+        it "should not keep scope in case of error" do
+            _m1 = RelationModel.create!(age: 10, active: true)
+            _m2 = RelationModel.create!(age: 10, active: false)
+            _m3 = RelationModel.create!(age: 30, active: true)
+            _m3 = RelationModel.create!(age: 30, active: false)
+            RelationModel.active.scoping do
+                expect(RelationModel.count).to eq 2
+                begin
+                    RelationModel.adult.scoping do
+                        raise "error"
+                    end
+                rescue RuntimeError                    
+                end
+                expect(RelationModel.count).to eq 2
             end
         end
     end
