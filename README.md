@@ -265,6 +265,14 @@ end
 Comment.by_author("Anne McCaffrey").where(category: 'S-F').not(ratings: 0).order(:title).limit(10)
 ```
 
+## Operators
+
+Several operators are available to filter numerical results : \_gt, \_lt, \_gte, \_lte, \_ne
+  
+  ```ruby
+  Comment.where(ratings: {_gt: 3})
+  ```
+
 ## Associations and Indexes
 
 There are common active record helpers available for use `belongs_to` and `has_many`
