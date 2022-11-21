@@ -34,7 +34,9 @@ It will generate this `config/couchbase.yml` for you:
 ```
 
 ## Setup without Rails
+
 If you are not using Rails, you can configure couchbase-orm with an initializer:
+
 ```ruby
 # config/initializers/couchbase_orm.rb
 CouchbaseOrm::Connection.config = {
@@ -50,7 +52,6 @@ This works fine in production however by default in development models are lazy 
 
     # config/environments/development.rb
     config.eager_load = true
-
 
 ## Examples
 
@@ -98,29 +99,30 @@ You can also let the library generate the unique identifier for you:
 ## Typing
 
 The following types have been tested :
+
 - :string
 - :integer
 - :float
 - :boolean
 - :date
-- :datetime (stored as iso8601)
+- :datetime (stored as iso8601, use precision: n to store more decimal precision)
 - :timestamp (stored as integer)
 - :encrypted
-  - see https://docs.couchbase.com/couchbase-lite/current/c/field-level-encryption.html
+  - see <https://docs.couchbase.com/couchbase-lite/current/c/field-level-encryption.html>
   - You must store a string that can be encoded in json (not binary data), use base64 if needed
 - :array (see below)
 - :nested (see below)
 
 You can register other types in ActiveModel registry :
 
-```
-class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
-  def serialize(value)
-    value&.iso8601(3)
-  end
-end
+```ruby
+    class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
+      def serialize(value)
+        value&.iso8601(3)
+      end
+    end
 
-ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
+    ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
 ```
 
 ## Validations
@@ -176,10 +178,12 @@ When using a compound key, the usage is the same, you just give the full key :
 
    # or even a range !
 
-   Comment.by_view_count(startkey: '["'+user_id+'",10]', endkey: '["'+user_id+'",20]') # gives all comments that have been seen more than 10 times but less than 20
+   Comment.by_view_count(startkey: '["'+user_id+'",10]', endkey: '["'+user_id+'",20]') 
+   
+   # gives all comments that have been seen more than 10 times but less than 20
 ```
 
-Check this couchbase help page to learn more on what's possible with compound keys : https://developer.couchbase.com/documentation/server/3.x/admin/Views/views-translateSQL.html
+Check this couchbase help page to learn more on what's possible with compound keys : <https://developer.couchbase.com/documentation/server/3.x/admin/Views/views-translateSQL.html>
 
 Ex : Compound keys allows to decide the order of the results, and you can reverse it by passing `descending: true`
 
@@ -236,11 +240,30 @@ Comment.pluck(:title, :ratings)
 
 Comment.where(author: "David Eddings").ids
 
-# To delete all the models
+# To delete all the models of a relation
 
 Comment.where(ratings: 0).delete_all
 ```
 
+## scopes
+
+Scopes can be written as class method, scope method is not implemented yet.
+They can be chained as in AR or mixed with relation methods.
+
+```ruby
+class Comment < CouchbaseOrm::Base
+      attribute :title, :string
+      attribute :author, :string
+      attribute :category, :string
+      attribute :ratings, :number
+
+      def self.by_author(author)
+        where(author: author)
+      end
+end
+
+Comment.by_author("Anne McCaffrey").where(category: 'S-F').not(ratings: 0).order(:title).limit(10)
+```
 
 ## Associations and Indexes
 
@@ -260,21 +283,23 @@ There are common active record helpers available for use `belongs_to` and `has_m
     end
 ```
 
-By default, `has_many` uses a view for association, but you can define a `type` option to specify an association using N1QL instead:
+By default, `has_many` uses a view for association,
+but you can define a `type` option to specify an association using N1QL instead:
 
-```ruby
-    class Comment < CouchbaseOrm::Base
-        belongs_to :author
-    end
+  ```ruby
+  class Comment < CouchbaseOrm::Base
+      belongs_to :author
+  end
 
-    class Author < CouchbaseOrm::Base
-        has_many :comments, type: :n1ql, dependent: :destroy
-    end
-```
+  class Author < CouchbaseOrm::Base
+      has_many :comments, type: :n1ql, dependent: :destroy
+  end
+  ```
 
 ## Nested
 
-Attributes can be of type nested, they must specify a type of NestedDocument. The NestedValidation triggers nested validation on parent validation. 
+Attributes can be of type nested, they must specify a type of NestedDocument.
+The NestedValidation triggers nested validation on parent validation.
 
 ```ruby
     class Address < CouchbaseOrm::NestedDocument
@@ -289,9 +314,16 @@ Attributes can be of type nested, they must specify a type of NestedDocument. Th
     end
 ```
 
+Model can be queried using the nested attributes
+
+```ruby
+    Author.where(address: {road: '1 rue de la paix', city: 'Paris'})
+```
+
 ## Array
 
-Attributes can be of type array, they must contain something that can be serialized and deserialized to/from JSON. You can enforce the type of array elements. The type can be a NestedDocument
+Attributes can be of type array, they must contain something that can be serialized and deserialized to/from JSON.
+You can enforce the type of array elements. The type can be a NestedDocument
 
 ```ruby
     class Book < CouchbaseOrm::NestedDocument
@@ -313,10 +345,10 @@ Attributes can be of type array, they must contain something that can be seriali
 Basically we migrated an application from [Couchbase Ruby Model](https://github.com/couchbase/couchbase-ruby-model)
 to [Couchbase-ORM](https://github.com/acaprojects/couchbase-orm) (this project)
 
-* Rails 5 production
-* Puma as the webserver
-* Running on a 2015 Macbook Pro
-* Performance test: `siege -c250 -r10  http://localhost:3000/auth/authority`
+- Rails 5 production
+- Puma as the webserver
+- Running on a 2015 Macbook Pro
+- Performance test: `siege -c250 -r10  http://localhost:3000/auth/authority`
 
 The request above pulls the same database document each time and returns it. A simple O(1) operation.
 
