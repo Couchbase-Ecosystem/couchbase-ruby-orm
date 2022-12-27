@@ -16,6 +16,12 @@ class TimestampTest < CouchbaseOrm::Base
     attribute :deleted_at, :datetime, precision: 6
 end
 
+class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
+    ignored_properties :deprecated_property
+    attribute :name, :string
+    attribute :job, :string
+end
+
 describe CouchbaseOrm::Base do
     it "should be comparable to other objects" do
         base = BaseTest.create!(name: 'joe')
@@ -59,6 +65,33 @@ describe CouchbaseOrm::Base do
 
         expect { CompareTest.find_by_id(base.id) }.to raise_error(CouchbaseOrm::Error::TypeMismatchError)
 
+        base.destroy
+    end
+
+    it "raises ActiveModel::UnknownAttributeError on loading objects with unexpected properties" do
+        too_much_properties_doc = {
+            type: BaseTest.design_document,
+            name: 'Pierre',
+            job: 'dev',
+            age: '42'
+        }
+        BaseTest.bucket.default_collection.upsert 'doc_1', too_much_properties_doc
+
+        expect { BaseTest.find_by_id('doc_1') }.to raise_error(ActiveModel::UnknownAttributeError)
+
+        BaseTest.bucket.default_collection.remove 'doc_1'
+    end
+
+    it "loads objects even if there is a missing property in doc" do
+        missing_properties_doc = {
+            type: BaseTest.design_document,
+            name: 'Pierre'
+        }
+        BaseTest.bucket.default_collection.upsert 'doc_1', missing_properties_doc
+        base = BaseTest.find('doc_1')
+
+        expect(base.name).to eq('Pierre')
+        expect(base.job).to be_nil
         base.destroy
     end
 
@@ -185,5 +218,42 @@ describe CouchbaseOrm::Base do
 
     describe CompareTest do
         it_behaves_like "ActiveModel"
+    end
+
+    describe '.ignored_properties' do
+
+
+        it 'returns an array of ignored properties' do
+            expect(BaseTestWithIgnoredProperties.ignored_properties).to eq(['deprecated_property'])
+        end
+
+        context 'given a document with ignored properties' do
+            let(:doc_id) { 'doc_1' }
+            let(:document_properties) do
+                {
+                    'type' => BaseTestWithIgnoredProperties.design_document,
+                    'name' => 'Pierre',
+                    'job' => 'dev',
+                    'deprecated_property' => 'depracted that could be removed on next save'
+                }
+            end
+            let(:loaded_model) { BaseTestWithIgnoredProperties.find(doc_id) }
+
+            before { BaseTestWithIgnoredProperties.bucket.default_collection.upsert doc_id, document_properties }
+            after { BaseTestWithIgnoredProperties.bucket.default_collection.remove doc_id }
+
+            it 'ignores the ignored properties on load from db (and dont raise)' do
+                expect(loaded_model.attributes.keys).not_to include('deprecated_property')
+                expect(loaded_model.name).to eq('Pierre')
+                expect(BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content).to include(document_properties)
+            end
+
+            it 'delete the ignored properties on save' do
+                base = BaseTestWithIgnoredProperties.find(doc_id)
+                expect{ loaded_model.save }.to change { BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content.keys.sort }.
+                    from(%w[deprecated_property job name type]).
+                    to(%w[job name type])
+            end
+        end
     end
 end
