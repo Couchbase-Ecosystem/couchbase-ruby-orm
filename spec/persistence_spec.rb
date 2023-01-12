@@ -2,6 +2,7 @@
 
 require File.expand_path("../support", __FILE__)
 
+require "action_controller"
 
 class BasicModel < CouchbaseOrm::Base
     attribute :name
@@ -236,6 +237,18 @@ describe CouchbaseOrm::Persistence do
         expect(model.destroyed?).to be(true)
     end
 
+    it "should update with action controler parameters" do
+        model = BasicModel.create!
+        params = ActionController::Parameters.new({
+              name: 'Francesco',
+              age:  22,
+              foo: 'bar'
+          })
+        model.update!(params.permit(:name, :age))
+        model.reload
+        expect(model.age).to eq(22)
+    end
+
     it "should update attributes" do
         model = BasicModel.new
 
@@ -254,6 +267,31 @@ describe CouchbaseOrm::Persistence do
 
         model.destroy
         expect(model.destroyed?).to be(true)
+    end
+
+    it "should not allow to update unkown attributes" do
+        model = BasicModel.new
+        
+        expect{ model.update_attributes({
+            name: 'bob',
+            age: 34,
+            foo: 'bar'
+        }) }.to raise_error(ActiveModel::UnknownAttributeError) 
+    end
+
+    it "should not allow to create with unkown attributes" do
+        expect{ BasicModel.create({
+            name: 'bob',
+            age: 34,
+            foo: 'bar'
+        }) }.to raise_error(ActiveModel::UnknownAttributeError) 
+    end
+
+    it "should not allow to update with unkown attributes" do
+        model = BasicModel.create!(name: 'bob', age: 34)
+        expect{ model.update({
+            foo: 'bar'
+        }) }.to raise_error(ActiveModel::UnknownAttributeError) 
     end
 
     describe BasicModel do

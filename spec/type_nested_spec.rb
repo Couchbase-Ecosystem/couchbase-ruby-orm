@@ -14,6 +14,7 @@ end
 class TypeNestedTest < CouchbaseOrm::Base
     attribute :main, :nested, type: SubTypeTest
     attribute :others, :array, type: SubTypeTest
+    attribute :flags, :array, type: :boolean
 end
 
 describe CouchbaseOrm::Types::Nested do
@@ -63,6 +64,7 @@ describe CouchbaseOrm::Types::Nested do
         expect(obj.send(:serialized_attributes)).to eq ({
             "id" => obj.id,
             "main" => nil,
+            "flags" => [],
             "others" => [
                 {
                     "name" => "foo",
@@ -103,10 +105,28 @@ describe CouchbaseOrm::Types::Nested do
         expect{CouchbaseOrm::Types::Nested.new(type: SubTypeTest).serialize([1,2,3])}.to raise_error(ArgumentError)
     end
 
+    it "should save a object with nested changes"  do
+        obj = TypeNestedTest.new
+        obj.main = SubTypeTest.new(name: "foo")
+        obj.others = [SubTypeTest.new(name: "foo"), SubTypeTest.new(name: "bar")]
+        obj.flags = [false, true]
+        obj.save!
+        obj.main.name = "bar"
+        obj.others[0].name = "bar"
+        obj.others[1].name = "baz"
+        obj.flags[0] = true
+
+        obj.save!
+        obj = TypeNestedTest.find(obj.id)
+        expect(obj.main.name).to eq "bar"
+        expect(obj.others[0].name).to eq "bar"
+        expect(obj.others[1].name).to eq "baz"
+        expect(obj.flags).to eq [true, true]
+    end
+
     describe "Validations" do
-
-
         class SubWithValidation < CouchbaseOrm::NestedDocument
+            attribute :id, :string
             attribute :name
             attribute :label
             attribute :child, :nested, type: SubWithValidation
@@ -119,6 +139,24 @@ describe CouchbaseOrm::Types::Nested do
             attribute :children, :array, type: SubWithValidation
             validates :child, :children, nested: true
         end
+        
+        it "should generate an id" do
+            expect(SubWithValidation.new.id).to be_present
+        end
+
+        it "should not regenerate the id after reloading parent" do
+            obj = WithValidationParent.new
+            obj.child = SubWithValidation.new(name: "foo")
+            obj.save!
+            expect(obj.child.id).to be_present
+            old_id = obj.child.id
+            obj.reload
+            expect(obj.child.id).to eq(old_id)
+        end
+
+        it "should not override the param id" do
+            expect(SubWithValidation.new(id: "foo").id).to eq "foo"
+        end
 
         it "should validate the nested object" do
             obj = WithValidationParent.new
@@ -126,7 +164,6 @@ describe CouchbaseOrm::Types::Nested do
             expect(obj).to_not be_valid
             expect(obj.errors[:child]).to eq ["is invalid"]
             expect(obj.child.errors[:name]).to eq ["can't be blank"]
-
         end
 
         it "should validate the nested objects in an array" do

@@ -116,6 +116,7 @@ module CouchbaseOrm
 
         include ::ActiveRecord::Core
         include ActiveRecordCompat
+        include Encrypt
 
         extend Enum
 
@@ -126,7 +127,6 @@ module CouchbaseOrm
 
         class MismatchTypeError < RuntimeError; end
 
-        # Add support for libcouchbase response objects
         def initialize(model = nil, ignore_doc_type: false, **attributes)
             CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
             @__metadata__   = Metadata.new
@@ -147,18 +147,19 @@ module CouchbaseOrm
                     self.id = attributes[:id] if attributes[:id].present?
                     @__metadata__.cas = model.cas
 
-                    assign_attributes(doc)
+                    assign_attributes(decode_encrypted_attributes(doc))
                 when CouchbaseOrm::Base
                     clear_changes_information
                     super(model.attributes.except(:id, 'type'))
                 else
                     clear_changes_information
-                    assign_attributes(**attributes.merge(Hash(model)).symbolize_keys)
+                    assign_attributes(decode_encrypted_attributes(**attributes.merge(Hash(model)).symbolize_keys))
                 end
             else
                 clear_changes_information
                 super(attributes)
             end
+
             yield self if block_given?
 
             run_callbacks :initialize
@@ -175,14 +176,19 @@ module CouchbaseOrm
         protected
 
         def serialized_attributes
-            attributes.map { |k, v|
+            encode_encrypted_attributes.map { |k, v|
                 [k, self.class.attribute_types[k].serialize(v)]
             }.to_h
         end
     end
 
     class NestedDocument < Document
-
+        def initialize(*args, **kwargs)
+            super
+            if respond_to?(:id) && id.nil?
+                assign_attributes(id: SecureRandom.hex)
+            end
+        end
     end
 
     class Base < Document

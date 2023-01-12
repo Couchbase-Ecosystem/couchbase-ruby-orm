@@ -13,6 +13,7 @@ end
 
 class TimestampTest < CouchbaseOrm::Base
     attribute :created_at, :datetime
+    attribute :deleted_at, :datetime
 end
 
 describe CouchbaseOrm::Base do
@@ -100,7 +101,7 @@ describe CouchbaseOrm::Base do
             expect(base.changes.empty?).to be(false)
             expect(base.previous_changes.empty?).to be(true)
         ensure
-            base.destroy if base.id
+            base.destroy if base.persisted?
         end
     end
 
@@ -113,6 +114,19 @@ describe CouchbaseOrm::Base do
             base.destroy
         end
     end
+
+    it "should be able to create model with a custom ID" do
+        begin
+            base = BaseTest.create!(id: 'custom_id', name: 'joe')
+            expect(base.id).to eq('custom_id')
+
+            base = BaseTest.find('custom_id')
+            expect(base.id).to eq('custom_id')
+        ensure
+            base&.destroy
+        end
+    end
+
 
     it "should try to load a model with nothing but single-multiple ID" do
         begin
@@ -161,7 +175,7 @@ describe CouchbaseOrm::Base do
     end
 
     it "should generate a timestamp on creation" do
-        base = TimestampTest.create!()
+        base = TimestampTest.create!
         expect(base.created_at).to be_a(Time)
     end
 

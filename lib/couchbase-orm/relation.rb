@@ -38,17 +38,52 @@ module CouchbaseOrm
                 query.to_a
             end
 
+            def first
+                result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: :request_plus))
+                first_id = result.rows.to_a.first
+                @model.find(first_id) if first_id
+            end
+
+            def last
+                result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: :request_plus))
+                last_id = result.rows.to_a.last
+                @model.find(last_id) if last_id
+            end
+
             def count
                 query.count
             end
 
+            def empty?
+                limit(1).count == 0
+            end
+
+            def pluck(*fields)
+                map do |model|
+                    if fields.length == 1
+                        model.send(fields.first)
+                    else
+                        fields.map do |field|
+                            model.send(field)
+                        end
+                    end
+                end
+            end
+
+            alias :size :count
+            alias :length :count
+
             def to_ary
-                query.results { |res| @model.find(res) }.to_ary
+                query.results { |ids| @model.find(ids) }.to_ary
             end
 
             alias :to_a :to_ary
 
-            delegate :each, :map, :collect, :to => :to_ary
+            delegate :each, :map, :collect, :find, :filter, :reduce, :to => :to_ary
+
+            def [](*args)
+                to_ary[*args]
+            end
 
             def delete_all
                 CouchbaseOrm::logger.debug{ "Delete all: #{self}" }
@@ -58,6 +93,10 @@ module CouchbaseOrm
 
             def where(**conds)
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
+            end
+
+            def find_by(**conds)
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds))).first
             end
 
             def not(**conds)
@@ -136,7 +175,7 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(model: self)
             end
 
-            delegate :ids, :delete_all, :count, to: :all
+            delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
         end
     end
 end

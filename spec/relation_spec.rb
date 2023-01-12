@@ -30,6 +30,7 @@ describe CouchbaseOrm::Relation do
         RelationModel.create! name: :alice, active: true, age: 20
         RelationModel.create! name: :john, active: false, age: 30
         expect(RelationModel.where(active: true).count).to eq(2)
+        expect(RelationModel.where(active: true).size).to eq(2)
 
         expect(RelationModel.where(active: true).to_a.map(&:name)).to match_array(%w[bob alice])
         expect(RelationModel.where(active: true).where(age: 10).to_a.map(&:name)).to match_array(%w[bob])
@@ -44,6 +45,15 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.where(active: true).where(name: 'bob').count).to eq(1)
     end
 
+    it "should find_by conditions" do
+        RelationModel.create! name: :bob, active: true, age: 10
+        m = RelationModel.create! name: :bob, active: false, age: 10
+        RelationModel.create! name: :alice, active: true, age: 20
+        RelationModel.create! name: :alice, active: false, age: 20
+
+        expect(RelationModel.where(name: 'bob').find_by(active: false)).to eq(m)
+        expect(RelationModel.find_by(name: 'bob', active: false)).to eq(m)
+    end
 
     it "should count without loading models" do
         RelationModel.create! name: :bob, active: true, age: 10
@@ -135,8 +145,36 @@ describe CouchbaseOrm::Relation do
         m1 = RelationModel.create!(active: true, age: 10)
         m2 = RelationModel.create!(active: true, age: 20)
         _m3 = RelationModel.create!(active: false, age: 30)
-        expect(RelationModel.where(active: true).order(age: :desc).all).to match_array([m2, m1])
-        expect(RelationModel.all.where(active: true).order(age: :asc)).to match_array([m1, m2])
+        expect(RelationModel.where(active: true).order(age: :desc).all.to_a).to eq([m2, m1])
+        expect(RelationModel.all.where(active: true).order(age: :asc).to_a).to eq([m1, m2])
+    end
+
+    it "should query by id" do
+        m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(id: [m1.id, m2.id])).to match_array([m1, m2])
+    end
+
+    it "should query first" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(active: true).order(age: :desc).first).to eq m2
+    end
+
+    it "should query array first" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(active: true).order(age: :desc)[0]).to eq m2
+    end
+
+    it "should query last" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.where(active: true).order(age: :asc).last).to eq m2
     end
 
     it "should return a relation when using not" do
@@ -153,6 +191,31 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.not(active: true)).to respond_to(:each)
         expect(RelationModel.all.not(active: true)).to respond_to(:each)
     end
+
+    it "should pluck one element" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        _m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.order(:age).pluck(:age)).to match_array([10, 20, 30])
+    end
+
+    it "should find one element" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.all.find do |m|
+            m.age == 20
+        end).to eq m2
+    end
+
+
+    it "should pluck several elements" do
+        _m1 = RelationModel.create!(active: true, age: 10)
+        _m2 = RelationModel.create!(active: true, age: 20)
+        _m3 = RelationModel.create!(active: false, age: 30)
+        expect(RelationModel.order(:age).pluck(:age, :active)).to match_array([[10, true], [20, true], [30, false]])
+    end
+
 
     it "should query true boolean" do
         m1 = RelationModel.create!(active: true)
@@ -208,6 +271,23 @@ describe CouchbaseOrm::Relation do
         _m2 = RelationModel.create!(active: false)
         _m3 = RelationModel.create!(active: nil)
         expect(RelationModel.not(active: [false, nil])).to match_array([m1])
+    end
+
+    it "is empty" do
+        expect(RelationModel.empty?).to eq(true)
+    end
+
+    it "is not empty with a created model" do
+        RelationModel.create!(active: true)
+        expect(RelationModel.empty?).to eq(false)
+    end
+
+    it "should query by gte and lte" do
+        _m1 = RelationModel.create!(age: 10)
+        m2 = RelationModel.create!(age: 20)
+        m3 = RelationModel.create!(age: 30)
+        _m4 = RelationModel.create!(age: 40)
+        expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
     end
 end
 

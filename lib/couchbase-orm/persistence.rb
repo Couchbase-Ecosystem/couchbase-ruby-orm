@@ -7,6 +7,8 @@ module CouchbaseOrm
     module Persistence
         extend ActiveSupport::Concern
 
+        include Encrypt
+
         included do
             attribute :id, :string
         end
@@ -57,19 +59,19 @@ module CouchbaseOrm
         # Returns true if this object hasn't been saved yet -- that is, a record
         # for the object doesn't exist in the database yet; otherwise, returns false.
         def new_record?
-            @__metadata__.cas.nil? && id.nil?
+            @__metadata__.cas.nil?
         end
         alias_method :new?, :new_record?
 
         # Returns true if this object has been destroyed, otherwise returns false.
         def destroyed?
-            !!(@__metadata__.cas && id.blank?)
+            @destroyed
         end
 
         # Returns true if the record is persisted, i.e. it's not a new record and it was
         # not destroyed, otherwise returns false.
         def persisted?
-            id.present?
+            !new_record? && !destroyed?
         end
         alias_method :exists?, :persisted?
 
@@ -106,6 +108,7 @@ module CouchbaseOrm
 
             self.id = nil
             clear_changes_information
+            @destroyed = true
             self.freeze
             self
         end
@@ -130,6 +133,7 @@ module CouchbaseOrm
                 self.id = nil
 
                 clear_changes_information
+                @destroyed = true
                 freeze
             end
         end
@@ -146,7 +150,8 @@ module CouchbaseOrm
         end
 
         def assign_attributes(hash)
-            super(hash.with_indifferent_access.except("type"))
+            hash = hash.with_indifferent_access if hash.is_a?(Hash)
+            super(hash.except("type"))
         end
 
         # Updates the attributes of the model from the passed-in hash and saves the
@@ -204,7 +209,7 @@ module CouchbaseOrm
 
             CouchbaseOrm.logger.debug "Data - Get #{id}"
             resp = self.class.collection.get!(id)
-            assign_attributes(resp.content.except("id")) # API return a nil id
+            assign_attributes(decode_encrypted_attributes(resp.content.except("id"))) # API return a nil id
             @__metadata__.cas = resp.cas
 
             reset_associations
@@ -224,7 +229,7 @@ module CouchbaseOrm
 
         def _update_record(*_args, with_cas: false, **options)
             return false unless perform_validations(:update, options)
-            return true unless changed?
+            return true unless changed? || self.class.attribute_types.any? { |_, type| type.is_a?(CouchbaseOrm::Types::Nested) || type.is_a?(CouchbaseOrm::Types::Array)  }
 
             run_callbacks :update do
                 run_callbacks :save do
