@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-20.04
     name: ${{ matrix.ruby }} rails-${{ matrix.gemfile }}  couchbase-${{ matrix.couchbase }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: sudo apt-get update && sudo apt-get install libevent-dev libev-dev python-httplib2
     - uses: ruby/setup-ruby@v1
       with:
