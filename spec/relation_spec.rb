@@ -2,12 +2,30 @@
 
 require File.expand_path("../support", __FILE__)
 
+class NestedRelationModel < CouchbaseOrm::NestedDocument
+  attribute :name, :string
+  attribute :age, :integer
+end
+
+class PathRelationModel < CouchbaseOrm::NestedDocument
+    attribute :pathelement, :nested, type: PathRelationModel
+    attribute :children, :array, type: NestedRelationModel
+end
 
 class RelationModel < CouchbaseOrm::Base
     attribute :name, :string
     attribute :last_name, :string
     attribute :active, :boolean
     attribute :age, :integer
+    attribute :children, :array, type: NestedRelationModel
+    attribute :pathelement, :nested, type: PathRelationModel
+    def self.adult
+        where(age: {_gte: 18})
+    end
+
+    def self.active
+        where(active: true)
+    end
 end
 
 describe CouchbaseOrm::Relation do
@@ -208,14 +226,12 @@ describe CouchbaseOrm::Relation do
         end).to eq m2
     end
 
-
     it "should pluck several elements" do
         _m1 = RelationModel.create!(active: true, age: 10)
         _m2 = RelationModel.create!(active: true, age: 20)
         _m3 = RelationModel.create!(active: false, age: 30)
         expect(RelationModel.order(:age).pluck(:age, :active)).to match_array([[10, true], [20, true], [30, false]])
     end
-
 
     it "should query true boolean" do
         m1 = RelationModel.create!(active: true)
@@ -273,6 +289,18 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.not(active: [false, nil])).to match_array([m1])
     end
 
+    it "should query by string" do
+        m1 = RelationModel.create!(age: 20, active: true)
+        m2 = RelationModel.create!(age: 10, active: false)
+        m3 = RelationModel.create!(age: 20, active: false)
+
+        expect(RelationModel.where("active = true").count).to eq(1)
+        expect(RelationModel.where("active = true")).to match_array([m1])
+        expect(RelationModel.where("active = false")).to match_array([m2, m3])
+        expect(RelationModel.where(age: 20).where("active = false")).to match_array([m3])
+        expect(RelationModel.where("active = false").where(age: 20)).to match_array([m3])
+    end
+
     it "is empty" do
         expect(RelationModel.empty?).to eq(true)
     end
@@ -282,12 +310,121 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.empty?).to eq(false)
     end
 
-    it "should query by gte and lte" do
-        _m1 = RelationModel.create!(age: 10)
-        m2 = RelationModel.create!(age: 20)
-        m3 = RelationModel.create!(age: 30)
-        _m4 = RelationModel.create!(age: 40)
-        expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
+    describe "operators" do
+        it "should query by gte and lte" do
+            _m1 = RelationModel.create!(age: 10)
+            m2 = RelationModel.create!(age: 20)
+            m3 = RelationModel.create!(age: 30)
+            _m4 = RelationModel.create!(age: 40)
+            expect(RelationModel.where(age: {_lte: 30, _gt:10})).to match_array([m2, m3])
+        end
+    end
+
+    describe "update_all" do
+        it "should update matching documents" do
+            m1 = RelationModel.create!(age: 10)
+            m2 = RelationModel.create!(age: 20)
+            m3 = RelationModel.create!(age: 30)
+            m4 = RelationModel.create!(age: 40)
+            RelationModel.where(age: {_lte: 30, _gt:10}).update_all(age: 50)
+            expect(m1.reload.age).to eq(10)
+            expect(m2.reload.age).to eq(50)
+            expect(m3.reload.age).to eq(50)
+            expect(m4.reload.age).to eq(40)
+        end
+
+        it "should update nested attributes with a for clause (when hash style)" do
+            m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m3 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            
+            RelationModel.where(age: 20).update_all(child: {age: 50, _for: :children, _when: {child: {name: "Tom"}}})
+            
+            expect(m1.reload.children.map(&:age)).to eq([10, 20])
+            expect(m2.reload.children.map(&:age)).to eq([50, 20])
+            expect(m3.reload.children.map(&:age)).to eq([50, 20])
+        end
+
+        it "should update nested attributes with a for clause (when path style)" do
+            m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m3 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            
+            RelationModel.where(age: 20).update_all(child: {age: 50, _for: :children, _when: {'child.name': "Tom"}})
+            
+            expect(m1.reload.children.map(&:age)).to eq([10, 20])
+            expect(m2.reload.children.map(&:age)).to eq([50, 20])
+            expect(m3.reload.children.map(&:age)).to eq([50, 20])
+        end
+
+        it "should update nested attributes with a path in a for clause" do
+            m1 = RelationModel.create!(
+                pathelement: PathRelationModel.new(
+                    pathelement: PathRelationModel.new(
+                        children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")]
+                    )
+                )
+            )
+
+            RelationModel.update_all(child: {age: 50, _for: 'pathelement.pathelement.children', _when: {'child.name': "Tom"}})
+
+            expect(m1.reload.pathelement.pathelement.children.map(&:age)).to eq([50, 20])
+        end
+    end
+
+    describe "scopes" do
+        it "should return block value" do
+            RelationModel.create!(active: true)
+            RelationModel.create!(active: false)
+            count = RelationModel.active.scoping do
+                RelationModel.count
+            end
+            expect(count).to eq 1
+        end
+        
+        it "should chain scopes" do
+            _m1 = RelationModel.create!(age: 10, active: true)
+            _m2 = RelationModel.create!(age: 20, active: false)
+            m3 = RelationModel.create!(age: 30, active: true)
+            m4 = RelationModel.create!(age: 40, active: true)
+
+            expect(RelationModel.all.adult.all.active.all).to match_array([m3, m4])
+            expect(RelationModel.where(active: true).adult).to match_array([m3, m4])
+        end
+
+        it "should be scoped only in current thread" do
+            m1 = RelationModel.create!(active: true)
+            m2 = RelationModel.create!(active: false)
+            RelationModel.active.scoping do
+                expect(RelationModel.all).to match_array([m1])
+                Thread.start do
+                    expect(RelationModel.all).to match_array([m1, m2])
+                end.join
+            end
+        end
+
+        it "should propagate error" do
+            expect{RelationModel.active.scoping do
+                raise "error"
+            end}.to raise_error(RuntimeError)
+        end
+
+        it "should not keep scope in case of error" do
+            _m1 = RelationModel.create!(age: 10, active: true)
+            _m2 = RelationModel.create!(age: 10, active: false)
+            _m3 = RelationModel.create!(age: 30, active: true)
+            _m3 = RelationModel.create!(age: 30, active: false)
+            RelationModel.active.scoping do
+                expect(RelationModel.count).to eq 2
+                begin
+                    RelationModel.adult.scoping do
+                        raise "error"
+                    end
+                rescue RuntimeError                    
+                end
+                expect(RelationModel.count).to eq 2
+            end
+        end
     end
 end
 

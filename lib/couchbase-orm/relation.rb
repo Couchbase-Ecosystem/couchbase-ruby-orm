@@ -26,12 +26,25 @@ module CouchbaseOrm
                 "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
             end
 
-            def query
-                CouchbaseOrm::logger.debug("Query: #{self}")
-                n1ql_query = to_n1ql
+            def execute(n1ql_query)
                 result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: :request_plus))
                 CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} return #{result.rows.to_a.length} rows" }
                 N1qlProxy.new(result)
+            end
+
+            def query
+                CouchbaseOrm::logger.debug("Query: #{self}")
+                n1ql_query = to_n1ql
+                execute(n1ql_query)
+            end
+            
+            def update_all(**cond)
+                bucket_name = @model.bucket.name
+                where = build_where
+                limit = build_limit
+                update = build_update(**cond)
+                n1ql_query = "update `#{bucket_name}` set #{update} where #{where} #{limit}"
+                execute(n1ql_query)
             end
 
             def ids
@@ -91,8 +104,8 @@ module CouchbaseOrm
                 CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
 
-            def where(**conds)
-                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)))
+            def where(string_cond=nil, **conds)
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(where: merge_where(conds)+string_where(string_cond)))
             end
 
             def find_by(**conds)
@@ -113,6 +126,15 @@ module CouchbaseOrm
 
             def all
                 CouchbaseOrm_Relation.new(**initializer_arguments)
+            end
+
+            def scoping
+                scopes = (Thread.current[@model.name] ||= [])
+                scopes.push(self)
+                result = yield
+            ensure
+                scopes.pop
+                result
             end
 
             private
@@ -137,6 +159,12 @@ module CouchbaseOrm
                 @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
             end
 
+            def string_where(string_cond, _not = false)
+                return [] unless string_cond
+                cond = "(#{string_cond})"
+                [(_not ? [nil, cond, :not] : [nil, cond])]
+            end
+
             def build_order
                 order = @order.map do |key, value|
                     "#{key} #{value}"
@@ -145,37 +173,65 @@ module CouchbaseOrm
             end
             
             def build_where
-                ([[:type, @model.design_document]] + @where).map do |key, value, opt|
-                    opt == :not ? 
-                        @model.build_not_match(key, value) : 
-                        @model.build_match(key, value)
+                build_conds([[:type, @model.design_document]] + @where)
+            end
+
+            def build_conds(conds)
+                conds.map do |key, value, opt|
+                    if key
+                        opt == :not ? 
+                            @model.build_not_match(key, value) : 
+                            @model.build_match(key, value)
+                    else
+                        value
+                    end
                 end.join(" AND ")
+            end
+
+            def build_update(**cond)
+                cond.map do |key, value|
+                    for_clause=""
+                    if value.is_a?(Hash) && value[:_for]
+                        path_clause = value.delete(:_for)
+                        var_clause = path_clause.to_s.split(".").last.singularize
+                        
+                        _when = value.delete(:_when)
+                        when_clause = _when ? build_conds(_when.to_a) : ""
+                        
+                        _set = value.delete(:_set)                       
+                        value = _set if _set
+
+                        for_clause = " for #{var_clause} in #{path_clause} when #{when_clause} end"
+                    end
+                    if value.is_a?(Hash)
+                        value.map do |k, v|
+                            "#{key}.#{k} = #{v}"
+                        end.join(", ") + for_clause
+                    else
+                        "#{key} = #{@model.quote(value)}#{for_clause}"
+                    end
+                end.join(", ")
+            end
+
+            def method_missing(method, *args, &block)
+                if @model.respond_to?(method)
+                    scoping {
+                        @model.public_send(method, *args, &block)
+                    }
+                else
+                    super
+                end
             end
         end
 
         module ClassMethods
-            def where(**conds)
-                CouchbaseOrm_Relation.new(model: self, where: conds)
+            def relation
+                Thread.current[self.name]&.last || CouchbaseOrm_Relation.new(model: self)
             end
 
-            def not(**conds)
-                CouchbaseOrm_Relation.new(model: self, where: conds, _not: true)
-            end
+            delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            def order(*ordersl, **ordersh)
-                order = ordersh.reverse_merge(ordersl.map{ |o| [o, :asc] }.to_h)
-                CouchbaseOrm_Relation.new(model: self, order: order)
-            end
-
-            def limit(limit)
-                CouchbaseOrm_Relation.new(model: self, limit: limit)
-            end
-
-            def all
-                CouchbaseOrm_Relation.new(model: self)
-            end
-
-            delegate :ids, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
+            delegate :where, :not, :order, :limit, :all, to: :relation
         end
     end
 end

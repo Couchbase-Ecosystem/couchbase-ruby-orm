@@ -12,8 +12,8 @@ class CompareTest < CouchbaseOrm::Base
 end
 
 class TimestampTest < CouchbaseOrm::Base
-    attribute :created_at, :datetime
-    attribute :deleted_at, :datetime
+    attribute :created_at, :datetime, precision: 6
+    attribute :deleted_at, :datetime, precision: 6
 end
 
 describe CouchbaseOrm::Base do
