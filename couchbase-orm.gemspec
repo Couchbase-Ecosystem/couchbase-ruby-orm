@@ -10,11 +10,11 @@ Gem::Specification.new do |gem|
     gem.summary       = "Couchbase ORM for Rails"
     gem.description   = "A Couchbase ORM for Rails"
 
-    gem.required_ruby_version = '>= 2.1.0'
+    gem.required_ruby_version = '>= 2.7.0'
     gem.require_paths = ["lib"]
 
-    gem.add_runtime_dependency     'activemodel',   ENV["ACTIVE_MODEL_VERSION"] || '>= 5.2'
-    gem.add_runtime_dependency     'activerecord',  ENV["ACTIVE_MODEL_VERSION"] || '>= 5.2'
+    gem.add_runtime_dependency     'activemodel',   ENV["CBORM_ACTIVE_MODEL_VERSION"] || '>= 5.2'
+    gem.add_runtime_dependency     'activerecord',  ENV["CBORM_ACTIVE_MODEL_VERSION"] || '>= 5.2'
 
     gem.add_runtime_dependency     'couchbase'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
@@ -27,6 +27,7 @@ Gem::Specification.new do |gem|
     gem.add_development_dependency 'simplecov'
     gem.add_development_dependency 'actionpack'
     gem.add_development_dependency 'timecop'
+    gem.add_development_dependency 'base64'
 
     gem.files         = `git ls-files`.split("\n")
     gem.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

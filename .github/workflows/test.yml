@@ -12,29 +12,32 @@ jobs:
       matrix:
         include:
           - ruby: '3.2'
-            gemfile: '7.0.4'
+            active_model_version: '7.0.4'
             couchbase: '7.1.0'
           - ruby: '3.2'
-            gemfile: '7.0.3'
+            active_model_version: '7.0.3'
             couchbase: '6.6.5'
           - ruby: '3.1'
-            gemfile: '7.0.2'
+            active_model_version: '7.0.2'
             couchbase: '7.1.0'
           - ruby: '3.1'
-            gemfile: '7.0.1'
+            active_model_version: '7.0.1'
             couchbase: '6.6.5'
           - ruby: '3.0'
-            gemfile: '7.0.0'
+            active_model_version: '7.0.0'
             couchbase: '7.1.0'
           - ruby: '3.0'
-            gemfile: '7.0.0'
+            active_model_version: '7.0.0'
             couchbase: '6.6.5'
           - ruby: '2.7'
-            gemfile: '7.0.0'
+            active_model_version: '7.0.0'
+            couchbase: '7.1.0'
+          - ruby: '2.7'
+            active_model_version: '5.2.8.1'
             couchbase: '7.1.0'
       fail-fast: false
     runs-on: ubuntu-20.04
-    name: ${{ matrix.ruby }} rails-${{ matrix.gemfile }}  couchbase-${{ matrix.couchbase }}
+    name: ${{ matrix.ruby }} rails-${{ matrix.active_model_version }}  couchbase-${{ matrix.couchbase }}
     steps:
     - uses: actions/checkout@v3
     - run: sudo apt-get update && sudo apt-get install libevent-dev libev-dev python-httplib2
@@ -45,7 +48,7 @@ jobs:
     - run: sudo ./ci/run_couchbase.sh $COUCHBASE_VERSION $COUCHBASE_BUCKET $COUCHBASE_USER $COUCHBASE_PASSWORD
     - run: bundle exec rspec
     env:
-      ACTIVE_MODEL_VERSION: ${{ matrix.gemfile }}
+      CBORM_ACTIVE_MODEL_VERSION: ${{ matrix.active_model_version }}
       BUNDLE_JOBS: 4
       BUNDLE_PATH: vendor/bundle
       COUCHBASE_BUCKET: default

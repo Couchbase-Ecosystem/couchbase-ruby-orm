@@ -1,6 +1,7 @@
 require File.expand_path("../support", __FILE__)
 
 require "active_model"
+require "base64"
 
 class SubTypeEncryptedTest < CouchbaseOrm::NestedDocument
     attribute :name, :string
