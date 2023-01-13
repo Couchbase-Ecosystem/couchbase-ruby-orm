@@ -40,7 +40,7 @@ jobs:
     name: ${{ matrix.ruby }} rails-${{ matrix.active_model_version }}  couchbase-${{ matrix.couchbase }}
     steps:
     - uses: actions/checkout@v3
-    - run: sudo apt-get update && sudo apt-get install libevent-dev libev-dev python-httplib2
+    - run: sudo apt-get update && sudo apt-get --option="APT::Acquire::Retries=5" install libevent-dev libev-dev python-httplib2
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
