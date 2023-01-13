@@ -12,13 +12,13 @@ jobs:
       matrix:
         include:
           - ruby: '3.2'
-            active_model_version: '7.0.4'
+            active_model_version: '7.0.1'
             couchbase: '7.1.0'
           - ruby: '3.2'
-            active_model_version: '7.0.3'
+            active_model_version: '7.0.1'
             couchbase: '6.6.5'
           - ruby: '3.1'
-            active_model_version: '7.0.2'
+            active_model_version: '7.0.1'
             couchbase: '7.1.0'
           - ruby: '3.1'
             active_model_version: '7.0.1'
