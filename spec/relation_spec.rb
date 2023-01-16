@@ -320,6 +320,15 @@ describe CouchbaseOrm::Relation do
         end
     end
 
+    describe '#to_n1ql' do
+        context 'when no limit is specified' do
+            it 'returns a query with no limit' do
+                query = RelationModel.where(age: 10).to_n1ql
+                expect(query).to eq("select raw meta().id from `billeo-pme-bucket` where type = 'relation_model' AND age = 10 order by meta().id")
+            end
+        end
+    end
+
     describe "update_all" do
         it "should update matching documents" do
             m1 = RelationModel.create!(age: 10)

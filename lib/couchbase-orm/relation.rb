@@ -23,7 +23,7 @@ module CouchbaseOrm
                 where = build_where
                 order = build_order
                 limit = build_limit
-                "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
+                "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}".strip
             end
 
             def execute(n1ql_query)
