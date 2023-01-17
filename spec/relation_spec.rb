@@ -324,7 +324,7 @@ describe CouchbaseOrm::Relation do
         context 'when no limit is specified' do
             it 'returns a query with no limit' do
                 query = RelationModel.where(age: 10).to_n1ql
-                expect(query).to eq("select raw meta().id from `billeo-pme-bucket` where type = 'relation_model' AND age = 10 order by meta().id")
+                expect(query).to eq("select raw meta().id from `#{ENV['COUCHBASE_BUCKET']}` where type = 'relation_model' AND age = 10 order by meta().id")
             end
         end
     end
