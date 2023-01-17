@@ -33,7 +33,7 @@ describe CouchbaseOrm::Relation do
             NestedModel.new(name: "sub3")
         ]
         parent.save!
-        expected_n1ql = "select raw meta().id from `billeo-pme-bucket` where type = 'relation_parent_model' AND any sub in subs satisfies sub.name = 'sub2' end order by meta().id"
+        expected_n1ql = "select raw meta().id from #{ENV['COUCHBASE_BUCKET']} where type = 'relation_parent_model' AND any sub in subs satisfies sub.name = 'sub2' end order by meta().id"
         expect(RelationParentModel.where(subs: {name: 'sub2'}).to_n1ql).to eq expected_n1ql
         expect(RelationParentModel.where(subs: {name: 'sub2'}).first).to eq parent
         expect(RelationParentModel.where(subs: {name: ['sub3', 'subX']}).first).to eq parent
