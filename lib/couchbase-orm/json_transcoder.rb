@@ -1,23 +1,19 @@
 require "json"
+require 'couchbase/json_transcoder'
 
 module CouchbaseOrm
-  class JsonTranscoder
+  class JsonTranscoder < Couchbase::JsonTranscoder
 
     attr_reader :ignored_properties
-    def initialize(ignored_properties: [])
-        @ignored_properties = ignored_properties
-    end
-    # @param [Object] document
-    # @return [Array<String, Integer>] pair of encoded document and flags
-    def encode(document)
-      [JSON.generate(document), (0x02 << 24) | 0x06]
+
+    def initialize(ignored_properties: [], **options, &block)
+      @ignored_properties = ignored_properties
+      super(**options, &block)
     end
 
-    # @param [String, nil] blob string of bytes, containing encoded representation of the document
-    # @param [Integer, :json] _flags bit field, describing how the data encoded
-    # @return Object decoded document
     def decode(blob, _flags)
-      JSON.parse(blob).except(*ignored_properties) unless blob&.empty?
+      original = super
+      original&.except(*ignored_properties)
     end
   end
 end
