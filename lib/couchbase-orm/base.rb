@@ -26,6 +26,7 @@ require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/utilities/ignored_properties'
+require 'couchbase-orm/utilities/json_schema_validation'
 require 'couchbase-orm/json_transcoder'
 
 
@@ -211,6 +212,7 @@ module CouchbaseOrm
         extend HasMany
         extend Index
         extend IgnoredProperties
+        extend JsonSchemaValidation
 
         class << self
             def connect(**options)
@@ -249,7 +251,7 @@ module CouchbaseOrm
                     raise CouchbaseOrm::Error::EmptyNotAllowed, 'no id(s) provided'
                 end
 
-                transcoder = CouchbaseOrm::JsonTranscoder.new(ignored_properties: ignored_properties)
+                transcoder = CouchbaseOrm::JsonTranscoder.new(ignored_properties: ignored_properties, json_schema: json_schema)
                 records = quiet ? collection.get_multi(ids, transcoder: transcoder) : collection.get_multi!(ids, transcoder: transcoder)
                 CouchbaseOrm.logger.debug { "Base.find found(#{records})" }
                 records = records.zip(ids).map { |record, id|
