@@ -28,6 +28,7 @@ Gem::Specification.new do |gem|
     gem.add_development_dependency 'simplecov'
     gem.add_development_dependency 'actionpack'
     gem.add_development_dependency 'timecop'
+    gem.add_development_dependency 'base64'
 
     gem.files         = `git ls-files`.split("\n")
     gem.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
