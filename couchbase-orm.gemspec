@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
     gem.add_runtime_dependency     'activemodel',   ENV["ACTIVE_MODEL_VERSION"] || '>= 5.2'
     gem.add_runtime_dependency     'activerecord',  ENV["ACTIVE_MODEL_VERSION"] || '>= 5.2'
 
-    gem.add_runtime_dependency     'couchbase'
+    gem.add_runtime_dependency     'couchbase',    '~> 3.2.0'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
 
     gem.add_development_dependency 'rake',         '~> 12.2'
