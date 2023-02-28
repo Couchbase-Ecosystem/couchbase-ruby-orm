@@ -19,6 +19,14 @@ module CouchbaseOrm
             end
         end
 
+        @@couchbase_orm_config_n1ql = nil
+        def self.config(new_config = nil)
+            @@couchbase_orm_config_n1ql = new_config if new_config
+            @@couchbase_orm_config_n1ql || {
+              :scan_consistency => :request_plus
+            }
+        end
+
         module ClassMethods
             # Defines a query N1QL for the model
             #
@@ -49,7 +57,7 @@ module CouchbaseOrm
                 @indexes[name] = method_opts
 
                 singleton_class.__send__(:define_method, name) do |key: NO_VALUE, **opts, &result_modifier|
-                    opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
+                    opts = options.merge(opts).reverse_merge(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency])
                     values = key == NO_VALUE ? NO_VALUE : convert_values(method_opts[:emit_key], key)
                     current_query = run_query(method_opts[:emit_key], values, query_fn, custom_order: custom_order, **opts.except(:include_docs, :key))
                     if result_modifier
