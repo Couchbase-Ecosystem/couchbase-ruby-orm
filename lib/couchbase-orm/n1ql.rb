@@ -19,10 +19,9 @@ module CouchbaseOrm
             end
         end
 
-        @@couchbase_orm_config_n1ql = nil
         def self.config(new_config = nil)
-            @@couchbase_orm_config_n1ql = new_config if new_config
-            @@couchbase_orm_config_n1ql || {
+            Thread.current['__couchbaseorm_n1ql_config_n1ql__'] = new_config if new_config
+            Thread.current['__couchbaseorm_n1ql_config_n1ql__'] || {
               :scan_consistency => :request_plus
             }
         end

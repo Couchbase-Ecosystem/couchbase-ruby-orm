@@ -181,11 +181,11 @@ describe CouchbaseOrm::N1ql do
         default_n1ql_config = CouchbaseOrm::N1ql.config
         CouchbaseOrm::N1ql.config({ scan_consistency: :not_bounded })
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with('N1QL query: select raw meta().id from `billeo-cb-bucket` where type="n1_ql_test"  order by name DESC  return 0 rows with scan_consistency : not_bounded')
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : not_bounded")
 
         CouchbaseOrm::N1ql.config(default_n1ql_config)
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with('N1QL query: select raw meta().id from `billeo-cb-bucket` where type="n1_ql_test"  order by name DESC  return 0 rows with scan_consistency : request_plus')
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : request_plus")
     end
 
     after(:all) do
