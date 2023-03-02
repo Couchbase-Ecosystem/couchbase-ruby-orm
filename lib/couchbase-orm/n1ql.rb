@@ -57,7 +57,7 @@ module CouchbaseOrm
                 @indexes[name] = method_opts
 
                 singleton_class.__send__(:define_method, name) do |key: NO_VALUE, **opts, &result_modifier|
-                    opts = options.merge(opts).reverse_merge(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency] || DEFAULT_SCAN_CONSISTENCY)
+                    opts = options.merge(opts).reverse_merge(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency])
                     values = key == NO_VALUE ? NO_VALUE : convert_values(method_opts[:emit_key], key)
                     current_query = run_query(method_opts[:emit_key], values, query_fn, custom_order: custom_order, **opts.except(:include_docs, :key))
                     if result_modifier
