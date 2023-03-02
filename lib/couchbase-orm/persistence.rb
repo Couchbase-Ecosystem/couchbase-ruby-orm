@@ -80,6 +80,9 @@ module CouchbaseOrm
         # If the model is new, a record gets created in the database, otherwise
         # the existing record gets updated.
         def save(**options)
+            if transcoder = 
+                options.merge(transcoder: transcoder)
+            end
             raise "Cannot save a destroyed document!" if destroyed?
             self.new_record? ? _create_record(**options) : _update_record(**options)
         end

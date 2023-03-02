@@ -220,6 +220,18 @@ describe CouchbaseOrm::Base do
         it_behaves_like "ActiveModel"
     end
 
+    describe 'json_schema validation' do
+        let(:json_schema_path) { "#{__dir__}/support/valid_json_schema_example.json" }
+        let(:transcoder) { CouchbaseOrm::JsonTranscoder.new(json_schema: json_schema)}
+        describe '#encode' do
+            it 'raises on encoding unvalid data' do
+                unvalid_data = 
+            end
+            it 'does not rais on encoding valid data'
+        end
+
+    end
+
     describe '.ignored_properties' do
 
 

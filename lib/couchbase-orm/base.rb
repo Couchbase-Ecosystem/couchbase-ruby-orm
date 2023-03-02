@@ -212,7 +212,6 @@ module CouchbaseOrm
         extend HasMany
         extend Index
         extend IgnoredProperties
-        extend JsonSchemaValidation
 
         class << self
             def connect(**options)

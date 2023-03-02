@@ -5,11 +5,11 @@ require 'json-schema'
 module CouchbaseOrm
   class JsonTranscoder < Couchbase::JsonTranscoder
 
-    attr_reader :ignored_properties, :schema
+    attr_reader :ignored_properties, :json_schema
 
     def initialize(ignored_properties: [], json_schema: nil, **options, &block)
       @ignored_properties = ignored_properties
-      @schema = schema
+      @json_schema = json_schema
       super(**options, &block)
     end
 
@@ -17,7 +17,7 @@ module CouchbaseOrm
     # @return [Array<String, Integer>] pair of encoded document and flags
     def encode(document)
       super(document).tap do |json_blob, _flags|
-        JSON::Validator.validate(schema, json_blob) if schema
+        JSON::Validator.validate!(json_schema, json_blob) if json_schema
       end
     end
 
