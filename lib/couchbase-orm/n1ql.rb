@@ -124,7 +124,7 @@ module CouchbaseOrm
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug { "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{options[:scan_consistency]}" }
+                    CouchbaseOrm.logger.debug  "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{options[:scan_consistency]}"
                     N1qlProxy.new(result)
                 end
             end
