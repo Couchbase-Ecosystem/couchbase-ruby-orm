@@ -220,6 +220,15 @@ describe CouchbaseOrm::Base do
         it_behaves_like "ActiveModel"
     end
 
+    it 'does not expose callbacks for nested that wont never be called' do
+        expect{
+            class InvalidNested < CouchbaseOrm::NestedDocument
+                before_save {p "this should raise on loading class"}
+            end
+
+        }.to raise_error NoMethodError
+    end
+
     describe '.ignored_properties' do
 
 
