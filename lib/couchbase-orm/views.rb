@@ -66,7 +66,7 @@ EMAP
                 @views[name] = method_opts
 
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
-                    opts = options.merge(opts).reverse_merge(scan_consistency: :request_plus)
+                    opts = options.merge(opts).reverse_merge(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency])
                     CouchbaseOrm.logger.debug("View [#{@design_document}, #{name.inspect}] options: #{opts.inspect}")
                     if result_modifier
                         include_docs(bucket.view_query(@design_document, name.to_s, Couchbase::Options::View.new(**opts.except(:include_docs)))).map(&result_modifier)

@@ -27,8 +27,8 @@ module CouchbaseOrm
             end
 
             def execute(n1ql_query)
-                result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: :request_plus))
-                CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} return #{result.rows.to_a.length} rows" }
+                result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
+                CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{CouchbaseOrm::N1ql.config[:scan_consistency]}" }
                 N1qlProxy.new(result)
             end
 
@@ -52,13 +52,13 @@ module CouchbaseOrm
             end
 
             def first
-                result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: :request_plus))
+                result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
                 first_id = result.rows.to_a.first
                 @model.find(first_id) if first_id
             end
 
             def last
-                result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: :request_plus))
+                result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
                 last_id = result.rows.to_a.last
                 @model.find(last_id) if last_id
             end
@@ -87,7 +87,9 @@ module CouchbaseOrm
             alias :length :count
 
             def to_ary
-                query.results { |ids| @model.find(ids) }.to_ary
+                ids = query.results
+                return [] if ids.empty?
+                Array(ids && @model.find(ids))
             end
 
             alias :to_a :to_ary

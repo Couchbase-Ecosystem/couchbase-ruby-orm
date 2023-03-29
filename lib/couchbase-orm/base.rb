@@ -124,7 +124,6 @@ module CouchbaseOrm
         extend Enum
 
         define_model_callbacks :initialize, :only => :after
-        define_model_callbacks :create, :destroy, :save, :update
 
         Metadata = Struct.new(:cas)
 
@@ -212,6 +211,8 @@ module CouchbaseOrm
         extend HasMany
         extend Index
         extend IgnoredProperties
+
+        define_model_callbacks :create, :destroy, :save, :update
 
         class << self
             def connect(**options)
