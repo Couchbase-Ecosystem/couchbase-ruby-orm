@@ -17,7 +17,7 @@ class TimestampTest < CouchbaseOrm::Base
 end
 
 class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
-    ignored_properties :deprecated_property
+    self.ignored_properties += [:deprecated_property]
     attribute :name, :string
     attribute :job, :string
 end
