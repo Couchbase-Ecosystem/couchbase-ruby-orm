@@ -257,8 +257,7 @@ module CouchbaseOrm
                     next unless record
                     next if record.error
                     self.new(record, id: id)
-                }
-                records.compact!
+                }.compact
                 ids.length > 1 ? records : records[0]
             end
 
