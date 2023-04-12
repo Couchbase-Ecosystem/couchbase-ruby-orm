@@ -212,6 +212,27 @@ describe CouchbaseOrm::Base do
         expect(base.created_at).to be_a(Time)
     end
 
+    it "should find multiple ids at same time" do
+        base1 = BaseTest.create!(name: 'joe1')
+        base2 = BaseTest.create!(name: 'joe2')
+        base3 = BaseTest.create!(name: 'joe3')
+        expect(BaseTest.find([base1.id, base2.id, base3.id])).to eq([base1, base2, base3])
+    end
+
+    it "should find multiple ids at same time with a not found id with exception" do
+        base1 = BaseTest.create!(name: 'joe1')
+        base2 = BaseTest.create!(name: 'joe2')
+        base3 = BaseTest.create!(name: 'joe3')
+        expect { BaseTest.find([base1.id, 't', base3.id]) }.to raise_error(Couchbase::Error::DocumentNotFound)
+    end
+
+    it "should find multiple ids at same time with a not found id without exception" do
+        base1 = BaseTest.create!(name: 'joe1')
+        base2 = BaseTest.create!(name: 'joe2')
+        base3 = BaseTest.create!(name: 'joe3')
+        expect(BaseTest.find([base1.id, 't', 't', base2.id, base3.id], quiet: true)).to eq([base1, base2, base3])
+    end
+
     describe BaseTest do
         it_behaves_like "ActiveModel"
     end

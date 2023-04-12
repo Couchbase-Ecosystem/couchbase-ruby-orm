@@ -254,9 +254,10 @@ module CouchbaseOrm
                 records = quiet ? collection.get_multi(ids, transcoder: transcoder) : collection.get_multi!(ids, transcoder: transcoder)
                 CouchbaseOrm.logger.debug { "Base.find found(#{records})" }
                 records = records.zip(ids).map { |record, id|
-                    self.new(record, id: id) if record
-                }
-                records.compact!
+                    next unless record
+                    next if record.error
+                    self.new(record, id: id)
+                }.compact
                 ids.length > 1 ? records : records[0]
             end
 
