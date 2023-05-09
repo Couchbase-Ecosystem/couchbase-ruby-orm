@@ -209,4 +209,13 @@ describe CouchbaseOrm::Associations do
             it_behaves_like "ActiveModel"
         end
     end
+
+    describe 'strict_loading' do
+        it 'raises StrictLoadingViolationError on lazy loading child relation' do
+            parent = Parent.create!(name: 'joe')
+            child  = Child.create!(name: 'bob', parent_id: parent.id)
+            child.strict_loading!
+            expect {child.parent.id}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+        end
+    end
 end
