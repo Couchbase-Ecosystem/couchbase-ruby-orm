@@ -241,6 +241,15 @@ module CouchbaseOrm
             def uuid_generator=(generator)
                 @uuid_generator = generator
             end
+            
+            def strict_loading
+                @strict_loading = true
+                self
+            end
+
+            def strict_loading?
+                !!@strict_loading
+            end
 
             def find(*ids, quiet: false)
                 CouchbaseOrm.logger.debug { "Base.find(l##{ids.length}) #{ids}" }

@@ -211,11 +211,23 @@ describe CouchbaseOrm::Associations do
     end
 
     describe 'strict_loading' do
-        it 'raises StrictLoadingViolationError on lazy loading child relation' do
-            parent = Parent.create!(name: 'joe')
-            child  = Child.create!(name: 'bob', parent_id: parent.id)
-            child.strict_loading!
-            expect {child.parent.id}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+        let(:parent) {Parent.create!(name: 'joe')}
+        let(:child) {Child.create!(name: 'bob', parent_id: parent.id)}
+        context 'instance strict loading' do
+            it 'raises StrictLoadingViolationError on lazy loading child relation' do
+                
+                expect {child.parent.id}.not_to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Child.find(child.id).tap{|child| child.strict_loading! }.parent.id}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+            end
+        end
+        context 'scope strict loading' do
+            it 'raises StrictLoadingViolationError on lazy loading child relation' do
+                expect {Child.where(id: child.id).strict_loading.first.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Child.strict_loading.where(id: child.id).first.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Child.strict_loading.where(id: child.id).last.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Child.strict_loading.where(id: child.id).to_a.first.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                # ... cover all access methods (test should be refactored and split elsewhere)
+            end
         end
     end
 end

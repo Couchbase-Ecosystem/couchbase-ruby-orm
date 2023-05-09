@@ -51,10 +51,16 @@ module CouchbaseOrm
                 query.to_a
             end
 
+            def strict_loading
+                @strict_loading = true
+                self
+            end
+
             def first
                 result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
-                first_id = result.rows.to_a.first
-                @model.find(first_id) if first_id
+                return unless (first_id = result.rows.to_a.first)
+
+                @model.find(first_id).tap { |instance| instance.strict_loading! if @strict_loading || @model.strict_loading? }
             end
 
             def last
