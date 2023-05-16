@@ -3,14 +3,15 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         class CouchbaseOrm_Relation
-            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false)
-                CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit}"
+            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false, strict_loading: strict_loading = false)
+                CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit} strict_loading: #{strict_loading}"
                 @model = model
                 @limit = limit
                 @where = []
                 @order = {}
                 @order = merge_order(**order) if order
                 @where = merge_where(where, _not) if where
+                @strict_loading = strict_loading
                 CouchbaseOrm::logger.debug "- #{to_s}"
             end
 
@@ -52,8 +53,7 @@ module CouchbaseOrm
             end
 
             def strict_loading
-                @strict_loading = true
-                self
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(strict_loading: true))
             end
 
             def first
@@ -239,7 +239,7 @@ module CouchbaseOrm
 
             delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            delegate :where, :not, :order, :limit, :all, to: :relation
+            delegate :where, :not, :order, :limit, :all, :strict_loading, to: :relation
         end
     end
 end
