@@ -217,17 +217,21 @@ describe CouchbaseOrm::Associations do
             it 'raises StrictLoadingViolationError on lazy loading child relation' do
                 
                 expect {child.parent.id}.not_to raise_error(ActiveRecord::StrictLoadingViolationError)
-                expect {Child.find(child.id).tap{|child| child.strict_loading! }.parent.id}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect_strict_loading_error_on_calling_parent(Child.find(child.id).tap{|child| child.strict_loading!})
             end
         end
         context 'scope strict loading' do
             it 'raises StrictLoadingViolationError on lazy loading child relation' do
-                expect {Child.where(id: child.id).strict_loading.first.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-                expect {Child.strict_loading.where(id: child.id).first.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-                expect {Child.strict_loading.where(id: child.id).last.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-                expect {Child.strict_loading.where(id: child.id).to_a.first.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-                # ... cover all access methods (test should be refactored and split elsewhere)
+                expect_strict_loading_error_on_calling_parent(Child.where(id: child.id).strict_loading.first)
+                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).first)
+                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).last)
+                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).to_a.first)
+                expect_strict_loading_error_on_calling_parent(Child.strict_loading.all.to_a.first)
             end
         end
+    end
+
+    def expect_strict_loading_error_on_calling_parent(child_instance)
+      expect {child_instance.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
     end
 end
