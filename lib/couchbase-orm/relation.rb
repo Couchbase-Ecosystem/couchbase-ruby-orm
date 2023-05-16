@@ -60,13 +60,13 @@ module CouchbaseOrm
                 result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
                 return unless (first_id = result.rows.to_a.first)
 
-                @model.find(first_id).tap { |instance| instance.strict_loading! if @strict_loading || @model.strict_loading? }
+                @model.find(first_id, with_strict_loading: @strict_loading)
             end
 
             def last
                 result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
                 last_id = result.rows.to_a.last
-                @model.find(last_id) if last_id
+                @model.find(last_id, with_strict_loading: @strict_loading) if last_id
             end
 
             def count
