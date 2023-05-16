@@ -265,7 +265,7 @@ module CouchbaseOrm
                 records = records.zip(ids).map { |record, id|
                     next unless record
                     next if record.error
-                    new(record, id:).tap do |instance|
+                    new(record, id: id).tap do |instance|
                         instance.strict_loading! if with_strict_loading || strict_loading?
                     end
                 }.compact
