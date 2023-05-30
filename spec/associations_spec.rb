@@ -5,6 +5,7 @@ require File.expand_path("../support", __FILE__)
 
 class Parent < CouchbaseOrm::Base
     attribute :name
+    has_and_belongs_to_many :children
 end
 
 class RandomOtherType < CouchbaseOrm::Base
@@ -231,6 +232,10 @@ describe CouchbaseOrm::Associations do
             it 'does not raise StrictLoadingViolationError on lazy loading child relation without declaring it' do
                 expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).first)
                 expect { Child.where(id: child.id).last.parent}.not_to raise_error
+            end
+
+            it 'raises StrictLoadingViolationError on lazy loading habtm relation' do
+                expect {Parent.strict_loading.where(id: parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError) 
             end
         end
     end
