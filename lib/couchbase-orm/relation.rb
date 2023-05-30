@@ -16,7 +16,7 @@ module CouchbaseOrm
             end
 
             def to_s
-                "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit}"
+                "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit} strict_loading: #{@strict_loading}"
             end
 
             def to_n1ql
@@ -54,6 +54,10 @@ module CouchbaseOrm
 
             def strict_loading
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(strict_loading: true))
+            end
+
+            def strict_loading?
+                !!@strict_loading
             end
 
             def first
@@ -95,7 +99,7 @@ module CouchbaseOrm
             def to_ary
                 ids = query.results
                 return [] if ids.empty?
-                Array(ids && @model.find(ids))
+                Array(ids && @model.find(ids, with_strict_loading: @strict_loading))
             end
 
             alias :to_a :to_ary
@@ -152,7 +156,7 @@ module CouchbaseOrm
             end
 
             def initializer_arguments
-                { model: @model, order: @order, where: @where, limit: @limit }
+                { model: @model, order: @order, where: @where, limit: @limit, strict_loading: @strict_loading }
             end
 
             def merge_order(*lorder, **horder)
@@ -239,7 +243,7 @@ module CouchbaseOrm
 
             delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            delegate :where, :not, :order, :limit, :all, :strict_loading, to: :relation
+            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, to: :relation
         end
     end
 end

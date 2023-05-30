@@ -215,7 +215,6 @@ describe CouchbaseOrm::Associations do
         let(:child) {Child.create!(name: 'bob', parent_id: parent.id)}
         context 'instance strict loading' do
             it 'raises StrictLoadingViolationError on lazy loading child relation' do
-                
                 expect {child.parent.id}.not_to raise_error(ActiveRecord::StrictLoadingViolationError)
                 expect_strict_loading_error_on_calling_parent(Child.find(child.id).tap{|child| child.strict_loading!})
             end
