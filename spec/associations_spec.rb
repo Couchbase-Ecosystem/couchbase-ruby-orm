@@ -228,6 +228,11 @@ describe CouchbaseOrm::Associations do
                 expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).to_a.first)
                 expect_strict_loading_error_on_calling_parent(Child.strict_loading.all.to_a.first)
             end
+
+            it 'does not raise StrictLoadingViolationError on lazy loading child relation without declaring it' do
+                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).first)
+                expect { Child.where(id: child.id).last.parent}.not_to raise_error
+            end
         end
     end
 
