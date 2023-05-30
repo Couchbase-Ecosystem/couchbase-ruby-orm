@@ -213,15 +213,6 @@ module CouchbaseOrm
 
         define_model_callbacks :create, :destroy, :save, :update
 
-        def strict_loading
-            @strict_loading = true
-            self
-        end
-
-        def strict_loading?
-            !!@strict_loading
-        end
-
         class << self
             def connect(**options)
                 @bucket = BucketProxy.new(::MTLibcouchbase::Bucket.new(**options))
@@ -266,7 +257,9 @@ module CouchbaseOrm
                     next unless record
                     next if record.error
                     new(record, id: id).tap do |instance|
-                        instance.strict_loading! if with_strict_loading || strict_loading?
+                        if with_strict_loading
+                            instance.strict_loading!
+                        end
                     end
                 }.compact
                 ids.length > 1 ? records : records[0]

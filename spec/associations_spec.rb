@@ -235,7 +235,9 @@ describe CouchbaseOrm::Associations do
             end
 
             it 'raises StrictLoadingViolationError on lazy loading habtm relation' do
-                expect {Parent.strict_loading.where(id: parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError) 
+                expect {Parent.strict_loading.where(id: parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                # NB any action called on model class breaks find return type (find return an enumerator instead of a record)
+                expect {Parent.strict_loading.find(parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
             end
         end
     end
