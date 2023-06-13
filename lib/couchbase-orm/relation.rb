@@ -87,7 +87,9 @@ module CouchbaseOrm
             alias :length :count
 
             def to_ary
-                query.results { |ids| @model.find(ids) }.to_ary
+                ids = query.results
+                return [] if ids.empty?
+                Array(ids && @model.find(ids))
             end
 
             alias :to_a :to_ary
