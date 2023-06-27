@@ -150,7 +150,6 @@ module CouchbaseOrm
         end
 
         def assign_attributes(hash)
-            hash = hash.with_indifferent_access if hash.is_a?(Hash)
             super(hash.except("type"))
         end
 

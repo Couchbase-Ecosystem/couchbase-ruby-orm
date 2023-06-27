@@ -137,7 +137,7 @@ module CouchbaseOrm
             if model
                 case model
                 when Couchbase::Collection::GetResult
-                    doc = HashWithIndifferentAccess.new(model.content) || raise('empty response provided')
+                    doc = Hash.new(model.content) || raise('empty response provided')
                     type = doc.delete(:type)
                     doc.delete(:id)
 
