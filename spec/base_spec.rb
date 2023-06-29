@@ -284,6 +284,10 @@ describe CouchbaseOrm::Base do
                     from(%w[deprecated_property job name type]).
                     to(%w[job name type])
             end
+
+            it 'does not raise for reload' do
+                expect{ loaded_model.reload }.not_to raise_error
+            end
         end
     end
 end
