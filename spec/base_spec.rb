@@ -124,6 +124,20 @@ describe CouchbaseOrm::Base do
         BaseTest.bucket.default_collection.remove 'doc_1'
     end
 
+    it "raises ActiveModel::UnknownAttributeError on loading objects with unexpected properties even valued to null" do
+        too_much_properties_valued_to_null_doc = {
+            type: BaseTest.design_document,
+            name: 'Pierre',
+            job: 'dev',
+            age: nil
+        }
+        BaseTest.bucket.default_collection.upsert 'doc_1', too_much_properties_valued_to_null_doc
+
+        expect { BaseTest.find_by_id('doc_1') }.to raise_error(ActiveModel::UnknownAttributeError)
+
+        BaseTest.bucket.default_collection.remove 'doc_1'
+    end
+
     it "loads objects even if there is a missing property in doc" do
         missing_properties_doc = {
             type: BaseTest.design_document,
