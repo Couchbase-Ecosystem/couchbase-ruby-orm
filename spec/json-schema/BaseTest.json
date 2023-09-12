@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "required": [
+    "name",
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "numb": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 3.0
+    },
+    "name": {
+      "type": "string"
+    }
+  }
+}

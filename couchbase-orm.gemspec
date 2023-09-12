@@ -18,6 +18,7 @@ Gem::Specification.new do |gem|
 
     gem.add_runtime_dependency     'couchbase',    '~> 3.4.2'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
+    gem.add_runtime_dependency     'json-schema',  '~> 2.8' # validating JSON against a schema
 
     gem.add_development_dependency 'rake',         '~> 12.2'
     gem.add_development_dependency 'rspec',        '~> 3.7'
