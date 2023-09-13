@@ -56,6 +56,22 @@ describe CouchbaseOrm::JsonSchema::Validator do
     expect { EntitySnakecase.create!(value: "value_1") }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError
   end
 
+  it "update ok" do
+    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    base = EntitySnakecase.create!(value: "value_one")
+    base.value = "value_two"
+    base.save
+    base.delete
+  end
+
+  it "update ko" do
+    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    base = EntitySnakecase.create!(value: "value_one")
+    base.value = "value_2"
+    expect { base.save }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError
+    base.delete
+  end
+
   it "creation ok with design_document" do
     CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
     base = BaseTest.create!(name: "dsdsd", numb: 3)
