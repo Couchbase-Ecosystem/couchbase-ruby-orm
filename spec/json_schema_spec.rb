@@ -45,6 +45,10 @@ describe CouchbaseOrm::JsonSchema::Loader do
 end
 
 describe CouchbaseOrm::JsonSchema::Validator do
+  after(:each) do
+    CouchbaseOrm::JsonSchema::Loader.instance.reset
+  end
+
   it "creation ok" do
     CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
     base = EntitySnakecase.create!(value: "value_one")
