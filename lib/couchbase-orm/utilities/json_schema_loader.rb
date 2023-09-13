@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'couchbase-orm/json_schema_validator'
+require 'couchbase-orm/json_schema'
 
 module CouchbaseOrm
   module JsonSchemaLoader

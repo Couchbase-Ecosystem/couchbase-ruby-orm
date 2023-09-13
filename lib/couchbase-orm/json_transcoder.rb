@@ -1,6 +1,6 @@
 require "json"
 require 'couchbase/json_transcoder'
-require 'couchbase-orm/json_schema_validator'
+require 'couchbase-orm/json_schema'
 
 module CouchbaseOrm
   class JsonTranscoder < Couchbase::JsonTranscoder
