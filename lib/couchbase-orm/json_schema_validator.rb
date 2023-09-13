@@ -13,6 +13,7 @@ module CouchbaseOrm
 
       @schemas = nil
 
+      # only visible for test
       def reset
         @schemas = nil
       end

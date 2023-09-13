@@ -22,7 +22,7 @@ end
 
 describe CouchbaseOrm::JsonSchema::Loader do
 
-  before(:each) do
+  after(:each) do
     CouchbaseOrm::JsonSchema::Loader.instance.reset
   end
 
