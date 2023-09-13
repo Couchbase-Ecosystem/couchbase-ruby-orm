@@ -24,7 +24,7 @@ require 'couchbase-orm/utilities/index'
 require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/ignored_properties'
-require 'couchbase-orm/utilities/json_schema_validation'
+require 'couchbase-orm/utilities/json_schema_loader'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/json_transcoder'
 
@@ -120,7 +120,6 @@ module CouchbaseOrm
     include Encrypt
 
     extend Enum
-    extend JsonSchemaValidation
 
     define_model_callbacks :initialize, :only => :after
 
@@ -210,7 +209,7 @@ module CouchbaseOrm
     extend HasMany
     extend Index
     extend IgnoredProperties
-    prepend JsonSchemaValidation
+    prepend JsonSchemaLoader
 
     define_model_callbacks :create, :destroy, :save, :update
 

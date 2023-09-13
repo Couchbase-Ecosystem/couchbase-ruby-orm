@@ -2,6 +2,7 @@
 
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
+require 'couchbase-orm/json_transcoder'
 
 module CouchbaseOrm
     module Persistence
@@ -235,6 +236,9 @@ module CouchbaseOrm
                 run_callbacks :save do
                     options[:cas] = @__metadata__.cas if with_cas
                     CouchbaseOrm.logger.debug { "_update_record - replace #{id} #{serialized_attributes.to_s.truncate(200)}" }
+                    if options[:transcoder].nil?
+                        options[:transcoder] = CouchbaseOrm::JsonTranscoder.new
+                    end
                     resp = self.class.collection.replace(id, serialized_attributes.except("id").merge(type: self.class.design_document), Couchbase::Options::Replace.new(**options))
 
                     # Ensure the model is up to date
@@ -252,6 +256,9 @@ module CouchbaseOrm
                 run_callbacks :save do
                     assign_attributes(id: self.class.uuid_generator.next(self)) unless self.id
                     CouchbaseOrm.logger.debug { "_create_record - Upsert #{id} #{serialized_attributes.to_s.truncate(200)}" }
+                    if options[:transcoder].nil?
+                        options[:transcoder] = CouchbaseOrm::JsonTranscoder.new
+                    end
                     resp = self.class.collection.upsert(self.id, serialized_attributes.except("id").merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
 
                     # Ensure the model is up to date

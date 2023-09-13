@@ -1,5 +1,6 @@
 require "json"
 require 'couchbase/json_transcoder'
+require 'couchbase-orm/json_schema_validator'
 
 module CouchbaseOrm
   class JsonTranscoder < Couchbase::JsonTranscoder
@@ -14,6 +15,12 @@ module CouchbaseOrm
     def decode(blob, _flags)
       original = super
       original&.except(*ignored_properties)
+    end
+
+    def encode(document)
+      original = super
+      CouchbaseOrm::JsonSchema::Validator.new.validate_entity(document, original[0]) if document.present? && !original.empty?
+      original
     end
   end
 end
