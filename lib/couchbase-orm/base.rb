@@ -25,7 +25,6 @@ require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/utilities/ignored_properties'
-require 'couchbase-orm/utilities/json_schema_loader'
 require 'couchbase-orm/json_transcoder'
 
 module CouchbaseOrm
@@ -209,7 +208,6 @@ module CouchbaseOrm
     extend HasMany
     extend Index
     extend IgnoredProperties
-    extend JsonSchemaLoader
 
     define_model_callbacks :create, :destroy, :save, :update
 

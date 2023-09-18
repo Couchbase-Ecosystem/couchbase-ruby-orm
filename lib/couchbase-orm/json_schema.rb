@@ -11,7 +11,12 @@ module CouchbaseOrm
     class Loader
       include Singleton
 
-      @schemas = nil
+      attr_reader :schemas
+
+      def initialize
+        initialize_schemas(ENV['CB_ORM_JSON_SCHEMA_PATH'])
+        super
+      end
 
       # only visible for test
       def reset
@@ -20,22 +25,21 @@ module CouchbaseOrm
 
       def extract_type(entity)
         return entity[:type] if entity.present?
-
         nil
       end
 
       def get_json_schema(entity)
         class_name = extract_type(entity)
-        if @schemas.present? && class_name.present?
-          schema = @schemas[class_name]
-          return schema if schema.present?
+        if schemas&.present? && class_name.present?
+          schema = schemas[class_name]
+          return schema if schema&.present?
           CouchbaseOrm.logger.warn { "No schema found for entity #{class_name}" }
         end
         nil
       end
 
       def initialize_schemas(schemas_directory)
-        if schemas_directory.present? && @schemas.nil?
+        if schemas_directory&.present? && @schemas.nil?
           if File.directory?(schemas_directory)
             @schemas = {}
             Dir.glob(File.join(schemas_directory, '*.json'))
@@ -48,7 +52,7 @@ module CouchbaseOrm
             CouchbaseOrm.logger.warn { "Not exist CB_ORM_JSON_SCHEMA_PATH directory #{schemas_directory}" }
           end
         end
-        CouchbaseOrm.logger.debug { "SCHEMAS : #{@schemas}" }
+        CouchbaseOrm.logger.debug { "SCHEMAS : #{schemas}" }
       end
     end
 
