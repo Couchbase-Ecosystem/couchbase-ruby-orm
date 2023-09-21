@@ -27,17 +27,17 @@ describe CouchbaseOrm::JsonSchema::Loader do
   end
 
   it "With no existing dir " do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../dontexist", __FILE__))
+    load_schemas("../dontexist")
     expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "JsonSchemaBaseTest" })).to be_nil
   end
 
   it "Without existing json " do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../empty-json-schema", __FILE__))
+    load_schemas("../empty-json-schema")
     expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "JsonSchemaBaseTest" })).to be_nil
   end
 
   it "with schema " do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "JsonSchemaBaseTest" })).to include('"name"')
     expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "Unknown" })).to be_nil
 
@@ -50,18 +50,18 @@ describe CouchbaseOrm::JsonSchema::Validator do
   end
 
   it "creation ok" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+        load_schemas("../json-schema")
     base = EntitySnakecase.create!(value: "value_one")
     base.delete
   end
 
   it "creation ko" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     expect { EntitySnakecase.create!(value: "value_1") }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError
   end
 
   it "update ok" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = EntitySnakecase.create!(value: "value_one")
     base.value = "value_two"
     base.save
@@ -69,7 +69,7 @@ describe CouchbaseOrm::JsonSchema::Validator do
   end
 
   it "update ko" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = EntitySnakecase.create!(value: "value_one")
     base.value = "value_2"
     expect { base.save }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError
@@ -77,18 +77,18 @@ describe CouchbaseOrm::JsonSchema::Validator do
   end
 
   it "creation ok with design_document" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = JsonSchemaBaseTest.create!(name: "dsdsd", numb: 3)
     base.delete
   end
 
   it "creation ko with design_document" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     expect { JsonSchemaBaseTest.create!(name: "dsdsd", numb: 2) }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError
   end
 
   it "update ok with design_document" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = JsonSchemaBaseTest.create!(name: "dsdsd", numb: 3)
     base.numb = 4
     base.save
@@ -96,7 +96,7 @@ describe CouchbaseOrm::JsonSchema::Validator do
   end
 
   it "update ok with design_document" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = JsonSchemaBaseTest.create!(name: "dsdsd", numb: 3)
     base.numb = 2
     expect { base.save }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError
@@ -104,16 +104,20 @@ describe CouchbaseOrm::JsonSchema::Validator do
   end
 
   it "save with entity not define in schema files" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = UnknownTest.create!(test: true)
     base.delete
   end
 
   it "update with entity not define in schema files" do
-    CouchbaseOrm::JsonSchema::Loader.instance.initialize_schemas(File.expand_path("../json-schema", __FILE__))
+    load_schemas("../json-schema")
     base = UnknownTest.create!(test: true)
     base.test = false
     base.save
     base.delete
   end
+end
+
+def load_schemas(file_relative_path)
+  CouchbaseOrm::JsonSchema::Loader.instance.send(:initialize_schemas, File.expand_path(file_relative_path, __FILE__))
 end

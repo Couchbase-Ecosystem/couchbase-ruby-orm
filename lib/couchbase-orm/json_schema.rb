@@ -11,11 +11,12 @@ module CouchbaseOrm
     class Loader
       include Singleton
 
+      JSON_SCHEMAS_PATH = ENV['CB_ORM_JSON_SCHEMA_PATH']
+
       attr_reader :schemas
 
       def initialize
-        initialize_schemas(ENV['CB_ORM_JSON_SCHEMA_PATH'])
-        super
+        initialize_schemas
       end
 
       # only visible for test
@@ -38,7 +39,9 @@ module CouchbaseOrm
         nil
       end
 
-      def initialize_schemas(schemas_directory)
+      private
+
+      def initialize_schemas(schemas_directory = JSON_SCHEMAS_PATH)
         if schemas_directory&.present? && @schemas.nil?
           if File.directory?(schemas_directory)
             @schemas = {}
