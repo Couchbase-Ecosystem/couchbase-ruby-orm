@@ -19,11 +19,6 @@ module CouchbaseOrm
         initialize_schemas
       end
 
-      # only visible for test
-      def reset
-        @schemas = nil
-      end
-
       def extract_type(entity)
         return entity[:type] if entity.present?
         nil

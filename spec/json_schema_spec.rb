@@ -23,7 +23,7 @@ end
 describe CouchbaseOrm::JsonSchema::Loader do
 
   after(:each) do
-    CouchbaseOrm::JsonSchema::Loader.instance.reset
+    reset_schemas
   end
 
   it "With no existing dir " do
@@ -46,7 +46,7 @@ end
 
 describe CouchbaseOrm::JsonSchema::Validator do
   after(:each) do
-    CouchbaseOrm::JsonSchema::Loader.instance.reset
+    reset_schemas
   end
 
   it "creation ok" do
@@ -118,6 +118,13 @@ describe CouchbaseOrm::JsonSchema::Validator do
   end
 end
 
+
+# TODO : extract following helpers methods elsewhere
+
 def load_schemas(file_relative_path)
   CouchbaseOrm::JsonSchema::Loader.instance.send(:initialize_schemas, File.expand_path(file_relative_path, __FILE__))
+end
+
+def reset_schemas
+  CouchbaseOrm::JsonSchema::Loader.instance.instance_variable_set :@schemas, nil
 end
