@@ -14,9 +14,8 @@ module CouchbaseOrm
         initialize_schemas
       end
 
-      def extract_type(entity)
-        return entity[:type] if entity.present?
-        nil
+      def extract_type(entity = {})
+        entity[:type]
       end
 
       def get_json_schema(entity)
@@ -32,18 +31,18 @@ module CouchbaseOrm
       private
 
       def initialize_schemas(schemas_directory = JSON_SCHEMAS_PATH)
-        if schemas_directory&.present? && @schemas.nil?
-          if File.directory?(schemas_directory)
-            @schemas = {}
-            Dir.glob(File.join(schemas_directory, '*.json'))
-               .each do |file_path|
-              json_schema_value = File.read file_path
-              entity_name = File.basename(file_path, '.json')
-              @schemas[entity_name] = json_schema_value
-            end
-          else
-            CouchbaseOrm.logger.warn { "Not exist CB_ORM_JSON_SCHEMA_PATH directory #{schemas_directory}" }
-          end
+        return if schemas
+
+        return unless schemas_directory
+
+        CouchbaseOrm.logger.warn { "Not exist CB_ORM_JSON_SCHEMA_PATH directory #{schemas_directory}" } unless File.directory?(schemas_directory)
+
+        @schemas = {}
+        Dir.glob(File.join(schemas_directory, '*.json'))
+            .each do |file_path|
+          json_schema_value = File.read file_path
+          entity_name = File.basename(file_path, '.json')
+          @schemas[entity_name] = json_schema_value
         end
         CouchbaseOrm.logger.debug { "SCHEMAS : #{schemas}" }
       end
