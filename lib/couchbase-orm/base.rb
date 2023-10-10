@@ -43,6 +43,17 @@ module CouchbaseOrm
               ActiveRecord.default_timezone == :utc ? Time.now.utc : Time.now
             end
 
+            class Conn
+              def default_timezone
+                  ActiveRecord.default_timezone
+              end
+            end
+            def connection
+              Conn.new
+            end
+
+            def generate_alias_attributes; end
+
             def primary_key
                 "id"
             end
@@ -80,6 +91,10 @@ module CouchbaseOrm
                     attribute_types.keys
                 end
             end
+        end
+
+        def primary_key_values_present?
+          true
         end
 
         def _has_attribute?(attr_name)
