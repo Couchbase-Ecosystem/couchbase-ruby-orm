@@ -38,6 +38,11 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         module ClassMethods
+
+            def current_time_from_proper_timezone
+              ActiveRecord.default_timezone == :utc ? Time.now.utc : Time.now
+            end
+
             def primary_key
                 "id"
             end
