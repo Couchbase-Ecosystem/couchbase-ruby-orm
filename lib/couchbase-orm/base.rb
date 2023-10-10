@@ -52,6 +52,8 @@ module CouchbaseOrm
               Conn.new
             end
 
+            def composite_primary_key?; end
+
             def generate_alias_attributes; end
 
             def primary_key
