@@ -11,6 +11,9 @@ jobs:
     strategy:
       matrix:
         include:
+          - ruby: '3.2'
+            gemfile: '7.1.0'
+            couchbase: '7.1.1'
           - ruby: '3.0'
             gemfile: '7.0.0'
             couchbase: '6.6.5'
