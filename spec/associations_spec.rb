@@ -5,13 +5,6 @@ require File.expand_path("../support", __FILE__)
 
 class Parent < CouchbaseOrm::Base
     attribute :name
-    has_and_belongs_to_many :children
-end
-
-class StrictLoadingParent < CouchbaseOrm::Base
-    attribute :name
-    has_and_belongs_to_many :children
-    self.strict_loading_by_default = true
 end
 
 class RandomOtherType < CouchbaseOrm::Base
@@ -215,48 +208,5 @@ describe CouchbaseOrm::Associations do
         describe Part do
             it_behaves_like "ActiveModel"
         end
-    end
-
-    describe 'strict_loading' do
-        let(:parent) {Parent.create!(name: 'joe')}
-        let(:child) {Child.create!(name: 'bob', parent_id: parent.id)}
-        context 'instance strict loading' do
-            it 'raises StrictLoadingViolationError on lazy loading child relation' do
-                expect {child.parent.id}.not_to raise_error
-                expect_strict_loading_error_on_calling_parent(Child.find(child.id).tap{|child| child.strict_loading!})
-            end
-        end
-        context 'scope strict loading' do
-            it 'raises StrictLoadingViolationError on lazy loading child relation' do
-                expect_strict_loading_error_on_calling_parent(Child.where(id: child.id).strict_loading.first)
-                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).first)
-                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).last)
-                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).to_a.first)
-                expect_strict_loading_error_on_calling_parent(Child.strict_loading.all.to_a.first)
-            end
-
-            it 'does not raise StrictLoadingViolationError on lazy loading child relation without declaring it' do
-                expect_strict_loading_error_on_calling_parent(Child.strict_loading.where(id: child.id).first)
-                expect { Child.where(id: child.id).last.parent}.not_to raise_error
-            end
-
-            it 'raises StrictLoadingViolationError on lazy loading habtm relation' do
-                expect {Parent.strict_loading.where(id: parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-                # NB any action called on model class breaks find return type (find return an enumerator instead of a record)
-                expect {Parent.strict_loading.find(parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-            end
-
-            it 'raises StrictLoadingViolationError on lazy loading relation when model is by default strict_loading' do
-                strict_loading_parent = StrictLoadingParent.create!(name: 'joe')
-                expect {StrictLoadingParent.where(id: strict_loading_parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-                expect {Parent.find(parent.id).children}.not_to raise_error
-                # NB any action called on model class breaks find return type (find return an enumerator instead of a record)
-                expect {Parent.strict_loading.find(strict_loading_parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
-            end
-        end
-    end
-
-    def expect_strict_loading_error_on_calling_parent(child_instance)
-      expect {child_instance.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
     end
 end

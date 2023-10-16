@@ -32,8 +32,6 @@ module CouchbaseOrm
                     val = if options[:polymorphic]
                         ::CouchbaseOrm.try_load(self.send(ref))
                     else
-                        raise ActiveRecord::StrictLoadingViolationError, "#{self.class} is marked as strict_loading and #{assoc} cannot be lazily loaded." if strict_loading?
-
                         assoc.constantize.find(self.send(ref), quiet: true)
                     end
                     instance_variable_set(instance_var, val)
@@ -83,8 +81,6 @@ module CouchbaseOrm
                     val = if options[:polymorphic]
                         ::CouchbaseOrm.try_load(ref_value) if ref_value
                     else
-                        raise ActiveRecord::StrictLoadingViolationError, "#{self.class} is marked as strict_loading and #{assoc} cannot be lazily loaded." if strict_loading?
-
                         assoc.constantize.find(ref_value) if ref_value
                     end
                     val = Array.wrap(val || [])
