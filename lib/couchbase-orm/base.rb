@@ -10,6 +10,7 @@ else
 end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
+require 'couchbase-orm/inspectable'
 require 'couchbase-orm/error'
 require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
@@ -130,6 +131,7 @@ module CouchbaseOrm
     end
 
     class Document
+        include Inspectable
         include ::ActiveModel::Model
         include ::ActiveModel::Dirty
         include ::ActiveModel::Attributes
