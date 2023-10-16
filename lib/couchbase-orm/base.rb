@@ -2,12 +2,11 @@
 
 
 require 'active_model'
-require 'active_record'
-if ActiveModel::VERSION::MAJOR >= 6
-    require 'active_record/database_configurations'
-else
+# if ActiveModel::VERSION::MAJOR >= 6
+#     require 'active_record/database_configurations'
+# else
     require 'active_model/type'
-end
+# end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
 require 'couchbase-orm/inspectable'
@@ -39,19 +38,6 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         module ClassMethods
-
-            def current_time_from_proper_timezone
-              ActiveRecord.default_timezone == :utc ? Time.now.utc : Time.now
-            end
-
-            class Conn
-              def default_timezone
-                  ActiveRecord.default_timezone
-              end
-            end
-            def connection
-              Conn.new
-            end
 
             def composite_primary_key?; end
 
@@ -140,7 +126,7 @@ module CouchbaseOrm
         include ::ActiveModel::Validations
         include ::ActiveModel::Validations::Callbacks
 
-        include ::ActiveRecord::Core
+        # include ::ActiveRecord::Core
         include ActiveRecordCompat
         include Encrypt
 
@@ -217,10 +203,10 @@ module CouchbaseOrm
     end
 
     class Base < Document
-        include ::ActiveRecord::Validations
+        # include ::ActiveRecord::Validations
         include Persistence
-        include ::ActiveRecord::AttributeMethods::Dirty
-        include ::ActiveRecord::Timestamp # must be included after Persistence
+        # include ::ActiveRecord::AttributeMethods::Dirty
+        # include ::ActiveRecord::Timestamp # must be included after Persistence
 
         include Associations
         include Views

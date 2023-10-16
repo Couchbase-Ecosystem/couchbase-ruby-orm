@@ -65,7 +65,7 @@ module CouchbaseOrm
 
         # Returns true if this object has been destroyed, otherwise returns false.
         def destroyed?
-            @destroyed
+            @destroyed ||= false
         end
 
         # Returns true if the record is persisted, i.e. it's not a new record and it was
