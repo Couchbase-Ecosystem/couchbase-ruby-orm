@@ -27,6 +27,7 @@ require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/utilities/ignored_properties'
 require 'couchbase-orm/json_transcoder'
+require 'couchbase-orm/timestamps'
 
 
 module CouchbaseOrm
@@ -121,6 +122,7 @@ module CouchbaseOrm
         include ::ActiveModel::Model
         include ::ActiveModel::Dirty
         include ::ActiveModel::Attributes
+        include Timestamps
         include ::ActiveModel::Serializers::JSON
 
         include ::ActiveModel::Validations
