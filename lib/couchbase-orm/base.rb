@@ -41,14 +41,6 @@ module CouchbaseOrm
 
         module ClassMethods
 
-            def composite_primary_key?; end
-
-            def generate_alias_attributes; end
-
-            def primary_key
-                "id"
-            end
-
             def base_class?
                 true
             end
