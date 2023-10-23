@@ -86,16 +86,6 @@ module CouchbaseOrm
       @previous_attributes = {}
     end
 
-    # Things that need to execute after a document has been persisted.
-    #
-    # @example Handle post persistence.
-    #   document.post_persist
-    def post_persist
-      reset_persisted_descendants
-      reset_attributes_before_type_cast
-      move_changes
-    end
-
     # Get the previous changes on the document.
     #
     # @example Get the previous changes.
@@ -106,16 +96,6 @@ module CouchbaseOrm
       @previous_changes ||= {}
     end
 
-    # Remove a change from the dirty attributes hash. Used by the single field
-    # atomic updaters.
-    #
-    # @example Remove a flagged change.
-    #   model.remove_change(:field)
-    #
-    # @param [ Symbol | String ] name The name of the field.
-    def remove_change(name)
-      changed_attributes.delete(name.to_s)
-    end
 
     # Gets all the new values for each of the changed fields, to be passed to
     # a CouchbaseOrm $set modifier.
