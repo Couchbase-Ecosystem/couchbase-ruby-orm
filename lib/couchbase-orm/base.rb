@@ -5,7 +5,7 @@ require 'active_model'
 # if ActiveModel::VERSION::MAJOR >= 6
 #     require 'active_record/database_configurations'
 # else
-    require 'active_model/type'
+    # require 'active_model/type' 
 # end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
