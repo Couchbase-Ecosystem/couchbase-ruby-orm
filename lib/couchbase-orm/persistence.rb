@@ -20,6 +20,7 @@ module CouchbaseOrm
                 else
                     instance = new(attributes, &block)
                     instance.save
+                    instance.reset_object!
                     instance
                 end
             end
@@ -30,6 +31,7 @@ module CouchbaseOrm
                 else
                     instance = new(attributes, &block)
                     instance.save!
+                    instance.reset_object!
                     instance
                 end
             end
@@ -81,7 +83,9 @@ module CouchbaseOrm
         # the existing record gets updated.
         def save(**options)
             raise "Cannot save a destroyed document!" if destroyed?
-            self.new_record? ? _create_record(**options) : _update_record(**options)
+            ret = (self.new_record? ? _create_record(**options) : _update_record(**options))
+            move_changes
+            ret
         end
 
         # Saves the model.
@@ -214,6 +218,7 @@ module CouchbaseOrm
 
             reset_associations
             clear_changes_information
+            reset_object!
             self
         end
 

@@ -9,6 +9,7 @@ require 'active_model'
 # end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
+require 'couchbase-orm/changeable'
 require 'couchbase-orm/inspectable'
 require 'couchbase-orm/error'
 require 'couchbase-orm/views'
@@ -121,8 +122,8 @@ module CouchbaseOrm
         include Inspectable
         include ::ActiveModel::Model
         include ::ActiveModel::Dirty
+        include Changeable # override some methods from ActiveModel::Dirty (keep it included after)
         include ::ActiveModel::Attributes
-        include Timestamps
         include ::ActiveModel::Serializers::JSON
 
         include ::ActiveModel::Validations
@@ -224,8 +225,16 @@ module CouchbaseOrm
         extend IgnoredProperties
 
         define_model_callbacks :create, :destroy, :save, :update
+        include Timestamps
 
         class << self
+
+            def attribute(name, ...)
+                super
+                create_dirty_methods(name, name)
+                create_setters(name)
+            end
+
             def connect(**options)
                 @bucket = BucketProxy.new(::MTLibcouchbase::Bucket.new(**options))
             end

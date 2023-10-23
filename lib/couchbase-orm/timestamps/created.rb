@@ -9,9 +9,7 @@ module CouchbaseOrm
       extend ActiveSupport::Concern
 
       included do
-        attribute :created_at, type: Time
-        get_callbacks(:create) || define_callbacks(:create)
-        set_callback :create, :before, :set_created_at
+        set_callback :create, :before, :set_created_at, if: -> { attributes.has_key? 'created_at' }
       end
 
       # Update the created_at attribute on the Document to the current time. This is
@@ -22,7 +20,7 @@ module CouchbaseOrm
       def set_created_at
         return if created_at
 
-        time = Time.configured.now
+        time = Time.current
         self.updated_at = time if is_a?(Updated) && !updated_at_changed?
         self.created_at = time
       end

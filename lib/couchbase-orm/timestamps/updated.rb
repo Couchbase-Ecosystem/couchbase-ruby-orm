@@ -9,9 +9,7 @@ module CouchbaseOrm
       extend ActiveSupport::Concern
 
       included do
-        attribute :updated_at, type: Time
-        get_callbacks(:update) || define_callbacks(:update)
-        set_callback :update, :before, :set_updated_at
+        set_callback :update, :before, :set_updated_at, if: -> { attributes.has_key? 'updated_at' }
       end
 
       # Update the updated_at attribute on the Document to the current time. This is
@@ -21,8 +19,7 @@ module CouchbaseOrm
       #   person.set_updated_at
       def set_updated_at
         return if able_to_set_updated_at?
-
-        time = Time.configured.now
+        time = Time.current
         self.updated_at = time if is_a?(Updated) && !updated_at_changed?
       end
 

@@ -13,7 +13,7 @@ end
 
 class TimestampTest < CouchbaseOrm::Base
     attribute :created_at, :datetime, precision: 6
-    attribute :deleted_at, :datetime, precision: 6
+    attribute :updated_at, :datetime, precision: 6
 end
 
 class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
