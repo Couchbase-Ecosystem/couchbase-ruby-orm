@@ -14,7 +14,6 @@ Gem::Specification.new do |gem|
     gem.require_paths = ["lib"]
 
     gem.add_runtime_dependency     'activemodel',   ENV["ACTIVE_MODEL_VERSION"] || '>= 5.2'
-    # gem.add_runtime_dependency     'activerecord',  ENV["ACTIVE_MODEL_VERSION"] || '>= 5.2'
 
     gem.add_runtime_dependency     'couchbase',    '~> 3.4.2'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base

@@ -2,11 +2,6 @@
 
 
 require 'active_model'
-# if ActiveModel::VERSION::MAJOR >= 6
-#     require 'active_record/database_configurations'
-# else
-    # require 'active_model/type' 
-# end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
 require 'couchbase-orm/changeable'
@@ -125,7 +120,6 @@ module CouchbaseOrm
         include ::ActiveModel::Validations
         include ::ActiveModel::Validations::Callbacks
 
-        # include ::ActiveRecord::Core
         include ActiveRecordCompat
         include Encrypt
 
@@ -202,10 +196,7 @@ module CouchbaseOrm
     end
 
     class Base < Document
-        # include ::ActiveRecord::Validations
         include Persistence
-        # include ::ActiveRecord::AttributeMethods::Dirty
-        # include ::ActiveRecord::Timestamp # must be included after Persistence
 
         include Associations
         include Views
