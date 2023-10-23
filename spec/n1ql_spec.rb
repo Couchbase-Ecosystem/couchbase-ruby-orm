@@ -148,7 +148,6 @@ describe CouchbaseOrm::N1ql do
         expect(N1QLTest.find(t.id).name).to eq(special_name)
         expect(N1QLTest.by_name(key: special_name).to_a.first).to eq(t)
         expect(N1QLTest.where(name: special_name).to_a.first).to eq(t)
-        puts N1QLTest.where(name: special_name).to_n1ql
     end
     it "should return matching results with custom n1ql query" do
         N1QLTest.create! name: :bob, rating: :awesome
@@ -180,8 +179,6 @@ describe CouchbaseOrm::N1ql do
         allow(CouchbaseOrm.logger).to receive(:debug)
         default_n1ql_config = CouchbaseOrm::N1ql.config
         CouchbaseOrm::N1ql.config({ scan_consistency: :not_bounded })
-        puts "CouchbaseOrm::N1ql.config"
-        puts CouchbaseOrm::N1ql.config
         N1QLTest.by_rating_reverse()
         expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : not_bounded")
 
