@@ -76,6 +76,14 @@ module CouchbaseOrm
             end
         end
 
+        def slice(*methods)
+            methods.flatten.index_with { |method| public_send(method) }.with_indifferent_access
+        end
+
+        def values_at(*methods)
+            methods.flatten.map! { |method| public_send(method) }
+        end
+
         def _has_attribute?(attr_name)
             attribute_names.include?(attr_name.to_s)
         end
