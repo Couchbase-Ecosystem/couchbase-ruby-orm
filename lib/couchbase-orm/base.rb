@@ -84,10 +84,6 @@ module CouchbaseOrm
             end
         end
 
-        def primary_key_values_present?
-          true
-        end
-
         def _has_attribute?(attr_name)
             attribute_names.include?(attr_name.to_s)
         end
