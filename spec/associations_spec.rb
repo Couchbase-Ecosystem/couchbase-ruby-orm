@@ -80,7 +80,7 @@ describe CouchbaseOrm::Associations do
             id = child.id
             child.delete
 
-            expect(Child.exists?(id)).to be(false)
+            expect(Child.exists?(id)).to be(false) # this is flaky
             expect(Parent.exists?(parent.id)).to be(true)
 
             id = parent.id
