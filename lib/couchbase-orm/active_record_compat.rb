@@ -3,9 +3,11 @@ require 'active_model'
 require 'active_support/hash_with_indifferent_access'
 
 module CouchbaseOrm
+
+  # Set of methods defined in ActiveRecord and needed for CouchbaseOrm
+  # try to avoid dependencies on too many active record classes
+  # by exemple we don't want to go down to the concept of tables
   module ActiveRecordCompat
-    # try to avoid dependencies on too many active record classes
-    # by exemple we don't want to go down to the concept of tables
 
     extend ActiveSupport::Concern
 

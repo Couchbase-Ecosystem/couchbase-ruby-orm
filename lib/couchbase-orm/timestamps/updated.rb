@@ -9,28 +9,12 @@ module CouchbaseOrm
       extend ActiveSupport::Concern
 
       included do
-        set_callback :update, :before, :set_updated_at, if: -> { attributes.has_key? 'updated_at' }
-      end
+        set_callback :update, :before, -> {
+          return if !frozen? && (new_record? || changed?)
 
-      # Update the updated_at attribute on the Document to the current time. This is
-      # only called on update.
-      #
-      # @example Set the updated at time.
-      #   person.set_updated_at
-      def set_updated_at
-        return if able_to_set_updated_at?
-        time = Time.current
-        self.updated_at = time if is_a?(Updated) && !updated_at_changed?
-      end
-
-      # Is the updated timestamp able to be set?
-      #
-      # @example Can the timestamp be set?
-      #   document.able_to_set_updated_at?
-      #
-      # @return [ true | false ] If the timestamp can be set.
-      def able_to_set_updated_at?
-        !frozen? && (new_record? || changed?)
+          time = Time.current
+          self.updated_at = time if is_a?(Updated) && !updated_at_changed?
+        }, if: -> { attributes.has_key? 'updated_at' }
       end
     end
   end

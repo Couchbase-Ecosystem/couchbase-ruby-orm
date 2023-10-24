@@ -2,12 +2,13 @@
 
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
+require 'couchbase-orm/encrypt'
 
 module CouchbaseOrm
     module Persistence
         extend ActiveSupport::Concern
 
-        include Encrypt
+        include CouchbaseOrm::Encrypt
 
         included do
             attribute :id, :string
