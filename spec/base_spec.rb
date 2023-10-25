@@ -279,7 +279,7 @@ describe CouchbaseOrm::Base do
             end
 
             it 'delete the ignored properties on save' do
-                base = BaseTestWithIgnoredProperties.find(doc_id)
+                loaded_model.name = 'Updated Name'
                 expect{ loaded_model.save }.to change { BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content.keys.sort }.
                     from(%w[deprecated_property job name type]).
                     to(%w[job name type])

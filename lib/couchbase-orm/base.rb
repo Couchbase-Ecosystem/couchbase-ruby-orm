@@ -183,7 +183,7 @@ module CouchbaseOrm
                 records = records.zip(ids).map { |record, id|
                     next unless record
                     next if record.error
-                    self.new(record, id: id)
+                    self.new(record, id: id).tap(&:reset_object!)
                 }.compact
                 ids.length > 1 ? records : records[0]
             end
