@@ -85,6 +85,9 @@ module CouchbaseOrm
       @previous_changes = {}
       @previous_attributes = {}
     end
+    # for AR compatibility
+    # TODO add coverage and move it in AR compat module
+    alias_method :clear_changes_information, :reset_object!
 
     # Get the previous changes on the document.
     #
