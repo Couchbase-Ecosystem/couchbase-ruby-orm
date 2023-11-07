@@ -30,6 +30,13 @@ describe CouchbaseOrm::Base do
         expect(base.changed?).to be false
     end
 
+    it 'stores not stingified changes' do
+        compare = CompareTest.create!
+        compare.age = '42'
+        compare.save!
+        expect(compare.saved_change_to_age).to eq [nil, 42]
+    end
+
     it 'should update changed_attributes after update' do
         base = BaseTest.create!(name: 'joe')
         base = BaseTest.find base.id

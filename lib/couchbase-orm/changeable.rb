@@ -371,8 +371,8 @@ module CouchbaseOrm
         define_method("#{name}=") do |new_attribute_value|
           previous_value = attributes[name.to_s]
           ret = super(new_attribute_value)
-          if previous_value != new_attribute_value
-            changed_attributes.merge!(Hash[name, [previous_value, new_attribute_value]])
+          if previous_value != attributes[name.to_s]
+            changed_attributes.merge!(Hash[name, [previous_value, attributes[name.to_s]]])
           end
           return ret
         end
