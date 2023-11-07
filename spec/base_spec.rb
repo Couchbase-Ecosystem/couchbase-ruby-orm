@@ -23,6 +23,21 @@ class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
 end
 
 describe CouchbaseOrm::Base do
+
+    it 'should have clean model after find' do
+        base = BaseTest.create!(name: 'joe')
+        base = BaseTest.find base.id
+        expect(base.changed?).to be false
+    end
+
+    it 'should update changed_attributes after update' do
+        base = BaseTest.create!(name: 'joe')
+        base = BaseTest.find base.id
+        base.name = 'toto'
+        base.save!
+        expect(base.saved_change_to_name?).to be true
+        expect(base.saved_change_to_name).to eq ["joe", "toto"]
+    end
     it "should be comparable to other objects" do
         base = BaseTest.create!(name: 'joe')
         base2 = BaseTest.create!(name: 'joe')

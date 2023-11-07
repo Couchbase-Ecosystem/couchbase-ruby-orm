@@ -111,7 +111,7 @@ module CouchbaseOrm
                 save_method = :"autosave_associated_records_for_#{name}"
 
                 define_non_cyclic_method(save_method) do
-                    old, new = changes[ref.to_s]&.first
+                    old, new = changes[ref.to_s]
                     adds = (new || []) - (old || [])
                     subs = (old || []) - (new || [])
                     update_has_and_belongs_to_many_reverse_association(assoc, adds, true, **options) if adds.any?

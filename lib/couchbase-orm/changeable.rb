@@ -213,8 +213,7 @@ module CouchbaseOrm
     #
     # @return [ Array<Object> ] The old and new values.
     def attribute_change(attr)
-      
-      [ changed_attributes[attr], attributes[attr] ] if attribute_changed?(attr)
+      changed_attributes[attr] if attribute_changed?(attr)
     end
 
     # A class for representing the default value that an attribute was changed
