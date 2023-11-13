@@ -78,6 +78,11 @@ module CouchbaseOrm
       changed_attributes.clear
     end
 
+    def changes_applied
+      move_changes
+      super
+    end
+
     def reset_object!
       # @attributes = attributes
       # @attributes_before_type_cast = @attributes.dup
