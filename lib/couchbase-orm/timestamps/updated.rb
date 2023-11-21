@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 # rubocop:todo all
+require 'pry'
 
 module CouchbaseOrm
   module Timestamps
@@ -9,11 +10,12 @@ module CouchbaseOrm
       extend ActiveSupport::Concern
 
       included do
-        set_callback :update, :before, -> {
-          return if !frozen? && (new_record? || changed?)
+        set_callback :save, :before, -> {
+          return if frozen?
+          return unless changed? || new_record?
 
           time = Time.current
-          self.updated_at = time if is_a?(Updated) && !updated_at_changed?
+          self.updated_at = time if !updated_at_changed?
         }, if: -> { attributes.has_key? 'updated_at' }
       end
     end

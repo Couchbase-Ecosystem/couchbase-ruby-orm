@@ -13,9 +13,8 @@ module CouchbaseOrm
           return if created_at
 
           time = Time.current
-          self.updated_at = time if is_a?(Updated) && !updated_at_changed?
           self.created_at = time
-        }, if: -> { attributes.has_key? 'created_at' }
+        }, if: -> { attributes.has_key?('created_at')}
       end
     end
   end
