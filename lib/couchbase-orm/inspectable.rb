@@ -15,7 +15,7 @@ module CouchbaseOrm
     def inspect
       inspection = []
       inspection.concat(inspect_attributes)
-      "#<#{self.class.name} id: #{id.inspect}, #{inspection * ', '}>"
+      "#<#{self.class.name} id: #{respond_to?(:id)? id.inspect : 'no id'}, #{inspection * ', '}>"
     end
 
     private
