@@ -25,6 +25,7 @@ require 'couchbase-orm/utilities/ignored_properties'
 require 'couchbase-orm/json_transcoder'
 require 'couchbase-orm/timestamps'
 require 'couchbase-orm/active_record_compat'
+require 'couchbase-orm/strict_loading'
 
 
 module CouchbaseOrm
@@ -40,6 +41,7 @@ module CouchbaseOrm
         include ::ActiveModel::Validations::Callbacks
 
         include ActiveRecordCompat
+        include StrictLoading
         include Encrypt
 
         extend Enum
@@ -85,6 +87,7 @@ module CouchbaseOrm
 
             yield self if block_given?
 
+            init_strict_loading
             run_callbacks :initialize
         end
 
