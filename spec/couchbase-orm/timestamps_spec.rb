@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'couchbase-orm'
 require 'couchbase-orm/timestamps_spec_models'
-require 'timecop'
+# require 'timecop'
 
 describe CouchbaseOrm::Timestamps do
   context 'simple document' do
@@ -73,12 +73,13 @@ describe CouchbaseOrm::Timestamps do
     let(:nested_doc) { SimpleNestedDoc.new }
     describe 'when parent document has both timestamp attributes' do
       let(:doc) { DocWithBothTimestampsAttributesAndNested.new }
-      it 'runs created_at timestamp callback on create' do
+      # nested document is not saved, so it does not have created_at
+      it 'runs created_at timestamp callback on create only for parent document' do
         expect(doc).to receive(:created_at=)
         expect(doc).to receive(:updated_at=)
-        doc.save
         doc.sub = nested_doc
-        expect(nested_doc).to receive(:created_at=)
+        expect(nested_doc).not_to receive(:created_at=)
+        doc.save
       end
     end
   end
