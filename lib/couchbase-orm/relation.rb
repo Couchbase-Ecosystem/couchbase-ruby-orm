@@ -3,19 +3,20 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         class CouchbaseOrm_Relation
-            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false)
-                CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit}"
+            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false, strict_loading: strict_loading = false)
+                CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit} strict_loading: #{strict_loading}"
                 @model = model
                 @limit = limit
                 @where = []
                 @order = {}
                 @order = merge_order(**order) if order
                 @where = merge_where(where, _not) if where
+                @strict_loading = strict_loading
                 CouchbaseOrm::logger.debug "- #{to_s}"
             end
 
             def to_s
-                "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit}"
+                "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit} strict_loading: #{@strict_loading}"
             end
 
             def to_n1ql
@@ -51,16 +52,25 @@ module CouchbaseOrm
                 query.to_a
             end
 
+            def strict_loading
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(strict_loading: true))
+            end
+
+            def strict_loading?
+                !!@strict_loading
+            end
+
             def first
                 result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
-                first_id = result.rows.to_a.first
-                @model.find(first_id) if first_id
+                return unless (first_id = result.rows.to_a.first)
+
+                @model.find(first_id, with_strict_loading: @strict_loading)
             end
 
             def last
                 result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
                 last_id = result.rows.to_a.last
-                @model.find(last_id) if last_id
+                @model.find(last_id, with_strict_loading: @strict_loading) if last_id
             end
 
             def count
@@ -89,7 +99,7 @@ module CouchbaseOrm
             def to_ary
                 ids = query.results
                 return [] if ids.empty?
-                Array(ids && @model.find(ids))
+                Array(ids && @model.find(ids, with_strict_loading: @strict_loading))
             end
 
             alias :to_a :to_ary
@@ -146,7 +156,7 @@ module CouchbaseOrm
             end
 
             def initializer_arguments
-                { model: @model, order: @order, where: @where, limit: @limit }
+                { model: @model, order: @order, where: @where, limit: @limit, strict_loading: @strict_loading }
             end
 
             def merge_order(*lorder, **horder)
@@ -233,7 +243,7 @@ module CouchbaseOrm
 
             delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            delegate :where, :not, :order, :limit, :all, to: :relation
+            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, to: :relation
         end
     end
 end

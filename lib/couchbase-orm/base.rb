@@ -169,7 +169,7 @@ module CouchbaseOrm
                 @uuid_generator = generator
             end
 
-            def find(*ids, quiet: false)
+            def find(*ids, quiet: false, with_strict_loading: false)
                 CouchbaseOrm.logger.debug { "Base.find(l##{ids.length}) #{ids}" }
 
                 ids = ids.flatten.select { |id| id.present? }
@@ -183,7 +183,11 @@ module CouchbaseOrm
                 records = records.zip(ids).map { |record, id|
                     next unless record
                     next if record.error
-                    self.new(record, id: id).tap(&:reset_object!)
+                    new(record, id: id).tap do |instance|
+                        if with_strict_loading
+                            instance.strict_loading!
+                        end
+                    end.tap(&:reset_object!)
                 }.compact
                 ids.length > 1 ? records : records[0]
             end
