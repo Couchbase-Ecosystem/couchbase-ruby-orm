@@ -74,7 +74,6 @@ module CouchbaseOrm
       @previous_changes = changes
       @attributes_before_last_save = @previous_attributes
       @previous_attributes = attributes.dup
-      # reset_atomic_updates!
       changed_attributes.clear
     end
 

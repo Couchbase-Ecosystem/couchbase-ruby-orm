@@ -12,6 +12,11 @@ module CouchbaseOrm
     extend ActiveSupport::Concern
 
     module ClassMethods
+
+      def primary_key
+        'id'
+      end
+
       def base_class?
         true
       end
