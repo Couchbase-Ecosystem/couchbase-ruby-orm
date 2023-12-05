@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'active_support/concern'
 module CouchbaseOrm
     # Defines behavior for dirty tracking.
   module Changeable
@@ -139,7 +140,7 @@ module CouchbaseOrm
     #
     # @return [ Object ] Value of the attribute before the last save.
     def attribute_before_last_save(attr)
-      
+
       attributes_before_last_save[attr]
     end
 
@@ -150,7 +151,7 @@ module CouchbaseOrm
     # @return [ Array<Object> | nil ] If the attribute was changed, returns
     #   an array containing the original value and the saved value, otherwise nil.
     def saved_change_to_attribute(attr)
-      
+
       previous_changes[attr]
     end
 
@@ -254,7 +255,7 @@ module CouchbaseOrm
     #
     # @return [ true | false ] Whether the attribute has changed.
     def attribute_changed?(attr, from: ATTRIBUTE_UNCHANGED, to: ATTRIBUTE_UNCHANGED)
-      
+
       return false unless changed_attributes.key?(attr)
       return false if changed_attributes[attr] == attributes[attr]
       return false if from != changed_attributes[attr]
@@ -298,7 +299,7 @@ module CouchbaseOrm
     # @return [ Object | nil ] Attribute value before the document was saved,
     #   or nil if the document has not been saved yet.
     def attribute_previously_was(attr)
-      
+
       if previous_changes.key?(attr)
         previous_changes[attr].first
       else
@@ -329,12 +330,12 @@ module CouchbaseOrm
     #
     # @return [ Object ] The old value.
     def reset_attribute!(attr)
-      
+
       attributes[attr] = changed_attributes.delete(attr) if attribute_changed?(attr)
     end
 
     def reset_attribute_to_default!(attr)
-      
+
       if (field = fields[attr])
         __send__("#{attr}=", field.eval_default(self))
       else
