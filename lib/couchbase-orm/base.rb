@@ -118,6 +118,7 @@ module CouchbaseOrm
     end
 
     class Base < Document
+        define_model_callbacks :create, :destroy, :save, :update
         include Persistence
 
         include Associations
@@ -125,6 +126,7 @@ module CouchbaseOrm
         include QueryHelper
         include N1ql
         include Relation
+        include Timestamps
 
         extend Join
         extend Enum
@@ -133,8 +135,6 @@ module CouchbaseOrm
         extend Index
         extend IgnoredProperties
 
-        define_model_callbacks :create, :destroy, :save, :update
-        include Timestamps
 
         class << self
 
