@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 require 'couchbase-orm/base'
 
 class DocWithoutTimestamps < CouchbaseOrm::Base

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require "couchbase-orm/timestamps/created"
 require "couchbase-orm/timestamps/updated"
