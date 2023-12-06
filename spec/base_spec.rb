@@ -22,6 +22,15 @@ class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
     attribute :job, :string
 end
 
+class DocInvalidOnUpdate < CouchbaseOrm::Base
+    attribute :title
+    validate :foo, on: :update
+
+    def foo
+      errors.add(:title, 'should not be updated')
+    end
+  end
+
 describe CouchbaseOrm::Base do
 
     it 'should have clean model after find' do
@@ -270,6 +279,16 @@ describe CouchbaseOrm::Base do
             end
 
         }.to raise_error NoMethodError
+    end
+
+    it 'should unassign attributes on validation error' do
+        doc = DocInvalidOnUpdate.new(title: 'Test')
+        doc.save
+        expect(doc.title).to eq('Test')
+        expect { doc.update!(title: 'changed wich assignation should not stay after raise') }.to raise_error(CouchbaseOrm::Error::RecordInvalid)
+        expect(doc.title_was).to eq('Test') # raising in master with "changed wich assignation should not stay after raise"
+        expect(doc.title).not_to eq(doc.title_was)
+        expect(doc.title).to eq('changed wich assignation should not stay after raise')
     end
 
     describe '.ignored_properties' do
