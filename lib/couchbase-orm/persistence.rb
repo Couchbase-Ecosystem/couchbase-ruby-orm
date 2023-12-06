@@ -84,8 +84,7 @@ module CouchbaseOrm
         # the existing record gets updated.
         def save(**options)
             raise "Cannot save a destroyed document!" if destroyed?
-            ret = (self.new_record? ? _create_record(**options) : _update_record(**options))
-            ret
+            self.new_record? ? _create_record(**options) : _update_record(**options)
         end
 
         # Saves the model.
