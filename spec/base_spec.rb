@@ -39,7 +39,7 @@ describe CouchbaseOrm::Base do
         expect(base.changed?).to be false
     end
 
-    it 'stores not stingified changes' do
+    it 'stores not stringified changes' do
         compare = CompareTest.create!
         compare.age = '42'
         compare.save!
@@ -230,12 +230,6 @@ describe CouchbaseOrm::Base do
         base = BaseTest.create!(name: 'joe')
         expect(base.id).to_not be_nil
         expect{base.id = "foo"}.to raise_error(RuntimeError, 'ID cannot be changed')
-    end
-
-    if ActiveModel::VERSION::MAJOR >= 6
-        it "should have timestamp attributes for create in model", skip: "Not sure of the use of timestamp_attributes_for_create_in_model" do
-            expect(TimestampTest.timestamp_attributes_for_create_in_model).to eq(["created_at"])
-        end
     end
 
     it "should generate a timestamp on creation" do
