@@ -13,7 +13,7 @@ end
 
 class TimestampTest < CouchbaseOrm::Base
   attribute :created_at, :datetime, precision: 6
-  attribute :deleted_at, :datetime, precision: 6
+  attribute :updated_at, :datetime, precision: 6
 end
 
 class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
@@ -22,24 +22,55 @@ class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
   attribute :job, :string
 end
 
+class DocInvalidOnUpdate < CouchbaseOrm::Base
+    attribute :title
+    validate :foo, on: :update
+
+    def foo
+      errors.add(:title, 'should not be updated')
+    end
+  end
+
 describe CouchbaseOrm::Base do
+
+  it 'should have clean model after find' do
+      base = BaseTest.create!(name: 'joe')
+      base = BaseTest.find base.id
+      expect(base.changed?).to be false
+  end
+
+  it 'stores not stringified changes' do
+      compare = CompareTest.create!
+      compare.age = '42'
+      compare.save!
+      expect(compare.saved_change_to_age).to eq [nil, 42]
+  end
+
+  it 'should update changed_attributes after update' do
+      base = BaseTest.create!(name: 'joe')
+      base = BaseTest.find base.id
+      base.name = 'toto'
+      base.save!
+      expect(base.saved_change_to_name?).to be true
+      expect(base.saved_change_to_name).to eq ["joe", "toto"]
+  end
   it "should be comparable to other objects" do
-    base = BaseTest.create!(name: 'joe')
-    base2 = BaseTest.create!(name: 'joe')
-    base3 = BaseTest.create!(ActiveSupport::HashWithIndifferentAccess.new(name: 'joe'))
+      base = BaseTest.create!(name: 'joe')
+      base2 = BaseTest.create!(name: 'joe')
+      base3 = BaseTest.create!(ActiveSupport::HashWithIndifferentAccess.new(name: 'joe'))
 
-    expect(base).to eq(base)
-    expect(base).to be(base)
-    expect(base).not_to eq(base2)
+      expect(base).to eq(base)
+      expect(base).to be(base)
+      expect(base).not_to eq(base2)
 
-    same_base = BaseTest.find(base.id)
-    expect(base).to eq(same_base)
-    expect(base).not_to be(same_base)
-    expect(base2).not_to eq(same_base)
+      same_base = BaseTest.find(base.id)
+      expect(base).to eq(same_base)
+      expect(base).not_to be(same_base)
+      expect(base2).not_to eq(same_base)
 
-    base.delete
-    base2.delete
-    base3.delete
+      base.delete
+      base2.delete
+      base3.delete
   end
 
   it "should be inspectable" do
@@ -255,37 +286,104 @@ describe CouchbaseOrm::Base do
       expect(BaseTestWithIgnoredProperties.ignored_properties).to eq(['deprecated_property'])
     end
 
-    context 'given a document with ignored properties' do
-      let(:doc_id) { 'doc_1' }
-      let(:document_properties) do
-        {
-          'type' => BaseTestWithIgnoredProperties.design_document,
-          'name' => 'Pierre',
-          'job' => 'dev',
-          'deprecated_property' => 'depracted that could be removed on next save'
-        }
-      end
-      let(:loaded_model) { BaseTestWithIgnoredProperties.find(doc_id) }
+    it "cannot change the id of a loaded object" do
+        base = BaseTest.create!(name: 'joe')
+        expect(base.id).to_not be_nil
+        expect{base.id = "foo"}.to raise_error(RuntimeError, 'ID cannot be changed')
+    end
 
-      before { BaseTestWithIgnoredProperties.bucket.default_collection.upsert doc_id, document_properties }
-      after { BaseTestWithIgnoredProperties.bucket.default_collection.remove doc_id }
+    it "should generate a timestamp on creation" do
+        base = TimestampTest.create!
+        expect(base.created_at).to be_a(Time)
+    end
 
-      it 'ignores the ignored properties on load from db (and dont raise)' do
-        expect(loaded_model.attributes.keys).not_to include('deprecated_property')
-        expect(loaded_model.name).to eq('Pierre')
-        expect(BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content).to include(document_properties)
-      end
+    it "should find multiple ids at same time" do
+        base1 = BaseTest.create!(name: 'joe1')
+        base2 = BaseTest.create!(name: 'joe2')
+        base3 = BaseTest.create!(name: 'joe3')
+        expect(BaseTest.find([base1.id, base2.id, base3.id])).to eq([base1, base2, base3])
+    end
 
-      it 'delete the ignored properties on save' do
-        base = BaseTestWithIgnoredProperties.find(doc_id)
-        expect { loaded_model.save }.to change { BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content.keys.sort }.
-          from(%w[deprecated_property job name type]).
-          to(%w[job name type])
-      end
+    it "should find multiple ids at same time with a not found id with exception" do
+        base1 = BaseTest.create!(name: 'joe1')
+        base2 = BaseTest.create!(name: 'joe2')
+        base3 = BaseTest.create!(name: 'joe3')
+        expect { BaseTest.find([base1.id, 't', base3.id]) }.to raise_error(Couchbase::Error::DocumentNotFound)
+    end
 
-      it 'does not raise for reload' do
-        expect { loaded_model.reload }.not_to raise_error
-      end
+    it "should find multiple ids at same time with a not found id without exception" do
+        base1 = BaseTest.create!(name: 'joe1')
+        base2 = BaseTest.create!(name: 'joe2')
+        base3 = BaseTest.create!(name: 'joe3')
+        expect(BaseTest.find([base1.id, 't', 't', base2.id, base3.id], quiet: true)).to eq([base1, base2, base3])
+    end
+
+    describe BaseTest do
+        it_behaves_like "ActiveModel"
+    end
+
+    describe CompareTest do
+        it_behaves_like "ActiveModel"
+    end
+
+    it 'does not expose callbacks for nested that wont never be called' do
+        expect{
+            class InvalidNested < CouchbaseOrm::NestedDocument
+                before_save {p "this should raise on loading class"}
+            end
+
+        }.to raise_error NoMethodError
+    end
+
+    it 'should unassign attributes on validation error' do
+        doc = DocInvalidOnUpdate.new(title: 'Test')
+        doc.save
+        expect(doc.title).to eq('Test')
+        expect { doc.update!(title: 'changed wich assignation should not stay after raise') }.to raise_error(CouchbaseOrm::Error::RecordInvalid)
+        expect(doc.title_was).to eq('Test') # raising in master with "changed wich assignation should not stay after raise"
+        expect(doc.title).not_to eq(doc.title_was)
+        expect(doc.title).to eq('changed wich assignation should not stay after raise')
+    end
+
+    describe '.ignored_properties' do
+
+
+        it 'returns an array of ignored properties' do
+            expect(BaseTestWithIgnoredProperties.ignored_properties).to eq(['deprecated_property'])
+        end
+
+        context 'given a document with ignored properties' do
+            let(:doc_id) { 'doc_1' }
+            let(:document_properties) do
+                {
+                    'type' => BaseTestWithIgnoredProperties.design_document,
+                    'name' => 'Pierre',
+                    'job' => 'dev',
+                    'deprecated_property' => 'depracted that could be removed on next save'
+                }
+            end
+            let(:loaded_model) { BaseTestWithIgnoredProperties.find(doc_id) }
+
+            before { BaseTestWithIgnoredProperties.bucket.default_collection.upsert doc_id, document_properties }
+            after { BaseTestWithIgnoredProperties.bucket.default_collection.remove doc_id }
+
+            it 'ignores the ignored properties on load from db (and dont raise)' do
+                expect(loaded_model.attributes.keys).not_to include('deprecated_property')
+                expect(loaded_model.name).to eq('Pierre')
+                expect(BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content).to include(document_properties)
+            end
+
+            it 'delete the ignored properties on save' do
+                loaded_model.name = 'Updated Name'
+                expect{ loaded_model.save }.to change { BaseTestWithIgnoredProperties.bucket.default_collection.get(doc_id).content.keys.sort }.
+                    from(%w[deprecated_property job name type]).
+                    to(%w[job name type])
+            end
+
+            it 'does not raise for reload' do
+                expect{ loaded_model.reload }.not_to raise_error
+            end
+        end
     end
   end
 end

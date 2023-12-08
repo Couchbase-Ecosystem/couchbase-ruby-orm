@@ -87,7 +87,7 @@ describe CouchbaseOrm::Associations do
             id = child.id
             child.delete
 
-            expect(Child.exists?(id)).to be(false)
+            expect(Child.exists?(id)).to be(false) # this is flaky
             expect(Parent.exists?(parent.id)).to be(true)
 
             id = parent.id
@@ -241,22 +241,22 @@ describe CouchbaseOrm::Associations do
             end
 
             it 'raises StrictLoadingViolationError on lazy loading habtm relation' do
-                expect {Parent.strict_loading.where(id: parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Parent.strict_loading.where(id: parent.id).first.children}.to raise_error(CouchbaseOrm::StrictLoadingViolationError)
                 # NB any action called on model class breaks find return type (find return an enumerator instead of a record)
-                expect {Parent.strict_loading.find(parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Parent.strict_loading.find(parent.id).first.children}.to raise_error(CouchbaseOrm::StrictLoadingViolationError)
             end
 
             it 'raises StrictLoadingViolationError on lazy loading relation when model is by default strict_loading' do
                 strict_loading_parent = StrictLoadingParent.create!(name: 'joe')
-                expect {StrictLoadingParent.where(id: strict_loading_parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {StrictLoadingParent.where(id: strict_loading_parent.id).first.children}.to raise_error(CouchbaseOrm::StrictLoadingViolationError)
                 expect {Parent.find(parent.id).children}.not_to raise_error
                 # NB any action called on model class breaks find return type (find return an enumerator instead of a record)
-                expect {Parent.strict_loading.find(strict_loading_parent.id).first.children}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+                expect {Parent.strict_loading.find(strict_loading_parent.id).first.children}.to raise_error(CouchbaseOrm::StrictLoadingViolationError)
             end
         end
     end
 
     def expect_strict_loading_error_on_calling_parent(child_instance)
-      expect {child_instance.parent}.to raise_error(ActiveRecord::StrictLoadingViolationError)
+      expect {child_instance.parent}.to raise_error(CouchbaseOrm::StrictLoadingViolationError)
     end
 end
