@@ -21,7 +21,7 @@ module CouchbaseOrm
 
       def get_json_schema(entity)
         document_type = extract_type(entity)
-        schemas[document_type] if document_type
+        schemas[document_type] if document_type && schemas
       end
 
       private

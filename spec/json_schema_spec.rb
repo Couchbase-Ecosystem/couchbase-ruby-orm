@@ -122,7 +122,8 @@ end
 # TODO : extract following helpers methods elsewhere
 
 def load_schemas(file_relative_path)
-  CouchbaseOrm::JsonSchema::Loader.instance.send(:initialize_schemas, File.expand_path(file_relative_path, __FILE__))
+  CouchbaseOrm::JsonSchema::Loader.instance.send(:instance_variable_set, :@schemas_directory, File.expand_path(file_relative_path, __FILE__))
+  CouchbaseOrm::JsonSchema::Loader.instance.send(:initialize_schemas)
 end
 
 def reset_schemas
