@@ -2,14 +2,10 @@
 
 
 require 'active_model'
-require 'active_record'
-if ActiveModel::VERSION::MAJOR >= 6
-    require 'active_record/database_configurations'
-else
-    require 'active_model/type'
-end
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
+require 'couchbase-orm/changeable'
+require 'couchbase-orm/inspectable'
 require 'couchbase-orm/error'
 require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
@@ -27,97 +23,25 @@ require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/utilities/ignored_properties'
 require 'couchbase-orm/json_transcoder'
+require 'couchbase-orm/timestamps'
+require 'couchbase-orm/active_record_compat'
+require 'couchbase-orm/strict_loading'
 
 
 module CouchbaseOrm
-
-    module ActiveRecordCompat
-        # try to avoid dependencies on too many active record classes
-        # by exemple we don't want to go down to the concept of tables
-
-        extend ActiveSupport::Concern
-
-        module ClassMethods
-            def primary_key
-                "id"
-            end
-
-            def base_class?
-                true
-            end
-
-            def column_names # can't be an alias for now
-                attribute_names
-            end
-
-            def abstract_class?
-                false
-            end
-
-            def connected?
-                true
-            end
-
-            def table_exists?
-                true
-            end
-            
-            def _reflect_on_association(attribute)
-                false
-            end
-
-            def type_for_attribute(attribute)
-                attribute_types[attribute]
-            end
-
-            if ActiveModel::VERSION::MAJOR < 6
-                def attribute_names
-                    attribute_types.keys
-                end
-            end
-        end
-
-        def _has_attribute?(attr_name)
-            attribute_names.include?(attr_name.to_s)
-        end
-
-        def attribute_for_inspect(attr_name)
-            value = send(attr_name)
-            value.inspect
-        end
-
-        if ActiveModel::VERSION::MAJOR < 6
-            def attribute_names
-                self.class.attribute_names
-            end
-
-            def has_attribute?(attr_name)
-                @attributes.key?(attr_name.to_s)
-            end
-
-            def attribute_present?(attribute)
-                value = send(attribute)
-                !value.nil? && !(value.respond_to?(:empty?) && value.empty?)
-            end
-
-            def _write_attribute(attr_name, value)
-                @attributes.write_from_user(attr_name.to_s, value)
-                value
-            end
-        end
-    end
-
     class Document
+        include Inspectable
         include ::ActiveModel::Model
         include ::ActiveModel::Dirty
+        include Changeable # override some methods from ActiveModel::Dirty (keep it included after)
         include ::ActiveModel::Attributes
         include ::ActiveModel::Serializers::JSON
 
         include ::ActiveModel::Validations
         include ::ActiveModel::Validations::Callbacks
 
-        include ::ActiveRecord::Core
         include ActiveRecordCompat
+        include StrictLoading
         include Encrypt
 
         extend Enum
@@ -163,6 +87,7 @@ module CouchbaseOrm
 
             yield self if block_given?
 
+            init_strict_loading
             run_callbacks :initialize
         end
 
@@ -193,16 +118,15 @@ module CouchbaseOrm
     end
 
     class Base < Document
-        include ::ActiveRecord::Validations
+        define_model_callbacks :create, :destroy, :save, :update
         include Persistence
-        include ::ActiveRecord::AttributeMethods::Dirty
-        include ::ActiveRecord::Timestamp # must be included after Persistence
 
         include Associations
         include Views
         include QueryHelper
         include N1ql
         include Relation
+        include Timestamps
 
         extend Join
         extend Enum
@@ -211,9 +135,15 @@ module CouchbaseOrm
         extend Index
         extend IgnoredProperties
 
-        define_model_callbacks :create, :destroy, :save, :update
 
         class << self
+
+            def attribute(name, ...)
+                super
+                create_dirty_methods(name, name)
+                create_setters(name)
+            end
+
             def connect(**options)
                 @bucket = BucketProxy.new(::MTLibcouchbase::Bucket.new(**options))
             end
@@ -260,7 +190,7 @@ module CouchbaseOrm
                         if with_strict_loading
                             instance.strict_loading!
                         end
-                    end
+                    end.tap(&:reset_object!)
                 }.compact
                 ids.length > 1 ? records : records[0]
             end

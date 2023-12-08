@@ -2,12 +2,13 @@
 
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
+require 'couchbase-orm/encrypt'
 
 module CouchbaseOrm
     module Persistence
         extend ActiveSupport::Concern
 
-        include Encrypt
+        include CouchbaseOrm::Encrypt
 
         included do
             attribute :id, :string
@@ -20,6 +21,7 @@ module CouchbaseOrm
                 else
                     instance = new(attributes, &block)
                     instance.save
+                    instance.reset_object!
                     instance
                 end
             end
@@ -30,6 +32,7 @@ module CouchbaseOrm
                 else
                     instance = new(attributes, &block)
                     instance.save!
+                    instance.reset_object!
                     instance
                 end
             end
@@ -65,7 +68,7 @@ module CouchbaseOrm
 
         # Returns true if this object has been destroyed, otherwise returns false.
         def destroyed?
-            @destroyed
+            @destroyed ||= false
         end
 
         # Returns true if the record is persisted, i.e. it's not a new record and it was
@@ -214,6 +217,7 @@ module CouchbaseOrm
 
             reset_associations
             clear_changes_information
+            reset_object!
             self
         end
 

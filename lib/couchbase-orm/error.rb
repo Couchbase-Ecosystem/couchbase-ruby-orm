@@ -3,7 +3,7 @@
 module CouchbaseOrm
     class Error < ::StandardError
         attr_reader :record
-        
+
         def initialize(message = nil, record = nil)
             @record = record
             super(message)
@@ -26,4 +26,5 @@ module CouchbaseOrm
         class RecordExists < Error; end
         class CouchbaseOrm::Error::EmptyNotAllowed < Error; end
     end
+    class StrictLoadingViolationError < Error; end
 end
