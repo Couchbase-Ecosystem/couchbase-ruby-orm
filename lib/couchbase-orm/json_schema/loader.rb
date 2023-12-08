@@ -10,7 +10,8 @@ module CouchbaseOrm
 
       attr_reader :schemas
 
-      def initialize
+      def initialize(json_schemas_path = JSON_SCHEMAS_PATH)
+        @schemas_directory = json_schemas_path
         initialize_schemas
       end
 
@@ -19,32 +20,37 @@ module CouchbaseOrm
       end
 
       def get_json_schema(entity)
-        class_name = extract_type(entity)
-        if schemas&.present? && class_name.present?
-          schema = schemas[class_name]
-          return schema if schema&.present?
-          CouchbaseOrm.logger.warn { "No schema found for entity #{class_name}" }
-        end
-        nil
+        document_type = extract_type(entity)
+        schemas[document_type] if document_type
       end
 
       private
 
-      def initialize_schemas(schemas_directory = JSON_SCHEMAS_PATH)
-        return if schemas
+      attr_reader :schemas_directory
 
-        return unless schemas_directory
-
-        CouchbaseOrm.logger.warn { "Not exist CB_ORM_JSON_SCHEMA_PATH directory #{schemas_directory}" } unless File.directory?(schemas_directory)
-
+      def initialize_schemas
         @schemas = {}
-        Dir.glob(File.join(schemas_directory, '*.json'))
-            .each do |file_path|
-          json_schema_value = File.read file_path
-          entity_name = File.basename(file_path, '.json')
-          @schemas[entity_name] = json_schema_value
+        unless schemas_directory && File.directory?(schemas_directory)
+          CouchbaseOrm.logger.warn { "Not exist CB_ORM_JSON_SCHEMA_PATH directory #{schemas_directory}" }
+          return
         end
-        CouchbaseOrm.logger.debug { "SCHEMAS : #{schemas}" }
+        schemas.default_proc = proc do |hash, key|
+          assign_schema(hash, key)
+        end
+      end
+
+      def assign_schema(hash, key)
+        file_path = File.join(schemas_directory, "#{key}.json")
+        hash[key] =
+          if File.exist?(file_path)
+            json_schema_value = File.read file_path
+            CouchbaseOrm.logger.info { "Schema loaded: #{key}" }
+            CouchbaseOrm.logger.debug { "Loaded from: #{file_path}" }
+            json_schema_value
+          else
+            CouchbaseOrm.logger.warn { "Unable to find schema: #{file_path}" }
+            nil # store nil in hash to avoid future file system lookups
+          end
       end
     end
   end
