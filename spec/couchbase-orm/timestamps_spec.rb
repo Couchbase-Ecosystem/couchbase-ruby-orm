@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 require 'couchbase-orm'
 require 'couchbase-orm/timestamps_spec_models'
-# require 'timecop'
 
 describe CouchbaseOrm::Timestamps do
   context 'simple document' do
