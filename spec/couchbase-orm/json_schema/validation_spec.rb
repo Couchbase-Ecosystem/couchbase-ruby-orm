@@ -12,12 +12,12 @@ end
 RSpec.describe CouchbaseOrm::JsonSchema::Validation do
   describe '#validate_json_schema' do
     it 'sets @validate_json_schema to true' do
-      expect(DummyClass.instance_variable_get(:@validate_json_schema)).to be_truthy
+      expect(DummyClass.json_validation_config[:enabled]).to be_truthy
     end
 
     it 'does not mixup @validate_json_schema between classes' do
-      expect(DummyClass.instance_variable_get(:@validate_json_schema)).to be_truthy
-      expect(DummyClass2.instance_variable_get(:@validate_json_schema)).to be_falsey
+      expect(DummyClass.json_validation_config[:enabled]).to be_truthy
+      expect(DummyClass2.json_validation_config[:enabled]).to be_falsey
     end
   end
 end

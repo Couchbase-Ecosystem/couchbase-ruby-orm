@@ -20,7 +20,7 @@ module CouchbaseOrm
 
     def encode(document)
       original = super
-      CouchbaseOrm::JsonSchema::Validator.new.validate_entity(document, original[0]) if document.present? && !original.empty? && json_validation_config[:enabled]
+      CouchbaseOrm::JsonSchema::Validator.new(json_validation_config).validate_entity(document, original[0]) if document.present? && !original.empty? && json_validation_config[:enabled]
       original
     end
   end

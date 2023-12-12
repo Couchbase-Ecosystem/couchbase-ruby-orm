@@ -7,11 +7,18 @@ module CouchbaseOrm
   module JsonSchema
     class Validator
 
+      def initialize(json_validation_config)
+        @json_validation_config = json_validation_config
+      end
+
       def validate_entity(entity, json)
-        if ENV['CB_ORM_JSON_SCHEMA_VALIDATION_TYPE'] == 'NO_STRICT'
+        case @json_validation_config[:mode]
+        when :strict
+          strict_validation(entity, json)
+        when :logger
           logger_validation(entity, json)
         else
-          strict_validation(entity, json)
+          raise "Unknown validation mode #{@json_validation_config[:mode]}"
         end
       end
 

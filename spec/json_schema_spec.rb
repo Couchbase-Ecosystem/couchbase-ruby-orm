@@ -133,6 +133,20 @@ describe CouchbaseOrm::JsonSchema::Loader do
     end
 
   end
+
+  context "with logger mode on model" do
+    before do
+      EntitySnakecase.instance_variable_set(:@json_validation_config, {enabled: true, mode: :logger})
+    end
+    it "does not raise error but log it" do
+      load_schemas("../json-schema")
+      base = EntitySnakecase.create!(value: "value_one")
+      base.value = "value_2"
+      expect(CouchbaseOrm.logger).to receive(:error)
+      base.save
+      base.delete
+    end
+  end
 end
 
 
