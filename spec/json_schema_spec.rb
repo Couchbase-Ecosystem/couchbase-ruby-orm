@@ -121,8 +121,12 @@ describe CouchbaseOrm::JsonSchema::Loader do
   end
 
   context "with validation disabled on model" do
+    let!(:original_config) { EntitySnakecase.instance_variable_get(:@json_validation_config) }
     before do
       EntitySnakecase.instance_variable_set(:@json_validation_config, {enabled: false})
+    end
+    after do
+      EntitySnakecase.instance_variable_set(:@json_validation_config, original_config)
     end
     it "does not validate schema (even if scehma exists and is not valid)" do
       load_schemas("../json-schema")
@@ -149,8 +153,12 @@ describe CouchbaseOrm::JsonSchema::Loader do
   end
 
   context "when schema_path is set on model" do
+    let!(:original_config) { EntitySnakecase.instance_variable_get(:@json_validation_config) }
     before do
       EntitySnakecase.instance_variable_set(:@json_validation_config, {enabled: true, mode: :strict, schema_path: 'spec/json-schema/specific_path.json'})
+    end
+    after do
+      EntitySnakecase.instance_variable_set(:@json_validation_config, original_config)
     end
     it "loads schema from the specified path" do
       expect { EntitySnakecase.create!(value: "value_one") }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError, /did not contain a required property of 'foo' in schema/
@@ -167,5 +175,5 @@ def load_schemas(file_relative_path)
 end
 
 def reset_schemas
-  CouchbaseOrm::JsonSchema::Loader.instance.instance_variable_set :@schemas, nil
+  CouchbaseOrm::JsonSchema::Loader.instance.instance_variable_get(:@schemas).clear
 end
