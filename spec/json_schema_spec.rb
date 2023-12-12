@@ -12,10 +12,12 @@ end
 
 class UnknownTest < CouchbaseOrm::Base
   attribute :test, :boolean
+  validate_json_schema
 end
 
 class EntitySnakecase < CouchbaseOrm::Base
   attribute :value, :string
+  validate_json_schema
 end
 
 describe CouchbaseOrm::JsonSchema::Loader do
@@ -119,6 +121,9 @@ describe CouchbaseOrm::JsonSchema::Loader do
   end
 
   context "with validation disabled on model" do
+    before do
+      EntitySnakecase.instance_variable_set(:@json_validation_config, {enabled: false})
+    end
     it "does not validate schema (even if scehma exists and is not valid)" do
       load_schemas("../json-schema")
       base = EntitySnakecase.create!(value: "value_one")
