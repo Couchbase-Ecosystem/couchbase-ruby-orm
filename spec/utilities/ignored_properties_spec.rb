@@ -13,8 +13,8 @@ RSpec.describe CouchbaseOrm::IgnoredProperties do
   describe '#ignored_properties=' do
     it 'does not mixup ignored properties between classes' do
       DummyClass.ignored_properties = [:property1, :property2]
-      expect(DummyClass.instance_variable_get(:@ignored_properties)).to eq(['property1', 'property2'])
-      expect(DummyClass2.instance_variable_get(:@ignored_properties)).to be_nil
+      expect(DummyClass.ignored_properties).to eq(['property1', 'property2'])
+      expect(DummyClass2.ignored_properties).to be_empty
     end
   end
 end
