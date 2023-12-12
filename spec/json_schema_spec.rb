@@ -147,6 +147,15 @@ describe CouchbaseOrm::JsonSchema::Loader do
       base.delete
     end
   end
+
+  context "when schema_path is set on model" do
+    before do
+      EntitySnakecase.instance_variable_set(:@json_validation_config, {enabled: true, mode: :strict, schema_path: 'spec/json-schema/specific_path.json'})
+    end
+    it "loads schema from the specified path" do
+      expect { EntitySnakecase.create!(value: "value_one") }.to raise_error CouchbaseOrm::JsonSchema::JsonValidationError, /did not contain a required property of 'foo' in schema/
+    end
+  end
 end
 
 

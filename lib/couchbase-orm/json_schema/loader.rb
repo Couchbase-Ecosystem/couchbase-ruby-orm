@@ -19,9 +19,13 @@ module CouchbaseOrm
         entity[:type]
       end
 
-      def get_json_schema(entity)
+      def get_json_schema(entity, schema_path: nil)
         document_type = extract_type(entity)
-        schemas[document_type] if document_type && schemas
+        if schema_path
+          schemas[document_type] = File.read(schema_path)
+        elsif document_type && schemas
+          schemas[document_type]
+        end
       end
 
       private

@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "required": [
+    "foo"
+  ],
+  "properties": {
+    "foo": {
+      "$ref": "#/definitions/ValueType"
+    }
+  },
+  "definitions": {
+    "ValueType": {
+      "type": "string",
+      "enum": [
+        "foo_one",
+        "foo_two"
+      ]
+    }
+  }
+}

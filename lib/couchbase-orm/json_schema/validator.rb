@@ -35,7 +35,7 @@ module CouchbaseOrm
       end
 
       def common_validate(entity, json)
-        schema = Loader.instance.get_json_schema(entity)
+        schema = Loader.instance.get_json_schema(entity, schema_path: @json_validation_config[:schema_path])
         return [] if schema.nil?
 
         JSON::Validator.fully_validate(schema, json)
