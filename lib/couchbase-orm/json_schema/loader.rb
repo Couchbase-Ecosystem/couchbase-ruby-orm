@@ -6,7 +6,7 @@ module CouchbaseOrm
     class Loader
       include Singleton
 
-      JSON_SCHEMAS_PATH = ENV['CB_ORM_JSON_SCHEMA_PATH']
+      JSON_SCHEMAS_PATH = ENV.fetch 'CB_ORM_JSON_SCHEMA_PATH'
 
       attr_reader :schemas
 
