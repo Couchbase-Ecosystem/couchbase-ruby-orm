@@ -30,19 +30,18 @@ describe CouchbaseOrm::JsonSchema::Loader do
 
     it "With no existing dir " do
       load_schemas("../dontexist")
-      expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "JsonSchemaBaseTest" })).to be_nil
+      expect { CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema!({ :type => "Unknown" }) }.to raise_error CouchbaseOrm::JsonSchema::Loader::Error, /Schema not found for Unknown in .*\/dontexist/
     end
 
     it "Without existing json " do
       load_schemas("../empty-json-schema")
-      expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "JsonSchemaBaseTest" })).to be_nil
+      expect { CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema!({ :type => "Unknown" }) }.to raise_error CouchbaseOrm::JsonSchema::Loader::Error, /Schema not found for Unknown in .*\/empty-json-schema/
     end
 
     it "with schema " do
       load_schemas("../json-schema")
-      expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "JsonSchemaBaseTest" })).to include('"name"')
-      expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema({ :type => "Unknown" })).to be_nil
-
+      expect(CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema!({ :type => "JsonSchemaBaseTest" })).to include('"name"')
+      expect { CouchbaseOrm::JsonSchema::Loader.instance.get_json_schema!({ :type => "Unknown" }) }.to raise_error CouchbaseOrm::JsonSchema::Loader::Error, /Schema not found for Unknown in .*\/json-schema/
     end
   end
 
@@ -105,17 +104,17 @@ describe CouchbaseOrm::JsonSchema::Loader do
       base.delete
     end
 
-    it "save with entity not define in schema files" do
+    it 'prevent saving with entity not define in schema files and raise' do
       load_schemas("../json-schema")
-      base = UnknownTest.create!(test: true)
-      base.delete
+      expect { UnknownTest.create!(test: true) }.to raise_error CouchbaseOrm::JsonSchema::Loader::Error, /Schema not found for unknown_test in .*\/json-schema/
     end
 
-    it "update with entity not define in schema files" do
+    it 'prevent updating with entity not define in schema files and raise' do
       load_schemas("../json-schema")
-      base = UnknownTest.create!(test: true)
-      base.test = false
-      base.save
+      base = JsonSchemaBaseTest.create!(name: 'Juju', numb: 3)
+      reset_schemas
+      base.name = 'Pierre'
+      expect { base.save }.to raise_error CouchbaseOrm::JsonSchema::Loader::Error, "Schema not found for JsonSchemaBaseTest in db/cborm_schemas/JsonSchemaBaseTest.json"
       base.delete
     end
   end
@@ -171,9 +170,9 @@ end
 
 def load_schemas(file_relative_path)
   CouchbaseOrm::JsonSchema::Loader.instance.send(:instance_variable_set, :@schemas_directory, File.expand_path(file_relative_path, __FILE__))
-  CouchbaseOrm::JsonSchema::Loader.instance.send(:initialize_schemas)
 end
 
 def reset_schemas
+  CouchbaseOrm::JsonSchema::Loader.instance.send(:instance_variable_set, :@schemas_directory, CouchbaseOrm::JsonSchema::Loader::JSON_SCHEMAS_PATH)
   CouchbaseOrm::JsonSchema::Loader.instance.instance_variable_get(:@schemas).clear
 end

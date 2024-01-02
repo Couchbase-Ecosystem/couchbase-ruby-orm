@@ -9,7 +9,7 @@ RSpec.describe CouchbaseOrm::JsonSchema::Loader do
       entity = { type: 'entity_snakecase' }
       expect(loader.extract_type(entity)).to eq('entity_snakecase')
 
-      expect(loader.get_json_schema(entity)).not_to be_nil
+      expect(loader.get_json_schema!(entity)).not_to be_nil
     end
   end
 
@@ -23,19 +23,19 @@ RSpec.describe CouchbaseOrm::JsonSchema::Loader do
 
       it 'returns the schema for the given document type' do
         entity = { type: 'user' }
-        expect(loader.get_json_schema(entity)).to eq(schemas['user'])
+        expect(loader.get_json_schema!(entity)).to eq(schemas['user'])
       end
 
-      it 'returns nil if no schema found for the document type' do
+      it 'raise error if no schema found for the document type' do
         entity = { type: 'post' }
-        expect(loader.get_json_schema(entity)).to be_nil
+        expect { loader.get_json_schema!(entity) }.to raise_error(CouchbaseOrm::JsonSchema::Loader::Error, /Schema not found for post in .*\/json-schema/)
       end
     end
 
     context 'when schemas are not present or document type is missing' do
       it 'returns nil' do
         entity = { type: 'user' }
-        expect(loader.get_json_schema(entity)).to be_nil
+        expect { loader.get_json_schema!(entity) }.to raise_error(CouchbaseOrm::JsonSchema::Loader::Error, /Schema not found for user in .*\/json-schema/)
       end
     end
   end
