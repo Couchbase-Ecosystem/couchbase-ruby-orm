@@ -183,6 +183,13 @@ When using a compound key, the usage is the same, you just give the full key :
    # gives all comments that have been seen more than 10 times but less than 20
 ```
 
+```ruby
+    class Comment < CouchbaseOrm::Base
+      self.ignored_properties = [:old_name] # ignore old_name property in the model
+      self.properties_always_exists_in_document = true # use is null for nil value instead of not valued for performance purpose, only possible if all property always exists in document
+    end
+```      
+
 Check this couchbase help page to learn more on what's possible with compound keys : <https://developer.couchbase.com/documentation/server/3.x/admin/Views/views-translateSQL.html>
 
 Ex : Compound keys allows to decide the order of the results, and you can reverse it by passing `descending: true`
