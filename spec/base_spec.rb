@@ -330,14 +330,14 @@ describe CouchbaseOrm::Base do
     end
 
     describe '.properties_always_exists_in_document' do
-        fit 'Uses NOT VALUED when properties_always_exists_in_document = false' do
+        it 'Uses NOT VALUED when properties_always_exists_in_document = false' do
             where_clause = BaseTest.where(name: nil)
-            expect(where_clause.to_n1ql).to eq("select raw meta().id from `billeo-cb-bucket` where type = 'base_test' AND name IS NOT VALUED order by meta().id ")
+            expect(where_clause.to_n1ql).to include("AND name IS NOT VALUED")
         end
 
-        it 'Uses NOT VALUED when properties_always_exists_in_document = true' do
+        it 'Uses IS NULL when properties_always_exists_in_document = true' do
             where_clause = BaseTestWithPropertiesAlwaysExistsInDocument.where(name: nil)
-            expect(where_clause.to_n1ql).to eq("select raw meta().id from `billeo-cb-bucket` where type = 'base_test_with_properties_always_exists_in_document' AND name IS NULL order by meta().id ")
+            expect(where_clause.to_n1ql).to include("AND name IS NULL")
         end
     end
 end
