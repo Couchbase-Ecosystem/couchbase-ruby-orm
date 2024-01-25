@@ -26,6 +26,8 @@ require 'couchbase-orm/json_transcoder'
 require 'couchbase-orm/timestamps'
 require 'couchbase-orm/active_record_compat'
 require 'couchbase-orm/strict_loading'
+require 'couchbase-orm/utilities/properties_always_exists_in_document'
+
 
 
 module CouchbaseOrm
@@ -134,6 +136,7 @@ module CouchbaseOrm
         extend HasMany
         extend Index
         extend IgnoredProperties
+        extend PropertiesAlwaysExistsInDocument
 
 
         class << self

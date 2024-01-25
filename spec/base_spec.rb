@@ -22,6 +22,11 @@ class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
     attribute :job, :string
 end
 
+class BaseTestWithPropertiesAlwaysExistsInDocument < CouchbaseOrm::Base
+    self.properties_always_exists_in_document = true
+    attribute :name, :string
+end
+
 class DocInvalidOnUpdate < CouchbaseOrm::Base
     attribute :title
     validate :foo, on: :update
@@ -286,8 +291,6 @@ describe CouchbaseOrm::Base do
     end
 
     describe '.ignored_properties' do
-
-
         it 'returns an array of ignored properties' do
             expect(BaseTestWithIgnoredProperties.ignored_properties).to eq(['deprecated_property'])
         end
@@ -323,6 +326,18 @@ describe CouchbaseOrm::Base do
             it 'does not raise for reload' do
                 expect{ loaded_model.reload }.not_to raise_error
             end
+        end
+    end
+
+    describe '.properties_always_exists_in_document' do
+        it 'Uses NOT VALUED when properties_always_exists_in_document = false' do
+            where_clause = BaseTest.where(name: nil)
+            expect(where_clause.to_n1ql).to include("AND name IS NOT VALUED")
+        end
+
+        it 'Uses IS NULL when properties_always_exists_in_document = true' do
+            where_clause = BaseTestWithPropertiesAlwaysExistsInDocument.where(name: nil)
+            expect(where_clause.to_n1ql).to include("AND name IS NULL")
         end
     end
 end
