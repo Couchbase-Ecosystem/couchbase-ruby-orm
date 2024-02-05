@@ -5,9 +5,12 @@ module CouchbaseOrm
         module ClassMethods
 
             def build_match(key, value)
+                use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
                 case
-                when value.nil?
+                when value.nil? && use_is_null
+                    "#{key} IS NULL"
+                when value.nil? && !use_is_null
                     "#{key} IS NOT VALUED"
                 when value.is_a?(Hash)
                     build_match_hash(key, value)
@@ -86,9 +89,12 @@ module CouchbaseOrm
 
 
             def build_not_match(key, value)
+                use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
                 case
-                when value.nil?
+                when value.nil? && use_is_null
+                    "#{key} IS NULL"
+                when value.nil? && !use_is_null
                     "#{key} IS VALUED"
                 when value.is_a?(Array) && value.include?(nil)
                     "(#{build_not_match(key, nil)} AND #{build_not_match(key, value.compact)})"
