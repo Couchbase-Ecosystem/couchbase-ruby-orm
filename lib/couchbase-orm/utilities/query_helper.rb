@@ -93,7 +93,7 @@ module CouchbaseOrm
                 key = "meta().id" if key.to_s == "id"
                 case
                 when value.nil? && use_is_null
-                    "#{key} IS NULL"
+                    "#{key} IS NOT NULL"
                 when value.nil? && !use_is_null
                     "#{key} IS VALUED"
                 when value.is_a?(Array) && value.include?(nil)

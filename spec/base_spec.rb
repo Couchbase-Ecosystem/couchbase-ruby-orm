@@ -335,9 +335,19 @@ describe CouchbaseOrm::Base do
             expect(where_clause.to_n1ql).to include("AND name IS NOT VALUED")
         end
 
+        it 'Uses VALUED when properties_always_exists_in_document = false' do
+            where_clause = BaseTest.where.not(name: nil)
+            expect(where_clause.to_n1ql).to include("AND name IS VALUED")
+        end
+
         it 'Uses IS NULL when properties_always_exists_in_document = true' do
             where_clause = BaseTestWithPropertiesAlwaysExistsInDocument.where(name: nil)
             expect(where_clause.to_n1ql).to include("AND name IS NULL")
+        end
+
+        it 'Uses IS NOT NULL when properties_always_exists_in_document = true' do
+            where_clause = BaseTestWithPropertiesAlwaysExistsInDocument.where.not(name: nil)
+            expect(where_clause.to_n1ql).to include("AND name IS NOT NULL")
         end
     end
 end
