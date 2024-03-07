@@ -283,6 +283,15 @@ Several operators are available to filter numerical results : \_gt, \_lt, \_gte,
   Comment.where(ratings: {_gt: 3})
   ```
 
+## Range in the where
+
+You can specify a Range of date or intger in the where clause
+
+  ```ruby
+  Person.where(birth_date: DateTime.new(1980, 1, 1)..DateTime.new(1990, 1, 1))
+  Person.where(age: 10..20)
+  ```
+
 ## Associations and Indexes
 
 There are common active record helpers available for use `belongs_to` and `has_many`

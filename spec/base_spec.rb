@@ -27,6 +27,12 @@ class BaseTestWithPropertiesAlwaysExistsInDocument < CouchbaseOrm::Base
     attribute :name, :string
 end
 
+class BaseTestWithTimeframe < CouchbaseOrm::Base
+    attribute :name, :string
+    attribute :start_date, :datetime
+    attribute :age, :integer
+end
+
 class DocInvalidOnUpdate < CouchbaseOrm::Base
     attribute :title
     validate :foo, on: :update
@@ -348,6 +354,35 @@ describe CouchbaseOrm::Base do
         it 'Uses IS NOT NULL when properties_always_exists_in_document = true' do
             where_clause = BaseTestWithPropertiesAlwaysExistsInDocument.where.not(name: nil)
             expect(where_clause.to_n1ql).to include("AND name IS NOT NULL")
+        end
+    end
+
+    describe 'With a range in the where clause' do
+        before do
+            BaseTestWithTimeframe.delete_all
+            BaseTestWithTimeframe.create!(name: 'january', start_date: DateTime.new(2020, 1, 1), age: 10)
+            BaseTestWithTimeframe.create!(name: 'midjanuary', start_date: DateTime.new(2020, 1, 15), age: 15)
+            BaseTestWithTimeframe.create!(name: 'february', start_date: DateTime.new(2020, 2, 1), age: 20)
+        end
+
+        it 'manages the datetime range correctly' do
+            result = BaseTestWithTimeframe.where(start_date: DateTime.new(2020, 1, 1)..DateTime.new(2020, 1, 31)).pluck(:name)
+            expect(result).to eq(%w[january midjanuary])
+        end
+
+        it 'manages the date range correctly' do
+            result = BaseTestWithTimeframe.where(start_date: Date.new(2020, 1, 1)..Date.new(2020, 1, 31)).pluck(:name)
+            expect(result).to eq(%w[january midjanuary])
+        end
+
+        it 'manages the time range correctly' do
+            result = BaseTestWithTimeframe.where(start_date: Time.new(2020, 1, 1, 14, 35, 0)..Time.new(2020, 1, 31, 16, 35, 0)).pluck(:name)
+            expect(result).to eq(%w[january midjanuary])
+        end
+
+        it 'manages the integer range correctly' do
+            result = BaseTestWithTimeframe.where(age: 12..25).pluck(:name)
+            expect(result).to eq(%w[midjanuary february])
         end
     end
 end
