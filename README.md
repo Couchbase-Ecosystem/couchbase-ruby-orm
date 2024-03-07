@@ -290,6 +290,8 @@ You can specify a Range of date or intger in the where clause
   ```ruby
   Person.where(birth_date: DateTime.new(1980, 1, 1)..DateTime.new(1990, 1, 1))
   Person.where(age: 10..20)
+
+  Person.where(age: 10...20) # to exclude the upper bound
   ```
 
 ## Associations and Indexes
