@@ -132,7 +132,7 @@ module CouchbaseOrm
             end
 
             def quote(value)
-                if value.is_a? String or value.is_a? DateTime or value.is_a? Date or value.is_a? Time
+                if [String, DateTime, Date, Time].any? { |clazz| value.is_a?(clazz) }
                     "'#{N1ql.sanitize(value)}'"
                 elsif value.is_a? Array
                     "[#{value.map{|v|quote(v)}.join(', ')}]"
