@@ -384,5 +384,10 @@ describe CouchbaseOrm::Base do
             result = BaseTestWithTimeframe.where(age: 12..25).pluck(:name)
             expect(result).to eq(%w[midjanuary february])
         end
+
+        it 'manages the exclude end correctly' do
+            result = BaseTestWithTimeframe.where(age: 10...15).pluck(:name)
+            expect(result).to eq(%w[january])
+        end
     end
 end

@@ -92,7 +92,11 @@ module CouchbaseOrm
             def build_match_range(key, value)
                 matches = []
                 matches << "#{key} >= #{quote(value.begin)}"
-                matches << "#{key} <= #{quote(value.end)}"
+                if value.exclude_end?
+                    matches << "#{key} < #{quote(value.end)}"
+                else
+                    matches << "#{key} <= #{quote(value.end)}"
+                end
                 matches.join(" AND ")
             end
 
