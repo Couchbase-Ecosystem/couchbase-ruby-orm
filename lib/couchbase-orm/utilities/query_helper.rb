@@ -18,6 +18,8 @@ module CouchbaseOrm
                     "(#{build_match(key, nil)} OR #{build_match(key, value.compact)})"
                 when value.is_a?(Array)
                     "#{key} IN #{quote(value)}"
+                when value.is_a?(Range)
+                    build_match_range(key, value)
                 else
                     "#{key} = #{quote(value)}"
                 end
@@ -87,6 +89,17 @@ module CouchbaseOrm
                 matches.join(" AND ")
             end
 
+            def build_match_range(key, value)
+                matches = []
+                matches << "#{key} >= #{quote(value.begin)}"
+                if value.exclude_end?
+                    matches << "#{key} < #{quote(value.end)}"
+                else
+                    matches << "#{key} <= #{quote(value.end)}"
+                end
+                matches.join(" AND ")
+            end
+
 
             def build_not_match(key, value)
                 use_is_null = self.properties_always_exists_in_document
@@ -119,7 +132,7 @@ module CouchbaseOrm
             end
 
             def quote(value)
-                if value.is_a? String
+                if [String, DateTime, Date, Time].any? { |clazz| value.is_a?(clazz) }
                     "'#{N1ql.sanitize(value)}'"
                 elsif value.is_a? Array
                     "[#{value.map{|v|quote(v)}.join(', ')}]"
