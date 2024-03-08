@@ -18,7 +18,7 @@ module CouchbaseOrm
                     "(#{build_match(key, nil)} OR #{build_match(key, value.compact)})"
                 when value.is_a?(Array)
                     "#{key} IN #{quote(value)}"
-                when value.instance_of?(Range)
+                when value.is_a?(Range)
                     build_match_range(key, value)
                 else
                     "#{key} = #{quote(value)}"
