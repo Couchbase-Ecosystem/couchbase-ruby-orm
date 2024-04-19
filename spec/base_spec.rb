@@ -360,14 +360,14 @@ describe CouchbaseOrm::Base do
     describe 'With a range in the where clause' do
         before do
             BaseTestWithTimeframe.delete_all
-            BaseTestWithTimeframe.create!(name: 'january', start_date: DateTime.new(2020, 1, 1), age: 10)
-            BaseTestWithTimeframe.create!(name: 'midjanuary', start_date: DateTime.new(2020, 1, 15), age: 15)
-            BaseTestWithTimeframe.create!(name: 'february', start_date: DateTime.new(2020, 2, 1), age: 20)
+            BaseTestWithTimeframe.create!(name: 'january', start_date: DateTime.new(2020, 1, 1, 10, 0, 0), age: 10)
+            BaseTestWithTimeframe.create!(name: 'midjanuary', start_date: DateTime.new(2020, 1, 15,11, 0, 0), age: 15)
+            BaseTestWithTimeframe.create!(name: 'february', start_date: DateTime.new(2020, 2, 1,15, 0, 0), age: 20)
         end
 
         it 'manages the datetime range correctly' do
-            result = BaseTestWithTimeframe.where(start_date: DateTime.new(2020, 1, 1)..DateTime.new(2020, 1, 31)).pluck(:name)
-            expect(result).to eq(%w[january midjanuary])
+            result = BaseTestWithTimeframe.where(start_date: DateTime.new(2020, 1, 1,11, 0,0)..DateTime.new(2020, 1, 31)).pluck(:name)
+            expect(result).to eq(%w[midjanuary])
         end
 
         it 'manages the date range correctly' do
