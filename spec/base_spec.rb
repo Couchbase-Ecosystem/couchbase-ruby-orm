@@ -366,7 +366,7 @@ describe CouchbaseOrm::Base do
         end
 
         it 'manages the datetime range correctly' do
-            result = BaseTestWithTimeframe.where(start_date: DateTime.new(2020, 1, 1,11, 0,0)..DateTime.new(2020, 1, 31)).pluck(:name)
+            result = BaseTestWithTimeframe.where(start_date: DateTime.new(2020, 1, 1, 11, 0,0)..DateTime.new(2020, 1, 31)).pluck(:name)
             expect(result).to eq(%w[midjanuary])
         end
 
@@ -377,7 +377,7 @@ describe CouchbaseOrm::Base do
 
         it 'manages the time range correctly' do
             result = BaseTestWithTimeframe.where(start_date: Time.new(2020, 1, 1, 14, 35, 0)..Time.new(2020, 1, 31, 16, 35, 0)).pluck(:name)
-            expect(result).to eq(%w[january midjanuary])
+            expect(result).to eq(%w[midjanuary])
         end
 
         it 'manages the integer range correctly' do

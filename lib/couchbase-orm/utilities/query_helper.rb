@@ -132,10 +132,10 @@ module CouchbaseOrm
             end
 
             def quote(value)
-                if [String, Date, Time].any? { |clazz| value.is_a?(clazz) }
+                if [String, Date].any? { |clazz| value.is_a?(clazz) }
                     "'#{N1ql.sanitize(value)}'"
-                elsif value.is_a? DateTime
-                    formatedDate = DateTime.serialize(value)
+                elsif [DateTime, Time].any? { |clazz| value.is_a?(clazz) }
+                    formatedDate = value&.iso8601(@precision)
                     "'#{N1ql.sanitize(formatedDate)}'"
                 elsif value.is_a? Array
                     "[#{value.map{|v|quote(v)}.join(', ')}]"
