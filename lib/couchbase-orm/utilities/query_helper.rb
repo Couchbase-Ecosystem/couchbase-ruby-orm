@@ -4,8 +4,6 @@ module CouchbaseOrm
 
         module ClassMethods
 
-            #         .where(medical_folder_id: medical_folders.pluck(:id), encounter_acts: { care_plan_uuid: id, deleted_at: nil })
-
             def build_match(key, value)
                 use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
@@ -14,7 +12,6 @@ module CouchbaseOrm
                     "#{key} IS NULL"
                 when value.nil? && !use_is_null
                     "#{key} IS NOT VALUED"
-                    # key: encounter_acts, value: { care_plan_uuid: id, deleted_at: nil })
                 when value.is_a?(Hash) && attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Array)
                     "any #{key.to_s.singularize} in #{key} satisfies (#{build_match_hash("#{key.to_s.singularize}", value)}) end"
                 when value.is_a?(Hash) && !attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Array)
