@@ -37,7 +37,20 @@ describe CouchbaseOrm::Relation do
         expect(RelationParentModel.where(subs: {name: 'sub2'}).first).to eq parent
         expect(RelationParentModel.where(subs: {name: ['sub3', 'subX']}).first).to eq parent
     end
-    
+
+    it "should query on nested array with multiple attributes" do
+        RelationParentModel.create(name: "parent_without_subs")
+        parent = RelationParentModel.create(name: "parent")
+        parent.subs = [
+          NestedModel.new(name: "sub2", size: 2),
+          NestedModel.new(name: "sub3", size: 3)
+        ]
+        parent.save!
+
+        expect(RelationParentModel.where(subs: {name: 'sub2', size: 2}).first).to eq parent
+        expect(RelationParentModel.where(subs: {name: 'sub2', size: 3}).first).to eq nil
+    end
+
     it "should query by gte function" do
         parent = RelationParentModel.create(name: "parent")
         parent.subs = [
