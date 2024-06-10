@@ -1,7 +1,5 @@
 # Couchbase ORM for Rails
 
-[![Build Status](https://secure.travis-ci.org/acaprojects/couchbase-orm.svg)](http://travis-ci.org/acaprojects/couchbase-orm)
-
 ## Rails integration
 
 To generate config you can use `rails generate couchbase_orm:config`:
