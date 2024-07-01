@@ -3,9 +3,9 @@ require File.expand_path('../lib/couchbase-orm/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.name = 'couchbase-orm'
   gem.version = CouchbaseOrm::VERSION
-  gem.license = 'MIT'
+  gem.license = 'Apache-2.0'
   gem.authors = ['Stephen von Takach', 'Gauthier Monserand', 'Pierre Merlin', 'Julien Burnet-Fauche']
-  gem.homepage = 'https://github.com/doctolib/couchbase-orm'
+  gem.homepage = 'https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm'
   gem.summary = 'Couchbase ORM for Rails'
   gem.description = 'A Couchbase ORM for Rails'
 
