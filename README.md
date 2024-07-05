@@ -6,7 +6,7 @@ https://couchbase-ruby-orm.com
 ## Installation
 Add this line to your application's Gemfile:
 ```ruby
-gem 'couchbase-orm', git: 'https://github.com/couchbase/couchbase-ruby-client'
+gem 'couchbase-orm', git: 'https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm' 
 ```
 And then execute:
 
