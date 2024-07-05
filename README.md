@@ -11,6 +11,7 @@ gem 'couchbase-orm', git: 'https://github.com/couchbase/couchbase-ruby-client'
 And then execute:
 
     $ bundle install
+
 ## Rails integration
 
 Create a couchbase-orm config file `config/couchbase.yml`
