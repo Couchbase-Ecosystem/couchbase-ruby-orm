@@ -1,13 +1,11 @@
 # Couchbase ORM for Rails
 
+## Documentation: 
+https://couchbase-ruby-orm.com
+
 ## Rails integration
 
-To generate config you can use `rails generate couchbase_orm:config`:
-
-    $ rails generate couchbase_orm:config dev_bucket dev_user dev_password
-      => create  config/couchbase.yml
-
-It will generate this `config/couchbase.yml` for you:
+Create a couchbase-orm config file `config/couchbase.yml`
 
 ```yaml
     common: &common
