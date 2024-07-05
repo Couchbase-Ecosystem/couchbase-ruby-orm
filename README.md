@@ -1,6 +1,6 @@
 # Couchbase ORM for Rails
 
-## Documentation: 
+## Documentation
 https://couchbase-ruby-orm.com
 
 ## Installation
