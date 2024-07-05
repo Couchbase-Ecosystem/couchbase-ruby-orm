@@ -3,6 +3,15 @@
 ## Documentation: 
 https://couchbase-ruby-orm.com
 
+## Installation
+Add this line to your application's Gemfile:
+```ruby
+gem 'couchbase-orm', git: 'https://github.com/couchbase/couchbase-ruby-client'
+```
+And then execute:
+
+    $ bundle install
+
 ## Rails integration
 
 Create a couchbase-orm config file `config/couchbase.yml`
