@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.metadata = {
     "source_code_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm",
     "bug_tracker_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm/issues",
-    "documentation_uri" => "https://couchbase-ruby-orm.com/"
+    "documentation_uri" => "https://couchbase-ruby-orm.com/",
     "homepage_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm"
   }
   gem.summary = 'Couchbase ORM for Rails'
