@@ -6,6 +6,12 @@ Gem::Specification.new do |gem|
   gem.license = 'Apache-2.0'
   gem.authors = ['Stephen von Takach', 'Gauthier Monserand', 'Pierre Merlin', 'Julien Burnet-Fauche']
   gem.homepage = 'https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm'
+  gem.metadata = {
+    "source_code_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm",
+    "bug_tracker_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm/issues",
+    "documentation_uri" => "https://couchbase-ruby-orm.com/"
+    "homepage_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm"
+  }
   gem.summary = 'Couchbase ORM for Rails'
   gem.description = 'A Couchbase ORM for Rails'
 
