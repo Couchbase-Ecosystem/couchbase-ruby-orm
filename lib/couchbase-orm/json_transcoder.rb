@@ -7,10 +7,10 @@ module CouchbaseOrm
 
     attr_reader :ignored_properties, :json_validation_config
 
-    def initialize(ignored_properties: [], json_validation_config: {}, **options, &block)
-      @ignored_properties = ignored_properties
-      @json_validation_config = json_validation_config
-      super(**options, &block)
+    def initialize(model_class)
+      @ignored_properties = model_class.ignored_properties
+      @json_validation_config = model_class.json_validation_config
+      super()
     end
 
     def decode(blob, _flags)
