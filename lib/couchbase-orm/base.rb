@@ -22,7 +22,9 @@ require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/utilities/ignored_properties'
+require 'couchbase-orm/json_transcoders'
 require 'couchbase-orm/json_transcoder'
+require 'couchbase-orm/tanker_json_transcoder'
 require 'couchbase-orm/timestamps'
 require 'couchbase-orm/active_record_compat'
 require 'couchbase-orm/strict_loading'
@@ -43,7 +45,6 @@ module CouchbaseOrm
 
         include ActiveRecordCompat
         include StrictLoading
-        include Encrypt
 
         extend Enum
 
@@ -72,14 +73,13 @@ module CouchbaseOrm
 
                     self.id = attributes[:id] if attributes[:id].present?
                     @__metadata__.cas = model.cas
-
-                    assign_attributes(decode_encrypted_attributes(doc))
+                    assign_attributes(doc.to_h.stringify_keys)
                 when CouchbaseOrm::Base
                     clear_changes_information
-                    super(model.attributes.except(:id, 'type'))
+                    super(model.attributes.except(:id, 'type').stringify_keys)
                 else
                     clear_changes_information
-                    assign_attributes(decode_encrypted_attributes(**attributes.merge(Hash(model)).symbolize_keys))
+                    assign_attributes(**attributes.merge(Hash(model)).stringify_keys)
                 end
             else
                 clear_changes_information
@@ -103,7 +103,7 @@ module CouchbaseOrm
         protected
 
         def serialized_attributes
-            encode_encrypted_attributes.map { |k, v|
+            attributes.map { |k, v|
                 [k, self.class.attribute_types[k].serialize(v)]
             }.to_h
         end
@@ -183,7 +183,7 @@ module CouchbaseOrm
                     raise CouchbaseOrm::Error::EmptyNotAllowed, 'no id(s) provided'
                 end
 
-                transcoder = CouchbaseOrm::JsonTranscoder.new(ignored_properties: ignored_properties)
+                transcoder = JsonTranscoders.new(self, TankerJsonTranscoder)
                 records = quiet ? collection.get_multi(ids, transcoder: transcoder) : collection.get_multi!(ids, transcoder: transcoder)
                 CouchbaseOrm.logger.debug { "Base.find found(#{records})" }
                 records = records.zip(ids).map { |record, id|

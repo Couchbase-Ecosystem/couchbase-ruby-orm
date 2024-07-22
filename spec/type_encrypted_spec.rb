@@ -41,10 +41,12 @@ describe CouchbaseOrm::Types::Encrypted do
     end
 
     def expect_serialized_secret(obj)
-        expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: base64_secret})
-        expect(obj.send(:serialized_attributes)).to_not have_key "secret"
-        expect(obj.send(:serialized_attributes)["encrypted$secret2"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: "a secret"})
-        expect(obj.send(:serialized_attributes)).to_not have_key "secret2"
+        tjt = CouchbaseOrm::TankerJsonTranscoder.new(obj.class)
+        encoded = tjt.encode(obj)
+        expect(encoded["encrypted$secret"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: base64_secret})
+        expect(encoded).to_not have_key "secret"
+        expect(encoded["encrypted$secret2"]).to eq({alg:"CB_MOBILE_CUSTOM", ciphertext: "a secret"})
+        expect(encoded).to_not have_key "secret2"
         expect(JSON.parse(obj.to_json)["secret"]).to eq base64_secret
         expect(obj.as_json["secret"]).to eq base64_secret
         expect(obj.as_json["secret2"]).to eq "a secret"
@@ -52,8 +54,10 @@ describe CouchbaseOrm::Types::Encrypted do
 
     it "prefix with custom algo" do
         obj = SpecificAlgoTest.new(secret: base64_secret)
-        expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"3DES", ciphertext: base64_secret})
-        expect(obj.send(:serialized_attributes)).to_not include "secret"
+        tjt = CouchbaseOrm::TankerJsonTranscoder.new(obj.class)
+        encoded = tjt.encode(obj)
+        expect(encoded["encrypted$secret"]).to eq({alg:"3DES", ciphertext: base64_secret})
+        expect(encoded).to_not include "secret"
     end
 
     it "decode encrypted attribute at reload" do
