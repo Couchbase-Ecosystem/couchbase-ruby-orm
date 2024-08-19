@@ -7,7 +7,7 @@ module CouchbaseOrm
                 type = self.class.attribute_types[key.to_s]
                 if type.is_a?(CouchbaseOrm::Types::Encrypted)
                     next unless value
-                    raise "Can not serialize value #{value} of type '#{value.class}' for Tanker encrypted attribute" unless value.is_a?(String)
+                    raise "Can not serialize value #{value} of type '#{value.class}' for encrypted attribute" unless value.is_a?(String)
                     ["encrypted$#{key}", {
                         alg: type.alg,
                         ciphertext: value
