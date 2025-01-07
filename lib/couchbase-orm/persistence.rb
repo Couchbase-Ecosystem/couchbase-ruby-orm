@@ -264,7 +264,6 @@ module CouchbaseOrm
                     if options[:transcoder].nil?
                         options[:transcoder] = CouchbaseOrm::JsonTranscoder.new(json_validation_config: self.class.json_validation_config)
                     end
-                    pp serialized_attributes
                     resp = self.class.collection.upsert(self.id, serialized_attributes.except("id").merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
                     # Ensure the model is up to date
                     @__metadata__.cas = resp.cas
