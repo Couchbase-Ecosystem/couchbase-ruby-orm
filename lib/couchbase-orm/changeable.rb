@@ -368,7 +368,7 @@ module CouchbaseOrm
       def create_setters(name)
         define_method("#{name}=") do |new_attribute_value|
           type = self.class.attribute_types[name.to_s]
-          casted_value = type.cast( type.serialize type.cast new_attribute_value)
+          casted_value = type.cast new_attribute_value
           previous_value = attributes[name.to_s]
           ret = super(casted_value)
           if previous_value != attributes[name.to_s]
