@@ -97,7 +97,6 @@ module CouchbaseOrm
         # CouchbaseOrm::Error::RecordInvalid gets raised, and the record won't be saved.
         def save!(**options)
             self.class.fail_validate!(self) unless self.save(**options)
-            # self.reload # this fix the issue but it's not acceptable since it doing an extra request
             self
         end
 
@@ -265,6 +264,7 @@ module CouchbaseOrm
                         options[:transcoder] = CouchbaseOrm::JsonTranscoder.new(json_validation_config: self.class.json_validation_config)
                     end
                     resp = self.class.collection.upsert(self.id, serialized_attributes.except("id").merge(type: self.class.design_document), Couchbase::Options::Upsert.new(**options))
+
                     # Ensure the model is up to date
                     @__metadata__.cas = resp.cas
 

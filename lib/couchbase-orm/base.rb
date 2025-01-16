@@ -33,8 +33,7 @@ module CouchbaseOrm
     class Document
         include Inspectable
         include ::ActiveModel::Model
-        # include ::ActiveModel::Dirty
-        include Changeable # override some methods from ActiveModel::Dirty (keep it included after)
+        include Changeable
         include ::ActiveModel::Attributes
         include ::ActiveModel::Serializers::JSON
 
