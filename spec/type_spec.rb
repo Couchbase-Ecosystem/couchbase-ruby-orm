@@ -8,16 +8,6 @@ class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
         super
         @precision=3
     end
-#   def serialize(value)
-#     value&.iso8601(precision)
-#   end
-#   def cast(value)
-#     value = super(value)
-#     return nil if value.nil?
-#     return Time.at(value) if value.is_a?(Integer) || value.is_a?(Float)
-#     return Time.at(value.to_i) if value.is_a?(String) && value =~ /^[0-9]+$/
-#     return value if value.is_a?(Time)
-#   end
 end
 
 ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
