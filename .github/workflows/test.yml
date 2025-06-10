@@ -27,11 +27,13 @@ jobs:
             active-model: '7.1.0'
             couchbase: '7.1.0'
       fail-fast: false
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: ${{ matrix.ruby }} rails-${{ matrix.active-model }}  couchbase-${{ matrix.couchbase }}
     steps:
     - uses: actions/checkout@v3
-    - run: sudo apt-get update && sudo apt-get install libevent-dev libev-dev python-httplib2
+    - run: sudo apt-get update && sudo apt-get install libevent-dev libev-dev python3-httplib2
+    - run: wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+    - run: sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
