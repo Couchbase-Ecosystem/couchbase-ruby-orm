@@ -15,7 +15,7 @@ Gem::Specification.new do |gem|
   gem.summary = 'Couchbase ORM for Rails'
   gem.description = 'A Couchbase ORM for Rails'
 
-  gem.required_ruby_version = '>= 3.1.0'
+  gem.required_ruby_version = '>= 3.2.0'
   gem.require_paths = ['lib']
 
   gem.add_runtime_dependency 'activemodel', ENV['ACTIVE_MODEL_VERSION'] || '>= 7.1'
