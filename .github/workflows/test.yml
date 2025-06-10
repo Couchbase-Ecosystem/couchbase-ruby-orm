@@ -27,7 +27,7 @@ jobs:
             active-model: '7.1.0'
             couchbase: '7.1.0'
       fail-fast: false
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: ${{ matrix.ruby }} rails-${{ matrix.active-model }}  couchbase-${{ matrix.couchbase }}
     steps:
     - uses: actions/checkout@v3
