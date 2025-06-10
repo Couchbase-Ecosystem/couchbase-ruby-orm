@@ -393,3 +393,15 @@ The request above pulls the same database document each time and returns it. A s
 |Response time|0.88 secs|0.34 secs|
 |Transaction rate|204.25 trans/sec|366.57 trans/sec|
 |Request Code|[ruby-model-app](https://github.com/QuayPay/coauth/blob/95bbf5e5c3b3340e5af2da494b90c91c5e3d6eaa/app/controllers/auth/authorities_controller.rb#L6)|[couch-orm-app](https://github.com/QuayPay/coauth/blob/87f6fdeaab784ba252a5d38bbcf9e6b0477bb504/app/controllers/auth/authorities_controller.rb#L8)|
+
+---
+
+## 📢 Support Policy
+
+We truly appreciate your interest in this project!  
+This project is **community-maintained**, which means it's **not officially supported** by our support team.
+
+If you need help, have found a bug, or want to contribute improvements, the best place to do that is right here — by [opening a GitHub issue](https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm/issues).  
+Our support portal is unable to assist with requests related to this project, so we kindly ask that all inquiries stay within GitHub.
+
+Your collaboration helps us all move forward together — thank you!
