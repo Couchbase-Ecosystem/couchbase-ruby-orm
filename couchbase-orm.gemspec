@@ -15,10 +15,10 @@ Gem::Specification.new do |gem|
   gem.summary = 'Couchbase ORM for Rails'
   gem.description = 'A Couchbase ORM for Rails'
 
-  gem.required_ruby_version = '>= 3.2.0'
+  gem.required_ruby_version = '>= 2.7.0'
   gem.require_paths = ['lib']
 
-  gem.add_runtime_dependency 'activemodel', ENV['ACTIVE_MODEL_VERSION'] || '>= 7.1'
+  gem.add_runtime_dependency 'activemodel', ENV['ACTIVE_MODEL_VERSION'] || '>= 5.2'
 
   gem.add_runtime_dependency     'couchbase',    '>= 3.4.2'
   gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
