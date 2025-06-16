@@ -133,7 +133,7 @@ module CouchbaseOrm
                 if [String, Date].any? { |clazz| value.is_a?(clazz) }
                     "'#{N1ql.sanitize(value)}'"
                 elsif [DateTime, Time].any? { |clazz| value.is_a?(clazz) }
-                    formatedDate = value&.iso8601(@precision)
+                    formatedDate = value&.iso8601(@precision || 0)
                     "'#{N1ql.sanitize(formatedDate)}'"
                 elsif value.is_a? Array
                     "[#{value.map{|v|quote(v)}.join(', ')}]"
