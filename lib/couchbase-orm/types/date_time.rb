@@ -7,7 +7,8 @@ module CouchbaseOrm
             end
 
             def serialize(value)
-                value&.iso8601(@precision)
+                value&.
+                    iso8601(@precision || 0)
             end
         end
     end
