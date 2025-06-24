@@ -4,10 +4,9 @@ require "active_model"
 require "couchbase-orm/types"
 
 class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
-    def initialize
-        super
-        @precision=3
-    end
+  def serialize(value)
+    value&.iso8601(3)
+  end
 end
 
 ActiveModel::Type.register(:datetime3decimal, DateTimeWith3Decimal)
@@ -18,7 +17,7 @@ class TypeTest < CouchbaseOrm::Base
     attribute :size, :float
     attribute :renewal_date, :date
     attribute :subscribed_at, :datetime
-    attribute :some_time, :timestamp, precision: 0
+    attribute :some_time, :timestamp
     attribute :precision3_time, :datetime3decimal
     attribute :precision6_time, :datetime, precision: 6
 
