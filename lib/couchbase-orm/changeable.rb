@@ -366,10 +366,8 @@ module CouchbaseOrm
 
       def create_setters(name)
         define_method("#{name}=") do |new_attribute_value|
-          type = self.class.attribute_types[name.to_s]
-          casted_value = type.cast new_attribute_value
           previous_value = attributes[name.to_s]
-          ret = super(casted_value)
+          ret = super(new_attribute_value)
           if previous_value != attributes[name.to_s]
             changed_attributes.merge!(Hash[name, [previous_value, attributes[name.to_s]]])
           end
