@@ -113,8 +113,11 @@ The following types have been tested :
 - :datetime (stored as iso8601, use precision: n to store more decimal precision)
 - :timestamp (stored as integer)
 - :encrypted
-  - see <https://docs.couchbase.com/couchbase-lite/current/c/field-level-encryption.html>
-  - You must store a string that can be encoded in json (not binary data), use base64 if needed
+  - Provides storage format compatible with Couchbase Lite field-level encryption
+  - See <https://docs.couchbase.com/couchbase-lite/current/c/field-level-encryption.html>
+  - **Important**: CouchbaseOrm does not perform encryption/decryption - your application must encrypt data before storing it
+  - Values must be Base64-encoded strings containing pre-encrypted ciphertext
+  - See the [encryption documentation](https://couchbase-ruby-orm.com/docs/tutorial-ruby-couchbase-orm/encryption) for details
 - :array (see below)
 - :nested (see below)
 
