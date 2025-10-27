@@ -110,6 +110,8 @@ module CouchbaseOrm
     end
 
     class NestedDocument < Document
+        extend IgnoredProperties
+
         def initialize(*args, **kwargs)
             super
             if respond_to?(:id) && id.nil?

@@ -188,4 +188,64 @@ describe CouchbaseOrm::Types::Nested do
             expect(obj.child.child.errors[:name]).to eq ["can't be blank"]
         end
     end
+
+    describe "Ignored Properties" do
+        class SubTypeWithIgnoredProperties < CouchbaseOrm::NestedDocument
+            self.ignored_properties = [:deprecated_property]
+            attribute :name, :string
+            attribute :value, :string
+        end
+
+        class ParentWithNestedIgnoredProperties < CouchbaseOrm::Base
+            self.ignored_properties = [:deprecated_at_root]
+            attribute :title, :string
+            attribute :nested, :nested, type: SubTypeWithIgnoredProperties
+        end
+
+        it "should ignore deprecated properties in nested documents on reload" do
+            # Create and save a parent with nested document
+            parent = ParentWithNestedIgnoredProperties.new
+            parent.title = "Test Parent"
+            parent.nested = SubTypeWithIgnoredProperties.new(name: "Nested", value: "Valid")
+            parent.save!
+
+            # Manually add a deprecated property to the nested document in the database
+            doc_id = parent.id
+            raw_doc = ParentWithNestedIgnoredProperties.bucket.default_collection.get(doc_id).content
+            raw_doc["nested"]["deprecated_property"] = "This should be ignored"
+            ParentWithNestedIgnoredProperties.bucket.default_collection.replace(doc_id, raw_doc)
+
+            # Reload the parent
+            parent.reload
+
+            # The deprecated property should NOT be present in the nested document
+            expect(parent.nested.attributes.keys).not_to include("deprecated_property")
+            expect(parent.nested.name).to eq("Nested")
+            expect(parent.nested.value).to eq("Valid")
+        end
+
+        it "should ignore deprecated properties in deeply nested documents" do
+            # Create a parent with nested documents that have a child
+            parent = ParentWithNestedIgnoredProperties.new
+            parent.title = "Test Parent"
+            parent.nested = SubTypeWithIgnoredProperties.new(name: "Parent Nested", value: "Parent Value")
+            parent.save!
+
+            # Manually add deprecated properties at multiple levels
+            doc_id = parent.id
+            raw_doc = ParentWithNestedIgnoredProperties.bucket.default_collection.get(doc_id).content
+            raw_doc["deprecated_at_root"] = "Should be ignored at root level"
+            raw_doc["nested"]["deprecated_property"] = "Should be ignored in nested"
+            ParentWithNestedIgnoredProperties.bucket.default_collection.replace(doc_id, raw_doc)
+
+            # Reload the parent
+            parent.reload
+
+            # Deprecated properties should not be present at any level
+            expect(parent.attributes.keys).not_to include("deprecated_at_root")
+            expect(parent.nested.attributes.keys).not_to include("deprecated_property")
+            expect(parent.nested.name).to eq("Parent Nested")
+            expect(parent.nested.value).to eq("Parent Value")
+        end
+    end
 end

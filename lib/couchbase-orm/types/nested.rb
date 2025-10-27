@@ -26,14 +26,29 @@ module CouchbaseOrm
             def cast(value)
                 return nil if value.nil?
                 return value if value.is_a?(@model_class)
-                return @model_class.new(value) if value.is_a?(Hash)
+
+                if value.is_a?(Hash)
+                    # Filter out ignored properties before creating the nested instance
+                    # Optimization: only call .except if there are properties to ignore
+                    ignored = @model_class.ignored_properties
+                    filtered_value = ignored.empty? ? value : value.except(*ignored)
+                    return @model_class.new(filtered_value)
+                end
 
                 raise ArgumentError, "Nested: #{value.inspect} (#{value.class}) is not supported for cast"
             end
         
             def serialize(value)
                 return nil if value.nil?
-                value = @model_class.new(value) if value.is_a?(Hash)
+
+                if value.is_a?(Hash)
+                    # Filter out ignored properties before creating the nested instance
+                    # Optimization: only call .except if there are properties to ignore
+                    ignored = @model_class.ignored_properties
+                    filtered_value = ignored.empty? ? value : value.except(*ignored)
+                    value = @model_class.new(filtered_value)
+                end
+
                 return value.send(:serialized_attributes) if value.is_a?(@model_class)
 
                 raise ArgumentError, "Nested: #{value.inspect} (#{value.class}) is not supported for serialization"
