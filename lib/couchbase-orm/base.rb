@@ -46,6 +46,7 @@ module CouchbaseOrm
         include Encrypt
 
         extend Enum
+        extend IgnoredProperties
 
         define_model_callbacks :initialize, :only => :after
 
@@ -110,8 +111,6 @@ module CouchbaseOrm
     end
 
     class NestedDocument < Document
-        extend IgnoredProperties
-
         def initialize(*args, **kwargs)
             super
             if respond_to?(:id) && id.nil?
@@ -136,7 +135,6 @@ module CouchbaseOrm
         extend EnsureUnique
         extend HasMany
         extend Index
-        extend IgnoredProperties
         extend JsonSchema::Validation
         extend PropertiesAlwaysExistsInDocument
 
