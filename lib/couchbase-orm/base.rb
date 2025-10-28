@@ -1,6 +1,7 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
 
+require 'set'
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
@@ -112,6 +113,29 @@ module CouchbaseOrm
                 super
             else
                 CouchbaseOrm.logger.warn "Ignoring unknown attribute '#{name}' for #{self.class.name}"
+            end
+        end
+
+        # Override assign_attributes to filter unknown attributes when raise_on_unknown_attributes is false
+        # This ensures consistent behavior across Document and NestedDocument
+        def assign_attributes(hash)
+            hash = hash.with_indifferent_access if hash.is_a?(Hash)
+
+            if self.class.raise_on_unknown_attributes
+                super(hash.except("type"))
+            else
+                # Filter unknown attributes
+                known_names = self.class.attribute_names
+                known_attrs = hash.slice(*known_names)
+
+                # Use a Set for efficient lookup of unknown keys
+                known_names_set = known_names.to_set
+                unknown_keys = hash.keys.reject { |k| known_names_set.include?(k) || k == "type" }
+
+                if unknown_keys.any?
+                    CouchbaseOrm.logger.warn "Ignoring unknown attribute(s) for #{self.class.name}: #{unknown_keys.join(', ')}"
+                end
+                super(known_attrs)
             end
         end
 

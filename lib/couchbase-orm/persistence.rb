@@ -153,21 +153,8 @@ module CouchbaseOrm
             changed? ? save(validate: false) : true
         end
 
-        def assign_attributes(hash)
-            hash = hash.with_indifferent_access if hash.is_a?(Hash)
-
-            # Filter unknown attributes if raise_on_unknown_attributes is false
-            if !self.class.raise_on_unknown_attributes
-                known_attrs = hash.slice(*self.class.attribute_names).except("type")
-                unknown_attrs = hash.keys - self.class.attribute_names - ["type"]
-                if unknown_attrs.any?
-                    CouchbaseOrm.logger.warn "Ignoring unknown attribute(s) for #{self.class.name}: #{unknown_attrs.join(', ')}"
-                end
-                super(known_attrs)
-            else
-                super(hash.except("type"))
-            end
-        end
+        # Note: assign_attributes is now handled in Document class (base.rb)
+        # to ensure consistent behavior across Document and NestedDocument
 
         # Updates the attributes of the model from the passed-in hash and saves the
         # record. If the object is invalid, the saving will fail and false will be returned.
