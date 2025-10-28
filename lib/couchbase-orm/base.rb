@@ -53,6 +53,10 @@ module CouchbaseOrm
 
         class MismatchTypeError < RuntimeError; end
 
+        # Configuration option to control whether unknown attributes should raise an error
+        # Set to false to silently ignore unknown attributes during mass assignment
+        class_attribute :raise_on_unknown_attributes, default: true
+
         def initialize(model = nil, ignore_doc_type: false, **attributes)
             CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
             @__metadata__   = Metadata.new
@@ -98,6 +102,17 @@ module CouchbaseOrm
 
         def []=(key, value)
             send(:"#{key}=", value)
+        end
+
+        # Handle assignment to unknown attributes based on raise_on_unknown_attributes configuration
+        # If raise_on_unknown_attributes is false, unknown attributes are silently ignored
+        # If raise_on_unknown_attributes is true (default), ActiveModel::UnknownAttributeError is raised
+        def attribute_writer_missing(name, value)
+            if self.class.raise_on_unknown_attributes
+                super
+            else
+                CouchbaseOrm.logger.warn "Ignoring unknown attribute '#{name}' for #{self.class.name}"
+            end
         end
 
         protected
