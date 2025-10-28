@@ -22,6 +22,12 @@ class BaseTestWithIgnoredProperties < CouchbaseOrm::Base
     attribute :job, :string
 end
 
+class BaseTestWithUnknownAttributesAllowed < CouchbaseOrm::Base
+    self.raise_on_unknown_attributes = false
+    attribute :name, :string
+    attribute :job, :string
+end
+
 class BaseTestWithPropertiesAlwaysExistsInDocument < CouchbaseOrm::Base
     self.properties_always_exists_in_document = true
     attribute :name, :string
@@ -345,6 +351,65 @@ describe CouchbaseOrm::Base do
 
             it 'does not raise for reload' do
                 expect{ loaded_model.reload }.not_to raise_error
+            end
+        end
+    end
+
+    describe 'handling unknown attributes' do
+        context 'when raise_on_unknown_attributes is set to false' do
+            it 'returns false when queried' do
+                expect(BaseTestWithUnknownAttributesAllowed.raise_on_unknown_attributes).to be(false)
+            end
+
+            it 'silently ignores unknown attributes in new' do
+                model = BaseTestWithUnknownAttributesAllowed.new(name: 'test', job: 'dev', unknown_attr: 'value')
+                expect(model.name).to eq('test')
+                expect(model.job).to eq('dev')
+                expect(model.respond_to?(:unknown_attr)).to be(false)
+            end
+
+            it 'silently ignores unknown attributes in assign_attributes' do
+                model = BaseTestWithUnknownAttributesAllowed.new(name: 'test')
+                expect {
+                    model.assign_attributes(name: 'updated', job: 'engineer', foo: 'bar', baz: 'qux')
+                }.not_to raise_error
+                expect(model.name).to eq('updated')
+                expect(model.job).to eq('engineer')
+                expect(model.respond_to?(:foo)).to be(false)
+                expect(model.respond_to?(:baz)).to be(false)
+            end
+
+            it 'only stores known attributes' do
+                model = BaseTestWithUnknownAttributesAllowed.new(
+                    name: 'Alice',
+                    job: 'Developer',
+                    unknown_field_1: 'value1',
+                    unknown_field_2: 'value2'
+                )
+                # Only known attributes should be stored
+                expect(model.name).to eq('Alice')
+                expect(model.job).to eq('Developer')
+                expect(model.respond_to?(:unknown_field_1)).to be(false)
+                expect(model.respond_to?(:unknown_field_2)).to be(false)
+            end
+        end
+
+        context 'default behavior (raise_on_unknown_attributes = true)' do
+            it 'returns true by default' do
+                expect(BaseTest.raise_on_unknown_attributes).to be(true)
+            end
+
+            it 'raises ActiveModel::UnknownAttributeError on unknown attributes in new' do
+                expect {
+                    BaseTest.new(name: 'bob', job: 'dev', foo: 'bar')
+                }.to raise_error(ActiveModel::UnknownAttributeError)
+            end
+
+            it 'raises ActiveModel::UnknownAttributeError on unknown attributes in assign_attributes' do
+                model = BaseTest.new(name: 'bob')
+                expect {
+                    model.assign_attributes(job: 'dev', foo: 'bar')
+                }.to raise_error(ActiveModel::UnknownAttributeError)
             end
         end
     end
