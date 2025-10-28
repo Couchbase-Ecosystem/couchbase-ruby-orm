@@ -58,6 +58,12 @@ module CouchbaseOrm
         # Set to false to silently ignore unknown attributes during mass assignment
         class_attribute :raise_on_unknown_attributes, default: true
 
+        # Returns a cached Set of attribute names for efficient lookup
+        # This avoids repeated array-to-set conversions in assign_attributes
+        def self.attribute_names_set
+            @attribute_names_set ||= attribute_names.to_set
+        end
+
         def initialize(model = nil, ignore_doc_type: false, **attributes)
             CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
             @__metadata__   = Metadata.new
@@ -124,13 +130,12 @@ module CouchbaseOrm
             if self.class.raise_on_unknown_attributes
                 super(hash.except("type"))
             else
-                # Filter unknown attributes
+                # Filter unknown attributes using cached Set for O(1) lookups
                 known_names = self.class.attribute_names
                 known_attrs = hash.slice(*known_names)
 
-                # Use a Set for efficient lookup of unknown keys
-                known_names_set = known_names.to_set
-                unknown_keys = hash.keys.reject { |k| known_names_set.include?(k) || k == "type" }
+                # Use cached Set for efficient O(1) lookup of unknown keys
+                unknown_keys = hash.keys.reject { |k| self.class.attribute_names_set.include?(k) || k == "type" }
 
                 if unknown_keys.any?
                     CouchbaseOrm.logger.warn "Ignoring unknown attribute(s) for #{self.class.name}: #{unknown_keys.join(', ')}"
