@@ -155,7 +155,18 @@ module CouchbaseOrm
 
         def assign_attributes(hash)
             hash = hash.with_indifferent_access if hash.is_a?(Hash)
-            super(hash.except("type"))
+
+            # Filter unknown attributes if raise_on_unknown_attributes is false
+            if !self.class.raise_on_unknown_attributes
+                known_attrs = hash.slice(*self.class.attribute_names).except("type")
+                unknown_attrs = hash.keys - self.class.attribute_names - ["type"]
+                if unknown_attrs.any?
+                    CouchbaseOrm.logger.warn "Ignoring unknown attribute(s) for #{self.class.name}: #{unknown_attrs.join(', ')}"
+                end
+                super(known_attrs)
+            else
+                super(hash.except("type"))
+            end
         end
 
         # Updates the attributes of the model from the passed-in hash and saves the
