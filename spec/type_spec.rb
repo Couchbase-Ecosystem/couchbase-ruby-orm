@@ -6,7 +6,7 @@ require "couchbase-orm/types"
 class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
   def cast(value)
     result = super(value)
-    result&.floor(3)
+    result
   end
 
   def serialize(value)
