@@ -4,6 +4,11 @@ require "active_model"
 require "couchbase-orm/types"
 
 class DateTimeWith3Decimal < CouchbaseOrm::Types::DateTime
+  def cast(value)
+    result = super(value)
+    result&.floor(3)
+  end
+
   def serialize(value)
     value&.iso8601(3)
   end

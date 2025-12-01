@@ -117,7 +117,7 @@ module CouchbaseOrm
             end
 
             def serialize_value(key, value_before_type_cast)
-                value = 
+                value =
                     if value_before_type_cast.is_a?(Array)
                         value_before_type_cast.map do |v|
                             attribute_types[key.to_s].serialize(attribute_types[key.to_s].cast(v))

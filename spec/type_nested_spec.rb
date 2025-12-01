@@ -42,6 +42,12 @@ describe CouchbaseOrm::Types::Nested do
         obj.others[1].child = SubTypeTest.new(name: "baz")
         obj.save!
 
+        expect(obj.others[0].name).to eq "foo"
+        expect(obj.others[0].tags).to eq ["foo", "bar"]
+        expect(obj.others[1].name).to eq "bar"
+        expect(obj.others[1].tags).to eq ["bar", "baz"]
+        expect(obj.others[1].child.name).to eq "baz"
+
         obj = TypeNestedTest.find(obj.id)
         expect(obj.others[0].name).to eq "foo"
         expect(obj.others[0].tags).to eq ["foo", "bar"]
@@ -116,7 +122,8 @@ describe CouchbaseOrm::Types::Nested do
         obj.others[1].name = "baz"
         obj.flags[0] = true
 
-        obj.save!
+        expect { obj.save! }.to_not change { [obj.main.name, obj.others[0].name, obj.others[1].name, obj.flags] }
+
         obj = TypeNestedTest.find(obj.id)
         expect(obj.main.name).to eq "bar"
         expect(obj.others[0].name).to eq "bar"

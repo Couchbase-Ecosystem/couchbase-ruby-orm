@@ -80,7 +80,6 @@ module CouchbaseOrm
 
     def changes_applied
       move_changes
-      super
     end
 
     def reset_object!
