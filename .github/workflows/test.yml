@@ -11,6 +11,9 @@ jobs:
     strategy:
       matrix:
         include:
+          - ruby: '3.5'
+            active-model: '8.1.1'
+            couchbase: '7.2.3'
           - ruby: '3.4'
             active-model: '8.0.2'
             couchbase: '7.2.3'
