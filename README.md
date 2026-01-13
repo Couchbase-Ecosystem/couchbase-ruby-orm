@@ -1,7 +1,7 @@
 # Couchbase ORM for Rails
 
 ## Documentation
-https://couchbase-ruby-orm.com
+https://www.couchbase-ruby-orm.com
 
 ## Installation
 Add this line to your application's Gemfile:
@@ -117,7 +117,7 @@ The following types have been tested :
   - See <https://docs.couchbase.com/couchbase-lite/current/c/field-level-encryption.html>
   - **Important**: CouchbaseOrm does not perform encryption/decryption - your application must encrypt data before storing it
   - Values must be Base64-encoded strings containing pre-encrypted ciphertext
-  - See the [encryption documentation](https://couchbase-ruby-orm.com/docs/tutorial-ruby-couchbase-orm/encryption) for details
+  - See the [encryption documentation](https://www.couchbase-ruby-orm.com/docs/tutorial-ruby-couchbase-orm/encryption) for details
 - :array (see below)
 - :nested (see below)
 
