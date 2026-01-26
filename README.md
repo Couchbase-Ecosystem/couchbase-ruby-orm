@@ -4,6 +4,9 @@
 https://couchbase-ruby-orm.com
 
 ## Installation
+
+Mind the supported Ruby version.
+
 Add this line to your application's Gemfile:
 ```ruby
 gem 'couchbase-orm', git: 'https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm' 
