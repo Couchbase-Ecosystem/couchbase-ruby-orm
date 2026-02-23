@@ -113,7 +113,7 @@ module CouchbaseOrm
             def delete_all
                 CouchbaseOrm::logger.debug{ "Delete all: #{self}" }
                 ids = query.to_a
-                CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
+                @model.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
 
             def where(string_cond=nil, **conds)
