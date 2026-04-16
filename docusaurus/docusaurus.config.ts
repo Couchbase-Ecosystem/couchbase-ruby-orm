@@ -43,6 +43,13 @@ const config: Config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        googleTagManager: {
+          containerId: 'GTM-MVPNN2',
+        },
+        gtag: {
+          trackingID: 'G-CVKKEY0D6B',
+          anonymizeIP: true,
+        },
       } satisfies Preset.Options,
     ],
   ],
