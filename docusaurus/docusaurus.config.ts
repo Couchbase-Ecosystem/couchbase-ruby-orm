@@ -30,6 +30,26 @@ const config: Config = {
     locales: ['en'],
   },
 
+  // OneTrust Cookies Consent Notice for couchbase.com
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: {
+        src: 'https://cdn.cookielaw.org/scripttemplates/otSDKStub.js',
+        type: 'text/javascript',
+        charset: 'UTF-8',
+        'data-domain-script': '748511ff-10bf-44bf-88b8-36382e5b5fd9',
+      },
+    },
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'text/javascript',
+      },
+      innerHTML: 'function OptanonWrapper() {}',
+    },
+  ],
+
   presets: [
     [
       'classic',
