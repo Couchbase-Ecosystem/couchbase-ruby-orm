@@ -5,7 +5,9 @@ module CouchbaseOrm
         module ClassMethods
 
             def serialize_for_binding(value)
-                if [DateTime, Time].any? { |clazz| value.is_a?(clazz) }
+                if value.is_a?(Array)
+                    value.map { |v| serialize_for_binding(v) }
+                elsif [DateTime, Time].any? { |clazz| value.is_a?(clazz) }
                     value.iso8601(@precision || 0)
                 elsif value.is_a?(Date)
                     value.to_s
@@ -15,9 +17,7 @@ module CouchbaseOrm
             end
 
             def bind(value, params)
-                if value.is_a?(Array)
-                    "[#{value.map { |v| bind(v, params) }.join(', ')}]"
-                elsif value.nil?
+                if value.nil?
                     nil
                 else
                     params << serialize_for_binding(value)
