@@ -23,7 +23,8 @@ module CouchbaseOrm
         def self.config(new_config = nil)
             Thread.current['__couchbaseorm_n1ql_config__'] = new_config if new_config
             Thread.current['__couchbaseorm_n1ql_config__'] || {
-                scan_consistency: DEFAULT_SCAN_CONSISTENCY
+                scan_consistency: DEFAULT_SCAN_CONSISTENCY,
+                adhoc: true
             }
         end
 
@@ -95,12 +96,17 @@ module CouchbaseOrm
                 end
             end
 
-            def build_where(keys, values)
+            def build_where(keys, values, params: nil)
                 where = values == NO_VALUE ? '' : keys.zip(Array.wrap(values))
                             .reject { |key, value| key.nil? && value.nil? }
-                            .map { |key, value| build_match(key, value) }
+                            .map { |key, value| build_match(key, value, params: params) }
                             .join(" AND ")
-                "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
+                if params
+                    type_placeholder = bind(design_document, params)
+                    "type=#{type_placeholder} #{"AND " + where unless where.blank?}"
+                else
+                    "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
+                end
             end
 
             # order-by-clause ::= ORDER BY ordering-term [ ',' ordering-term ]*
@@ -119,12 +125,18 @@ module CouchbaseOrm
                     N1qlProxy.new(query_fn.call(bucket, values, Couchbase::Options::Query.new(**options)))
                 else
                     bucket_name = bucket.name
-                    where = build_where(keys, values)
+                    params = []
+                    where = build_where(keys, values, params: params)
                     order = custom_order || build_order(keys, descending)
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
-                    result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug  "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{options[:scan_consistency]}"
+
+                    adhoc = options.delete(:adhoc) { CouchbaseOrm::N1ql.config[:adhoc] }
+                    query_options = options.merge(positional_parameters: params, adhoc: adhoc)
+                    result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**query_options))
+                    CouchbaseOrm.logger.debug {
+                        "N1QL query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows with scan_consistency: #{options[:scan_consistency]} adhoc: #{adhoc}"
+                    }
                     N1qlProxy.new(result)
                 end
             end

@@ -96,7 +96,12 @@ module CouchbaseOrm
                 klass.class_eval do
                   n1ql remote_method, emit_key: 'id', query_fn: proc { |bucket, values, options|
                     raise ArgumentError, "values[0] must not be blank" if values[0].blank?
-                    cluster.query("SELECT raw #{through_key} FROM `#{bucket.name}` where type = \"#{design_document}\" and #{foreign_key} = #{quote(values[0])}", options)
+                    n1ql_query = "SELECT raw #{through_key} FROM `#{bucket.name}` where type = $1 and #{foreign_key} = $2"
+                    params = [design_document, values[0]]
+                    cluster.query(n1ql_query, Couchbase::Options::Query.new(
+                      positional_parameters: params,
+                      scan_consistency: options.scan_consistency
+                    ))
                   }
                 end
             else

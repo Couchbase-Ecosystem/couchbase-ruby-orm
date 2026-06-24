@@ -172,19 +172,28 @@ describe CouchbaseOrm::N1ql do
     it "should log the default scan_consistency when n1ql query is executed" do
         allow(CouchbaseOrm.logger).to receive(:debug)
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : #{described_class::DEFAULT_SCAN_CONSISTENCY}")
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
+            msg = block ? block.call : nil
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=$1  order by name DESC  params: [\"n1_ql_test\"] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY} adhoc: true"
+        end
     end
 
     it "should log the set scan_consistency when n1ql query is executed with a specific scan_consistency" do
         allow(CouchbaseOrm.logger).to receive(:debug)
         default_n1ql_config = CouchbaseOrm::N1ql.config
-        CouchbaseOrm::N1ql.config({ scan_consistency: :not_bounded })
+        CouchbaseOrm::N1ql.config({ scan_consistency: :not_bounded, adhoc: true })
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : not_bounded")
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
+            msg = block ? block.call : nil
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=$1  order by name DESC  params: [\"n1_ql_test\"] return 0 rows with scan_consistency: not_bounded adhoc: true"
+        end
 
         CouchbaseOrm::N1ql.config(default_n1ql_config)
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : #{described_class::DEFAULT_SCAN_CONSISTENCY}")
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
+            msg = block ? block.call : nil
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=$1  order by name DESC  params: [\"n1_ql_test\"] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY} adhoc: true"
+        end
     end
 
     after(:all) do
