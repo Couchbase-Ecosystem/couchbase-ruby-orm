@@ -225,7 +225,7 @@ module CouchbaseOrm
                     end
                     if value.is_a?(Hash)
                         value.map do |k, v|
-                            "#{key}.#{k} = #{v}"
+                            "#{key}.#{k} = #{@model.bind(v, params)}"
                         end.join(", ") + for_clause
                     else
                         "#{key} = #{@model.bind(value, params)}#{for_clause}"
