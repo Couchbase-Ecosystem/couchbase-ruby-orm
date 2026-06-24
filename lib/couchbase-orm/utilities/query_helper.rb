@@ -7,7 +7,7 @@ module CouchbaseOrm
             def serialize_for_binding(value)
                 if value.is_a?(Array)
                     value.map { |v| serialize_for_binding(v) }
-                elsif [DateTime, Time].any? { |clazz| value.is_a?(clazz) }
+                elsif [DateTime, Time].any? { |clazz| value.is_a?(clazz) } || (value.respond_to?(:acts_like?) && value.acts_like?(:time))
                     value.iso8601(@precision || 0)
                 elsif value.is_a?(Date)
                     value.to_s
