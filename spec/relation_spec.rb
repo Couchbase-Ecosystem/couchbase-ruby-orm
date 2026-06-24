@@ -310,6 +310,56 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.empty?).to eq(false)
     end
 
+    describe "parameterized queries" do
+        it "should return parameterized query with to_n1ql_with_params" do
+            relation = RelationModel.where(active: true, name: "Jane")
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("type=$1")
+            expect(n1ql).to include("active = $2")
+            expect(n1ql).to include("name = $3")
+            expect(n1ql).not_to include("\"relation_model\"")
+            expect(n1ql).not_to include("'Jane'")
+            expect(params).to eq(["relation_model", true, "Jane"])
+        end
+
+        it "should parameterize NOT conditions" do
+            relation = RelationModel.not(active: true)
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("active != $2")
+            expect(params).to eq(["relation_model", true])
+        end
+
+        it "should parameterize range conditions" do
+            relation = RelationModel.where(age: 10..30)
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("age >= $2")
+            expect(n1ql).to include("age <= $3")
+            expect(params).to eq(["relation_model", 10, 30])
+        end
+
+        it "should parameterize hash operator conditions" do
+            relation = RelationModel.where(age: { _gte: 18, _lt: 65 })
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("age >= $2")
+            expect(n1ql).to include("age < $3")
+            expect(params).to eq(["relation_model", 18, 65])
+        end
+
+        it "should pass through string conditions without parameterization" do
+            relation = RelationModel.where("active = true")
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("(active = true)")
+            expect(params).to eq(["relation_model"])
+        end
+
+        it "should parameterize array IN conditions" do
+            relation = RelationModel.where(name: ["Alice", "Bob"])
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("name IN [$2, $3]")
+            expect(params).to eq(["relation_model", "Alice", "Bob"])
+        end
+    end
+
     describe "operators" do
         it "should query by gte and lte" do
             _m1 = RelationModel.create!(age: 10)

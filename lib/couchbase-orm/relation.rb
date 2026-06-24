@@ -20,32 +20,38 @@ module CouchbaseOrm
             end
 
             def to_n1ql
-                bucket_name = @model.bucket.name
-                where = build_where
-                order = build_order
-                limit = build_limit
-                "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
+                to_n1ql_with_params.first
             end
 
-            def execute(n1ql_query)
-                result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
-                CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{CouchbaseOrm::N1ql.config[:scan_consistency]}" }
+            def to_n1ql_with_params
+                bucket_name = @model.bucket.name
+                params = []
+                where = build_where_with_params(params)
+                order = build_order
+                limit = build_limit
+                ["select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}", params]
+            end
+
+            def execute(n1ql_query, params = [])
+                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
+                CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows" }
                 N1qlProxy.new(result)
             end
 
             def query
                 CouchbaseOrm::logger.debug("Query: #{self}")
-                n1ql_query = to_n1ql
-                execute(n1ql_query)
+                n1ql_query, params = to_n1ql_with_params
+                execute(n1ql_query, params)
             end
-            
+
             def update_all(**cond)
                 bucket_name = @model.bucket.name
-                where = build_where
+                params = []
+                where = build_where_with_params(params)
                 limit = build_limit
-                update = build_update(**cond)
+                update = build_update_with_params(params, **cond)
                 n1ql_query = "update `#{bucket_name}` set #{update} where #{where} #{limit}"
-                execute(n1ql_query)
+                execute(n1ql_query, params)
             end
 
             def ids
@@ -61,14 +67,16 @@ module CouchbaseOrm
             end
 
             def first
-                result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
+                n1ql_query, params = self.limit(1).to_n1ql_with_params
+                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
                 return unless (first_id = result.rows.to_a.first)
 
                 @model.find(first_id, with_strict_loading: @strict_loading)
             end
 
             def last
-                result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
+                n1ql_query, params = to_n1ql_with_params
+                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
                 last_id = result.rows.to_a.last
                 @model.find(last_id, with_strict_loading: @strict_loading) if last_id
             end
@@ -184,33 +192,33 @@ module CouchbaseOrm
                 order.empty? ? "meta().id" : order
             end
             
-            def build_where
-                build_conds([[:type, @model.design_document]] + @where)
+            def build_where_with_params(params)
+                build_conds_with_params([[:type, @model.design_document]] + @where, params)
             end
 
-            def build_conds(conds)
+            def build_conds_with_params(conds, params)
                 conds.map do |key, value, opt|
                     if key
-                        opt == :not ? 
-                            @model.build_not_match(key, value) : 
-                            @model.build_match(key, value)
+                        opt == :not ?
+                            @model.build_not_match(key, value, params: params) :
+                            @model.build_match(key, value, params: params)
                     else
                         value
                     end
                 end.join(" AND ")
             end
 
-            def build_update(**cond)
+            def build_update_with_params(params, **cond)
                 cond.map do |key, value|
-                    for_clause=""
+                    for_clause = ""
                     if value.is_a?(Hash) && value[:_for]
                         path_clause = value.delete(:_for)
                         var_clause = path_clause.to_s.split(".").last.singularize
-                        
+
                         _when = value.delete(:_when)
-                        when_clause = _when ? build_conds(_when.to_a) : ""
-                        
-                        _set = value.delete(:_set)                       
+                        when_clause = _when ? build_conds_with_params(_when.to_a, params) : ""
+
+                        _set = value.delete(:_set)
                         value = _set if _set
 
                         for_clause = " for #{var_clause} in #{path_clause} when #{when_clause} end"
@@ -220,9 +228,15 @@ module CouchbaseOrm
                             "#{key}.#{k} = #{v}"
                         end.join(", ") + for_clause
                     else
-                        "#{key} = #{@model.quote(value)}#{for_clause}"
+                        "#{key} = #{@model.bind(value, params)}#{for_clause}"
                     end
                 end.join(", ")
+            end
+
+            def build_query_options(positional_parameters: [])
+                opts = { scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency] }
+                opts[:positional_parameters] = positional_parameters unless positional_parameters.empty?
+                Couchbase::Options::Query.new(**opts)
             end
 
             def method_missing(method, *args, &block)
