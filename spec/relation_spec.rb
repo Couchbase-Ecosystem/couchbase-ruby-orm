@@ -314,7 +314,7 @@ describe CouchbaseOrm::Relation do
         it "should return parameterized query with to_n1ql_with_params" do
             relation = RelationModel.where(active: true, name: "Jane")
             n1ql, params = relation.send(:to_n1ql_with_params)
-            expect(n1ql).to include("type=$1")
+            expect(n1ql).to include("type = $1")
             expect(n1ql).to include("active = $2")
             expect(n1ql).to include("name = $3")
             expect(n1ql).not_to include("\"relation_model\"")
