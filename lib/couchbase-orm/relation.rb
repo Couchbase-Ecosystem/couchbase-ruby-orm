@@ -225,10 +225,10 @@ module CouchbaseOrm
                     end
                     if value.is_a?(Hash)
                         value.map do |k, v|
-                            "#{key}.#{k} = #{@model.bind(v, params)}"
+                            "#{key}.#{k} = #{v.nil? ? 'NULL' : @model.bind(v, params)}"
                         end.join(", ") + for_clause
                     else
-                        "#{key} = #{@model.bind(value, params)}#{for_clause}"
+                        "#{key} = #{value.nil? ? 'NULL' : @model.bind(value, params)}#{for_clause}"
                     end
                 end.join(", ")
             end
