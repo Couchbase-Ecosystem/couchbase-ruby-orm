@@ -100,7 +100,7 @@ module CouchbaseOrm
                     params = [design_document, values[0]]
                     cluster.query(n1ql_query, Couchbase::Options::Query.new(
                       positional_parameters: params,
-                      scan_consistency: options.scan_consistency
+                      scan_consistency: options.instance_variable_get(:@scan_consistency)
                     ))
                   }
                 end
