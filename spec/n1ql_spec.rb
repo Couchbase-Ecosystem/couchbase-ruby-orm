@@ -174,7 +174,7 @@ describe CouchbaseOrm::N1ql do
         N1QLTest.by_rating_reverse()
         expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
             msg = block ? block.call : nil
-            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=$1  order by name DESC  params: [\"n1_ql_test\"] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY}"
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  params: [] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY}"
         end
     end
 
@@ -185,14 +185,14 @@ describe CouchbaseOrm::N1ql do
         N1QLTest.by_rating_reverse()
         expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
             msg = block ? block.call : nil
-            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=$1  order by name DESC  params: [\"n1_ql_test\"] return 0 rows with scan_consistency: not_bounded"
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  params: [] return 0 rows with scan_consistency: not_bounded"
         end
 
         CouchbaseOrm::N1ql.config(default_n1ql_config)
         N1QLTest.by_rating_reverse()
         expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
             msg = block ? block.call : nil
-            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=$1  order by name DESC  params: [\"n1_ql_test\"] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY}"
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  params: [] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY}"
         end
     end
 

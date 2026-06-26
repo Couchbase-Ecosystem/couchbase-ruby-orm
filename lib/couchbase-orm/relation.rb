@@ -193,7 +193,7 @@ module CouchbaseOrm
             end
 
             def build_where_with_params(params)
-                build_conds_with_params([[:type, @model.design_document]] + @where, params)
+                build_conds_with_params([[nil, "type = #{@model.quote(@model.design_document)}"]] + @where, params)
             end
 
             def build_conds_with_params(conds, params)

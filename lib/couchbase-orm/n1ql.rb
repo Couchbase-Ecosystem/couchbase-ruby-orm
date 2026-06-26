@@ -100,12 +100,7 @@ module CouchbaseOrm
                             .reject { |key, value| key.nil? && value.nil? }
                             .map { |key, value| build_match(key, value, params: params) }
                             .join(" AND ")
-                if params
-                    type_placeholder = bind(design_document, params)
-                    "type=#{type_placeholder} #{"AND " + where unless where.blank?}"
-                else
-                    "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
-                end
+                "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end
 
             # order-by-clause ::= ORDER BY ordering-term [ ',' ordering-term ]*
