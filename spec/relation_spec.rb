@@ -355,8 +355,8 @@ describe CouchbaseOrm::Relation do
         it "should parameterize array IN conditions" do
             relation = RelationModel.where(name: ["Alice", "Bob"])
             n1ql, params = relation.send(:to_n1ql_with_params)
-            expect(n1ql).to include("name IN [$2, $3]")
-            expect(params).to eq(["relation_model", "Alice", "Bob"])
+            expect(n1ql).to include("name IN $2")
+            expect(params).to eq(["relation_model", ["Alice", "Bob"]])
         end
     end
 
