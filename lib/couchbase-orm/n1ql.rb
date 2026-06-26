@@ -23,7 +23,8 @@ module CouchbaseOrm
         def self.config(new_config = nil)
             Thread.current['__couchbaseorm_n1ql_config__'] = new_config if new_config
             Thread.current['__couchbaseorm_n1ql_config__'] || {
-                scan_consistency: DEFAULT_SCAN_CONSISTENCY
+                scan_consistency: DEFAULT_SCAN_CONSISTENCY,
+                adhoc: true
             }
         end
 
@@ -130,10 +131,11 @@ module CouchbaseOrm
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
 
-                    query_options = options.merge(positional_parameters: params)
+                    adhoc = options.delete(:adhoc) { CouchbaseOrm::N1ql.config[:adhoc] }
+                    query_options = options.merge(positional_parameters: params, adhoc: adhoc)
                     result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**query_options))
                     CouchbaseOrm.logger.debug {
-                        "N1QL query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows with scan_consistency: #{options[:scan_consistency]}"
+                        "N1QL query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows with scan_consistency: #{options[:scan_consistency]} adhoc: #{adhoc}"
                     }
                     N1qlProxy.new(result)
                 end
