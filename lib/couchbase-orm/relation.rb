@@ -217,7 +217,7 @@ module CouchbaseOrm
                     end
                     if value.is_a?(Hash)
                         value.map do |k, v|
-                            "#{key}.#{k} = #{v}"
+                            "#{key}.#{k} = #{@model.quote(v) || 'NULL'}"
                         end.join(", ") + for_clause
                     else
                         "#{key} = #{@model.quote(value)}#{for_clause}"
