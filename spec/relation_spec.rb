@@ -407,6 +407,32 @@ describe CouchbaseOrm::Relation do
             expect(m3.reload.children.map(&:age)).to eq([50, 20])
         end
 
+        it "should update nested hash attributes with string values" do
+            m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+
+            RelationModel.where(age: 20).update_all(child: {name: "Updated", _for: :children, _when: {child: {name: "Tom"}}})
+
+            expect(m1.reload.children.map(&:name)).to eq(["Tom", "Jerry"])
+            expect(m2.reload.children.map(&:name)).to eq(["Updated", "Jerry"])
+        end
+
+        it "should update nested hash attributes with nil values" do
+            m1 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+
+            RelationModel.where(age: 20).update_all(child: {name: nil, _for: :children, _when: {child: {name: "Tom"}}})
+
+            expect(m1.reload.children.map(&:name)).to eq([nil, "Jerry"])
+        end
+
+        it "should properly quote string values containing special characters in hash updates" do
+            m1 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+
+            RelationModel.where(age: 20).update_all(child: {name: "it's a test", _for: :children, _when: {child: {name: "Tom"}}})
+
+            expect(m1.reload.children.map(&:name)).to eq(["it's a test", "Jerry"])
+        end
+
         it "should update nested attributes with a path in a for clause" do
             m1 = RelationModel.create!(
                 pathelement: PathRelationModel.new(
