@@ -20,7 +20,11 @@ module CouchbaseOrm
             end
 
             def to_n1ql
-                to_n1ql_with_params.first
+                bucket_name = @model.bucket.name
+                where = build_where_with_params(nil)
+                order = build_order
+                limit = build_limit
+                "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
             end
 
             def to_n1ql_with_params
