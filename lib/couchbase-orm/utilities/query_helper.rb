@@ -25,10 +25,15 @@ module CouchbaseOrm
                 end
             end
 
+            # Renders a value either as a positional parameter (when +params+ is
+            # provided) or as an inline quoted literal (when it is nil).
+            def resolve_value(value, params)
+                params ? bind(value, params) : quote(value)
+            end
+
             def build_match(key, value, params: nil)
                 use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
-                resolve = ->(v) { params ? bind(v, params) : quote(v) }
                 case
                 when value.nil? && use_is_null
                     "#{key} IS NULL"
@@ -41,29 +46,28 @@ module CouchbaseOrm
                 when value.is_a?(Array) && value.include?(nil)
                     "(#{build_match(key, nil, params: params)} OR #{build_match(key, value.compact, params: params)})"
                 when value.is_a?(Array)
-                    "#{key} IN #{resolve.call(value)}"
+                    "#{key} IN #{resolve_value(value, params)}"
                 when value.is_a?(Range)
                     build_match_range(key, value, params: params)
                 else
-                    "#{key} = #{resolve.call(value)}"
+                    "#{key} = #{resolve_value(value, params)}"
                 end
             end
 
             def build_match_hash(key, value, params: nil)
                 matches = []
-                resolve = ->(v) { params ? bind(v, params) : quote(v) }
                 value.each do |k, v|
                     case k
                     when :_gt
-                        matches << "#{key} > #{resolve.call(v)}"
+                        matches << "#{key} > #{resolve_value(v, params)}"
                     when :_gte
-                        matches << "#{key} >= #{resolve.call(v)}"
+                        matches << "#{key} >= #{resolve_value(v, params)}"
                     when :_lt
-                        matches << "#{key} < #{resolve.call(v)}"
+                        matches << "#{key} < #{resolve_value(v, params)}"
                     when :_lte
-                        matches << "#{key} <= #{resolve.call(v)}"
+                        matches << "#{key} <= #{resolve_value(v, params)}"
                     when :_ne
-                        matches << "#{key} != #{resolve.call(v)}"
+                        matches << "#{key} != #{resolve_value(v, params)}"
 
                     # TODO v2
                     # when :_in
@@ -111,13 +115,12 @@ module CouchbaseOrm
             end
 
             def build_match_range(key, value, params: nil)
-                resolve = ->(v) { params ? bind(v, params) : quote(v) }
                 matches = []
-                matches << "#{key} >= #{resolve.call(value.begin)}"
+                matches << "#{key} >= #{resolve_value(value.begin, params)}"
                 if value.exclude_end?
-                    matches << "#{key} < #{resolve.call(value.end)}"
+                    matches << "#{key} < #{resolve_value(value.end, params)}"
                 else
-                    matches << "#{key} <= #{resolve.call(value.end)}"
+                    matches << "#{key} <= #{resolve_value(value.end, params)}"
                 end
                 matches.join(" AND ")
             end
@@ -126,7 +129,6 @@ module CouchbaseOrm
             def build_not_match(key, value, params: nil)
                 use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
-                resolve = ->(v) { params ? bind(v, params) : quote(v) }
                 case
                 when value.nil? && use_is_null
                     "#{key} IS NOT NULL"
@@ -135,9 +137,9 @@ module CouchbaseOrm
                 when value.is_a?(Array) && value.include?(nil)
                     "(#{build_not_match(key, nil, params: params)} AND #{build_not_match(key, value.compact, params: params)})"
                 when value.is_a?(Array)
-                    "#{key} NOT IN #{resolve.call(value)}"
+                    "#{key} NOT IN #{resolve_value(value, params)}"
                 else
-                    "#{key} != #{resolve.call(value)}"
+                    "#{key} != #{resolve_value(value, params)}"
                 end
             end
 
