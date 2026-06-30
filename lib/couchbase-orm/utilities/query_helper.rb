@@ -4,7 +4,34 @@ module CouchbaseOrm
 
         module ClassMethods
 
-            def build_match(key, value)
+            def serialize_for_binding(value)
+                if value.is_a?(Array)
+                    value.map { |v| serialize_for_binding(v) }
+                elsif [DateTime, Time].any? { |clazz| value.is_a?(clazz) } || (value.respond_to?(:acts_like?) && value.acts_like?(:time))
+                    value.iso8601(@precision || 0)
+                elsif value.is_a?(Date)
+                    value.to_s
+                else
+                    value
+                end
+            end
+
+            def bind(value, params)
+                if value.nil?
+                    nil
+                else
+                    params << serialize_for_binding(value)
+                    "$#{params.length}"
+                end
+            end
+
+            # Renders a value either as a positional parameter (when +params+ is
+            # provided) or as an inline quoted literal (when it is nil).
+            def resolve_value(value, params)
+                params ? bind(value, params) : quote(value)
+            end
+
+            def build_match(key, value, params: nil)
                 use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
                 case
@@ -13,35 +40,35 @@ module CouchbaseOrm
                 when value.nil? && !use_is_null
                     "#{key} IS NOT VALUED"
                 when value.is_a?(Hash) && attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Array)
-                    "any #{key.to_s.singularize} in #{key} satisfies (#{build_match_hash("#{key.to_s.singularize}", value)}) end"
+                    "any #{key.to_s.singularize} in #{key} satisfies (#{build_match_hash("#{key.to_s.singularize}", value, params: params)}) end"
                 when value.is_a?(Hash) && !attribute_types[key.to_s].is_a?(CouchbaseOrm::Types::Array)
-                    build_match_hash(key, value)
+                    build_match_hash(key, value, params: params)
                 when value.is_a?(Array) && value.include?(nil)
-                    "(#{build_match(key, nil)} OR #{build_match(key, value.compact)})"
+                    "(#{build_match(key, nil, params: params)} OR #{build_match(key, value.compact, params: params)})"
                 when value.is_a?(Array)
-                    "#{key} IN #{quote(value)}"
+                    "#{key} IN #{resolve_value(value, params)}"
                 when value.is_a?(Range)
-                    build_match_range(key, value)
+                    build_match_range(key, value, params: params)
                 else
-                    "#{key} = #{quote(value)}"
+                    "#{key} = #{resolve_value(value, params)}"
                 end
             end
 
-            def build_match_hash(key, value)
+            def build_match_hash(key, value, params: nil)
                 matches = []
                 value.each do |k, v|
                     case k
                     when :_gt
-                        matches << "#{key} > #{quote(v)}"
+                        matches << "#{key} > #{resolve_value(v, params)}"
                     when :_gte
-                        matches << "#{key} >= #{quote(v)}"
+                        matches << "#{key} >= #{resolve_value(v, params)}"
                     when :_lt
-                        matches << "#{key} < #{quote(v)}"
+                        matches << "#{key} < #{resolve_value(v, params)}"
                     when :_lte
-                        matches << "#{key} <= #{quote(v)}"
+                        matches << "#{key} <= #{resolve_value(v, params)}"
                     when :_ne
-                        matches << "#{key} != #{quote(v)}"
-                    
+                        matches << "#{key} != #{resolve_value(v, params)}"
+
                     # TODO v2
                     # when :_in
                     #     matches << "#{key} IN #{quote(v)}"
@@ -65,7 +92,7 @@ module CouchbaseOrm
                     #     matches << "#{key} MATCH #{quote(v)}"
                     # when :_nmatch
                     #     matches << "#{key} NOT MATCH #{quote(v)}"
-                    
+
                     # TODO v3
                     # when :_any
                     #     matches << "#{key} ANY #{quote(v)}"
@@ -80,26 +107,26 @@ module CouchbaseOrm
                     #when :_nwithin
                     #    matches << "#{key} NOT WITHIN #{quote(v)}"
                     else
-                        matches << build_match("#{key}.#{k}", v)
+                        matches << build_match("#{key}.#{k}", v, params: params)
                     end
                 end
-                
+
                 matches.join(" AND ")
             end
 
-            def build_match_range(key, value)
+            def build_match_range(key, value, params: nil)
                 matches = []
-                matches << "#{key} >= #{quote(value.begin)}"
+                matches << "#{key} >= #{resolve_value(value.begin, params)}"
                 if value.exclude_end?
-                    matches << "#{key} < #{quote(value.end)}"
+                    matches << "#{key} < #{resolve_value(value.end, params)}"
                 else
-                    matches << "#{key} <= #{quote(value.end)}"
+                    matches << "#{key} <= #{resolve_value(value.end, params)}"
                 end
                 matches.join(" AND ")
             end
 
 
-            def build_not_match(key, value)
+            def build_not_match(key, value, params: nil)
                 use_is_null = self.properties_always_exists_in_document
                 key = "meta().id" if key.to_s == "id"
                 case
@@ -108,11 +135,11 @@ module CouchbaseOrm
                 when value.nil? && !use_is_null
                     "#{key} IS VALUED"
                 when value.is_a?(Array) && value.include?(nil)
-                    "(#{build_not_match(key, nil)} AND #{build_not_match(key, value.compact)})"
+                    "(#{build_not_match(key, nil, params: params)} AND #{build_not_match(key, value.compact, params: params)})"
                 when value.is_a?(Array)
-                    "#{key} NOT IN #{quote(value)}"
+                    "#{key} NOT IN #{resolve_value(value, params)}"
                 else
-                    "#{key} != #{quote(value)}"
+                    "#{key} != #{resolve_value(value, params)}"
                 end
             end
 
