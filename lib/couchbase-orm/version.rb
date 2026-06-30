@@ -1,5 +1,5 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
 module CouchbaseOrm
-  VERSION = '3.0.3'
+  VERSION = '3.1.0'
 end
