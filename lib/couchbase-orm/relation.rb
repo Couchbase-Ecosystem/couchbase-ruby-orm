@@ -238,7 +238,10 @@ module CouchbaseOrm
             end
 
             def build_query_options(positional_parameters: [])
-                opts = { scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency] }
+                opts = {
+                    scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency],
+                    adhoc: CouchbaseOrm::N1ql.config[:adhoc]
+                }
                 opts[:positional_parameters] = positional_parameters unless positional_parameters.empty?
                 Couchbase::Options::Query.new(**opts)
             end

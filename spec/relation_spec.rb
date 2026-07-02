@@ -501,5 +501,10 @@ describe CouchbaseOrm::Relation do
             end
         end
     end
+
+    it "should use adhoc: false by default for prepared statement plan caching" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+        RelationModel.where(active: true).ids
+    end
 end
 
