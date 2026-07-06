@@ -75,10 +75,6 @@ module CouchbaseOrm
                 CouchbaseOrm_Relation.new(**initializer_arguments.merge(query_options: @query_options.merge(opts)))
             end
 
-            def adhoc(value)
-                with(adhoc: value)
-            end
-
             def first
                 n1ql_query, params = self.limit(1).to_n1ql_with_params
                 result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
@@ -270,7 +266,7 @@ module CouchbaseOrm
 
             delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, :with, :adhoc, to: :relation
+            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, :with, to: :relation
         end
     end
 end

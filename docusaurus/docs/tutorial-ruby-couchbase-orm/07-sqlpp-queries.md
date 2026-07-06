@@ -149,30 +149,30 @@ In the above examples, the `collect` method is used to extract the `name` attrib
 
 ## 7.8 Prepared Statement Plan Caching
 
-Couchbase Server can cache the query execution plan for a SQL++ query so that subsequent executions skip the planning step. CouchbaseOrm opts into this behaviour by default: every query is sent with `adhoc: false`, which tells the server to prepare and cache the plan on first execution and reuse it on subsequent ones.
+Couchbase Server can cache the query execution plan for a SQL++ query so that subsequent executions skip the planning step. This is controlled by the `adhoc` query option: `adhoc: false` tells the server to prepare and cache the plan on first execution and reuse it on subsequent ones.
 
 ### Default behaviour
 
-No configuration is required. All queries — both `n1ql`-macro queries and relation queries (`where`, `all`, `first`, `last`, `ids`, `update_all`, `delete_all`) — use `adhoc: false` out of the box.
+By default CouchbaseOrm runs queries with `adhoc: true` (the Couchbase SDK default), meaning no plan caching. This preserves the existing behaviour — you opt into plan caching explicitly.
 
-### Disabling caching for a specific call
+### Enabling caching for a specific call
 
-Pass `adhoc: true` directly to the query method to execute without caching (useful for one-off or highly dynamic queries):
+Pass `adhoc: false` directly to the query method to prepare and cache the plan (useful for frequently repeated queries):
 
 ```ruby
-# Run once without caching the plan
-N1QLTest.by_rating(key: 1, adhoc: true)
+# Cache the plan for this query
+N1QLTest.by_rating(key: 1, adhoc: false)
 
-# Relation query without caching
-User.where(country: 'FR').adhoc(true).to_a
+# Relation query with plan caching
+User.where(country: 'FR').with(adhoc: false).to_a
 ```
 
-### Disabling caching for a specific `n1ql` definition
+### Enabling caching for a specific `n1ql` definition
 
-Set `adhoc: true` in the macro options to always run that particular query as ad-hoc:
+Set `adhoc: false` in the macro options to always cache the plan for that particular query:
 
 ```ruby
-n1ql :by_dynamic_filter, emit_key: [:name], adhoc: true
+n1ql :by_stable_filter, emit_key: [:name], adhoc: false
 ```
 
 ### Changing the global default
@@ -180,13 +180,13 @@ n1ql :by_dynamic_filter, emit_key: [:name], adhoc: true
 Override the thread-local config to change the default for all queries in the current thread:
 
 ```ruby
-# Disable plan caching for all queries in this thread
-CouchbaseOrm::N1ql.config(adhoc: true)
+# Enable plan caching for all queries in this thread
+CouchbaseOrm::N1ql.config(adhoc: false)
 ```
 
 ### Override priority
 
-From highest to lowest: **per-call kwarg** > **per-`n1ql`-definition option** > **`N1ql.config`** > **default (`false`)**.
+From highest to lowest: **per-call kwarg** > **per-`n1ql`-definition option** > **`N1ql.config`** > **default (`true`)**.
 
 ## 7.7 Indexing for SQL++
 

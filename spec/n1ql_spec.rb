@@ -196,20 +196,20 @@ describe CouchbaseOrm::N1ql do
         end
     end
 
-    it "should use adhoc: false by default for prepared statement plan caching" do
-        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+    it "should use adhoc: true by default (no prepared statement plan caching)" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
         N1QLTest.by_rating_reverse()
     end
 
-    it "should allow overriding adhoc per call" do
-        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
-        N1QLTest.by_rating_reverse(adhoc: true)
+    it "should allow overriding adhoc per call to enable plan caching" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+        N1QLTest.by_rating_reverse(adhoc: false)
     end
 
     it "should respect N1ql.config adhoc setting" do
         default_config = CouchbaseOrm::N1ql.config
-        CouchbaseOrm::N1ql.config({ adhoc: true })
-        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
+        CouchbaseOrm::N1ql.config({ adhoc: false })
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
         N1QLTest.by_rating_reverse()
     ensure
         CouchbaseOrm::N1ql.config(default_config)
