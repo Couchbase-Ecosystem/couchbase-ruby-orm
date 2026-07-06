@@ -9,6 +9,7 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
         NO_VALUE = :no_value_specified
         DEFAULT_SCAN_CONSISTENCY = :request_plus
+        DEFAULT_ADHOC = true
         # sanitize for injection query
         def self.sanitize(value)
             if value.is_a?(String)
@@ -22,10 +23,10 @@ module CouchbaseOrm
 
         def self.config(new_config = nil)
             Thread.current['__couchbaseorm_n1ql_config__'] = new_config if new_config
-            Thread.current['__couchbaseorm_n1ql_config__'] || {
+            {
                 scan_consistency: DEFAULT_SCAN_CONSISTENCY,
-                adhoc: false
-            }
+                adhoc: DEFAULT_ADHOC
+            }.merge(Thread.current['__couchbaseorm_n1ql_config__'] || {})
         end
 
         module ClassMethods
