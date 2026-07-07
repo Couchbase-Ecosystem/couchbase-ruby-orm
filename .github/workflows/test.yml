@@ -20,15 +20,6 @@ jobs:
           - ruby: '3.3'
             active-model: '7.2'
             couchbase: '7.2.3'
-          - ruby: '3.2'
-            active-model: '7.2.0'
-            couchbase: '7.1.1'
-          - ruby: '3.2'
-            active-model: '7.1.0'
-            couchbase: '6.6.5'
-          - ruby: '3.1'
-            active-model: '7.1.0'
-            couchbase: '7.1.0'
       fail-fast: false
     runs-on: ubuntu-24.04
     name: ${{ matrix.ruby }} rails-${{ matrix.active-model }}  couchbase-${{ matrix.couchbase }}
