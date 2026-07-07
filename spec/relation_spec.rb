@@ -501,5 +501,38 @@ describe CouchbaseOrm::Relation do
             end
         end
     end
+
+    it "should use adhoc: true by default (no prepared statement plan caching)" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
+        RelationModel.where(active: true).ids
+    end
+
+    describe "adhoc option via with" do
+        it "should return a relation when calling with(adhoc:)" do
+            expect(RelationModel.all.with(adhoc: false)).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
+        end
+
+        it "should pass adhoc: false to query options when set on the relation" do
+            expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+            RelationModel.where(active: true).with(adhoc: false).ids
+        end
+
+        it "should override N1ql.config adhoc when set on the relation" do
+            default_config = CouchbaseOrm::N1ql.config
+            CouchbaseOrm::N1ql.config(adhoc: false)
+            expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
+            RelationModel.where(active: true).with(adhoc: true).ids
+        ensure
+            CouchbaseOrm::N1ql.config(default_config)
+        end
+
+        it "should be chainable with other relation methods" do
+            m1 = RelationModel.create!(active: true, age: 10)
+            _m2 = RelationModel.create!(active: false, age: 20)
+            expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+            result = RelationModel.where(active: true).order(:age).with(adhoc: false).to_a
+            expect(result).to match_array([m1])
+        end
+    end
 end
 

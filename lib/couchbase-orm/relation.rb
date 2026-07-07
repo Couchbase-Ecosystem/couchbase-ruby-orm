@@ -3,7 +3,7 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         class CouchbaseOrm_Relation
-            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false, strict_loading: strict_loading = false)
+            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false, strict_loading: strict_loading = false, query_options: query_options = {})
                 CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit} strict_loading: #{strict_loading}"
                 @model = model
                 @limit = limit
@@ -12,6 +12,7 @@ module CouchbaseOrm
                 @order = merge_order(**order) if order
                 @where = merge_where(where, _not) if where
                 @strict_loading = strict_loading
+                @query_options = query_options || {}
                 CouchbaseOrm::logger.debug "- #{to_s}"
             end
 
@@ -68,6 +69,10 @@ module CouchbaseOrm
 
             def strict_loading?
                 !!@strict_loading
+            end
+
+            def with(opts = {})
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(query_options: @query_options.merge(opts)))
             end
 
             def first
@@ -168,7 +173,7 @@ module CouchbaseOrm
             end
 
             def initializer_arguments
-                { model: @model, order: @order, where: @where, limit: @limit, strict_loading: @strict_loading }
+                { model: @model, order: @order, where: @where, limit: @limit, strict_loading: @strict_loading, query_options: @query_options }
             end
 
             def merge_order(*lorder, **horder)
@@ -238,7 +243,7 @@ module CouchbaseOrm
             end
 
             def build_query_options(positional_parameters: [])
-                opts = { scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency] }
+                opts = CouchbaseOrm::N1ql.config.merge(@query_options)
                 opts[:positional_parameters] = positional_parameters unless positional_parameters.empty?
                 Couchbase::Options::Query.new(**opts)
             end
@@ -261,7 +266,7 @@ module CouchbaseOrm
 
             delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, to: :relation
+            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, :with, to: :relation
         end
     end
 end

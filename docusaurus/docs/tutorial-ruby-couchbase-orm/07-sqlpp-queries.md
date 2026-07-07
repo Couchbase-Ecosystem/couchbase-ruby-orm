@@ -147,6 +147,47 @@ docs = N1QLTest.by_custom_rating_values(key: [[1, 2]]).collect { |ob| ob.name }
 
 In the above examples, the `collect` method is used to extract the `name` attribute from each document in the result set.
 
+## 7.8 Prepared Statement Plan Caching
+
+Couchbase Server can cache the query execution plan for a SQL++ query so that subsequent executions skip the planning step. This is controlled by the `adhoc` query option: `adhoc: false` tells the server to prepare and cache the plan on first execution and reuse it on subsequent ones.
+
+### Default behaviour
+
+By default CouchbaseOrm runs queries with `adhoc: true` (the Couchbase SDK default), meaning no plan caching. This preserves the existing behaviour — you opt into plan caching explicitly.
+
+### Enabling caching for a specific call
+
+Pass `adhoc: false` directly to the query method to prepare and cache the plan (useful for frequently repeated queries):
+
+```ruby
+# Cache the plan for this query
+N1QLTest.by_rating(key: 1, adhoc: false)
+
+# Relation query with plan caching
+User.where(country: 'FR').with(adhoc: false).to_a
+```
+
+### Enabling caching for a specific `n1ql` definition
+
+Set `adhoc: false` in the macro options to always cache the plan for that particular query:
+
+```ruby
+n1ql :by_stable_filter, emit_key: [:name], adhoc: false
+```
+
+### Changing the global default
+
+Override the thread-local config to change the default for all queries in the current thread:
+
+```ruby
+# Enable plan caching for all queries in this thread
+CouchbaseOrm::N1ql.config(adhoc: false)
+```
+
+### Override priority
+
+From highest to lowest: **per-call kwarg** > **per-`n1ql`-definition option** > **`N1ql.config`** > **default (`true`)**.
+
 ## 7.7 Indexing for SQL++
 
 To optimize the performance of SQL++ queries, it's important to create appropriate indexes on the fields used in the query conditions. Couchbase Server provides a way to create indexes using the Index service.
