@@ -27,6 +27,12 @@ class BaseTestWithPropertiesAlwaysExistsInDocument < CouchbaseOrm::Base
     attribute :name, :string
 end
 
+class BaseTestWithStrictDisabled < CouchbaseOrm::Base
+    self.strict = false
+    attribute :name, :string
+    attribute :job, :string
+end
+
 class BaseTestWithTimeframe < CouchbaseOrm::Base
     attribute :name, :string
     attribute :start_date, :datetime
@@ -136,6 +142,24 @@ describe CouchbaseOrm::Base do
         expect { BaseTest.find_by_id('doc_1') }.to raise_error(ActiveModel::UnknownAttributeError)
 
         BaseTest.bucket.default_collection.remove 'doc_1'
+    end
+
+    it "does not raise and silently drops unexpected properties when strict is disabled" do
+        too_much_properties_doc = {
+            type: BaseTestWithStrictDisabled.design_document,
+            name: 'Pierre',
+            job: 'dev',
+            age: '42'
+        }
+        BaseTestWithStrictDisabled.bucket.default_collection.upsert 'doc_1', too_much_properties_doc
+
+        loaded = BaseTestWithStrictDisabled.find_by_id('doc_1')
+
+        expect(loaded.name).to eq('Pierre')
+        expect(loaded.job).to eq('dev')
+        expect(loaded.attributes.keys).not_to include('age')
+
+        BaseTestWithStrictDisabled.bucket.default_collection.remove 'doc_1'
     end
 
     it "loads objects even if there is a missing property in doc" do

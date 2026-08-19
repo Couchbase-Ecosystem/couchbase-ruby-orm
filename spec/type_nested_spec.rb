@@ -255,4 +255,35 @@ describe CouchbaseOrm::Types::Nested do
             expect(parent.nested.value).to eq("Parent Value")
         end
     end
+
+    describe "Strict" do
+        class SubTypeWithStrictDisabled < CouchbaseOrm::NestedDocument
+            self.strict = false
+            attribute :name, :string
+            attribute :value, :string
+        end
+
+        class ParentWithNestedStrictDisabled < CouchbaseOrm::Base
+            attribute :title, :string
+            attribute :nested, :nested, type: SubTypeWithStrictDisabled
+        end
+
+        it "should ignore unexpected properties in nested documents on reload when strict is disabled" do
+            parent = ParentWithNestedStrictDisabled.new
+            parent.title = "Test Parent"
+            parent.nested = SubTypeWithStrictDisabled.new(name: "Nested", value: "Valid")
+            parent.save!
+
+            doc_id = parent.id
+            raw_doc = ParentWithNestedStrictDisabled.bucket.default_collection.get(doc_id).content
+            raw_doc["nested"]["ghost_property"] = "This should be ignored"
+            ParentWithNestedStrictDisabled.bucket.default_collection.replace(doc_id, raw_doc)
+
+            parent.reload
+
+            expect(parent.nested.attributes.keys).not_to include("ghost_property")
+            expect(parent.nested.name).to eq("Nested")
+            expect(parent.nested.value).to eq("Valid")
+        end
+    end
 end

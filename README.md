@@ -204,6 +204,16 @@ You can specify `properties_always_exists_in_document` to true if all properties
 
 WARNING: If a document exists without a property, the query will failed! So you must be sure that all documents have all properties.
 
+By default, loading a document that contains a property with no matching `attribute` declaration raises `ActiveModel::UnknownAttributeError`. `ignored_properties` lets you name known legacy properties one by one, but sometimes you cannot (or do not want to) enumerate every one of them. Set `strict` to `false` on a model to silently drop any undeclared property instead of raising:
+
+```ruby
+    class Comment < CouchbaseOrm::Base
+      self.strict = false # silently ignore any property that has no matching `attribute`, instead of raising
+    end
+```
+
+`strict` defaults to `true`, so existing models keep raising on unexpected properties unless they opt out explicitly. It also applies to nested documents (`CouchbaseOrm::NestedDocument` used via `attribute :x, :nested, type: SomeNestedClass`).
+
 
 ## N1ql
 

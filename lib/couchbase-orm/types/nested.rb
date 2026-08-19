@@ -32,6 +32,7 @@ module CouchbaseOrm
                     # Optimization: only call .except if there are properties to ignore
                     ignored = @model_class.ignored_properties
                     filtered_value = ignored.empty? ? value : value.except(*ignored)
+                    filtered_value = filtered_value.slice(*@model_class.attribute_names) unless @model_class.strict
                     return @model_class.new(filtered_value)
                 end
 
@@ -46,6 +47,7 @@ module CouchbaseOrm
                     # Optimization: only call .except if there are properties to ignore
                     ignored = @model_class.ignored_properties
                     filtered_value = ignored.empty? ? value : value.except(*ignored)
+                    filtered_value = filtered_value.slice(*@model_class.attribute_names) unless @model_class.strict
                     value = @model_class.new(filtered_value)
                 end
 

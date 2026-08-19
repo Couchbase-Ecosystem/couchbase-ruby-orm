@@ -22,6 +22,7 @@ require 'couchbase-orm/utilities/has_many'
 require 'couchbase-orm/utilities/ensure_unique'
 require 'couchbase-orm/utilities/query_helper'
 require 'couchbase-orm/utilities/ignored_properties'
+require 'couchbase-orm/utilities/strict'
 require 'couchbase-orm/json_transcoder'
 require 'couchbase-orm/timestamps'
 require 'couchbase-orm/active_record_compat'
@@ -46,6 +47,7 @@ module CouchbaseOrm
 
         extend Enum
         extend IgnoredProperties
+        extend Strict
 
         define_model_callbacks :initialize, :only => :after
 
