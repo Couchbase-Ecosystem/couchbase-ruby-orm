@@ -27,6 +27,7 @@ require 'couchbase-orm/json_transcoder'
 require 'couchbase-orm/timestamps'
 require 'couchbase-orm/active_record_compat'
 require 'couchbase-orm/strict_loading'
+require 'couchbase-orm/unknown_attributes'
 require 'couchbase-orm/json_schema/validation'
 require 'couchbase-orm/utilities/properties_always_exists_in_document'
 
@@ -44,6 +45,7 @@ module CouchbaseOrm
         include ActiveRecordCompat
         include StrictLoading
         include Encrypt
+        include UnknownAttributes
 
         extend Enum
         extend IgnoredProperties
@@ -53,16 +55,6 @@ module CouchbaseOrm
         Metadata = Struct.new(:cas)
 
         class MismatchTypeError < RuntimeError; end
-
-        # Configuration option to control whether unknown attributes should raise an error
-        # Set to false to silently ignore unknown attributes during mass assignment
-        class_attribute :raise_on_unknown_attributes, default: true
-
-        # Returns a cached Set of attribute names for efficient lookup
-        # This avoids repeated array-to-set conversions in assign_attributes
-        def self.attribute_names_set
-            @attribute_names_set ||= attribute_names.to_set
-        end
 
         def initialize(model = nil, ignore_doc_type: false, **attributes)
             CouchbaseOrm.logger.debug { "Initialize model #{model} with #{attributes.to_s.truncate(200)}" }
@@ -109,39 +101,6 @@ module CouchbaseOrm
 
         def []=(key, value)
             send(:"#{key}=", value)
-        end
-
-        # Handle assignment to unknown attributes based on raise_on_unknown_attributes configuration
-        # If raise_on_unknown_attributes is false, unknown attributes are silently ignored
-        # If raise_on_unknown_attributes is true (default), ActiveModel::UnknownAttributeError is raised
-        def attribute_writer_missing(name, value)
-            if self.class.raise_on_unknown_attributes
-                super
-            else
-                CouchbaseOrm.logger.warn "Ignoring unknown attribute '#{name}' for #{self.class.name}"
-            end
-        end
-
-        # Override assign_attributes to filter unknown attributes when raise_on_unknown_attributes is false
-        # This ensures consistent behavior across Document and NestedDocument
-        def assign_attributes(hash)
-            hash = hash.with_indifferent_access if hash.is_a?(Hash)
-
-            if self.class.raise_on_unknown_attributes
-                super(hash.except("type"))
-            else
-                # Filter unknown attributes using cached Set for O(1) lookups
-                known_names = self.class.attribute_names
-                known_attrs = hash.slice(*known_names)
-
-                # Use cached Set for efficient O(1) lookup of unknown keys
-                unknown_keys = hash.keys.reject { |k| self.class.attribute_names_set.include?(k) || k == "type" }
-
-                if unknown_keys.any?
-                    CouchbaseOrm.logger.warn "Ignoring unknown attribute(s) for #{self.class.name}: #{unknown_keys.join(', ')}"
-                end
-                super(known_attrs)
-            end
         end
 
         protected
