@@ -141,6 +141,17 @@ CouchbaseOrm handles the storage format for encrypted attributes but does not pe
 - All actual encryption/decryption is your application's responsibility
 - Values must be valid Base64-encoded strings
 
+The `encrypted$` unwrapping in step 2 above happens for **any** key with that prefix, whether or
+not it maps to a declared `:encrypted` attribute. This means that if you are retiring an encrypted
+attribute with [`raise_on_unknown_attributes = false`](./03-defining-models.md#37-handling-unknown-document-properties)
+instead of `ignored_properties`, a single rule covers both `legacy_field` and
+`encrypted$legacy_field` in the underlying document - you don't need to list both spellings.
+One case only `ignored_properties` can handle: if an `encrypted$`-prefixed key's value is not a
+`{alg:, ciphertext:}`-shaped hash (e.g. it was left over from a different serialization format),
+unwrapping raises before `raise_on_unknown_attributes` ever gets a chance to filter it - only
+naming the exact key with `ignored_properties`, which strips it before unwrapping is attempted,
+handles that case.
+
 ## 11.4. Considerations and Best Practices
 
 When using encrypted attributes in CouchbaseOrm, consider the following best practices:

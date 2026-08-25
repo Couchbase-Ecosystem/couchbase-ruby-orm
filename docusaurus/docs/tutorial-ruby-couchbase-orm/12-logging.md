@@ -46,3 +46,18 @@ D, [2024-05-24T11:48:00.113166 #234447] DEBUG -- : _update_record - replace user
 I, [2024-05-24T11:48:00.115239 #234447]  INFO -- : User user-1-vncZNSYZj updated email to john.doe@example.com
 ```
 
+## 12.2. Unknown Attribute Warnings
+
+When a model has [`raise_on_unknown_attributes`](./03-defining-models.md#37-handling-unknown-document-properties)
+set to `false`, every `assign_attributes` call (from `new`, `find`, `reload`, ...) that drops an
+undeclared key logs at `DEBUG` level. To avoid flooding your logs on high-traffic models, a `WARN`
+is only emitted the first time a given (model class, property name) pair is seen in the process:
+
+```
+D, [...] DEBUG -- : User: ignoring unknown property ["legacy_field"]
+W, [...]  WARN -- : User: ignoring unknown document property legacy_field (raise_on_unknown_attributes is false for this class - they will not be persisted if the document is saved)
+```
+
+That warning tracking is capped and can be reset (mainly useful in tests) with
+`CouchbaseOrm::UnknownAttributes.reset_warnings!`.
+

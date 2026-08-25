@@ -195,12 +195,38 @@ Check this couchbase help page to learn more on what's possible with compound ke
 Ex : Compound keys allows to decide the order of the results, and you can reverse it by passing `descending: true`
 
 ```ruby
-    class Comment < CouchbaseOrm::Base19
+    class Comment < CouchbaseOrm::Base
       self.ignored_properties = [:old_name] # ignore old_name property in the model
       self.properties_always_exists_in_document = true # use is null for nil value instead of not valued for performance purpose, only possible if all properties always exists in document
     end
 ```      
 You can specify `properties_always_exists_in_document` to true if all properties always exists in document, this will allow to use `is null` instead of `not valued` for nil value, this will improve performance. 
+
+## Schema evolution
+
+`ignored_properties` (above) drops a named, fixed list of legacy keys wherever a document is
+decoded. For the more general case of a rolling/canary deploy - where a document written by a pod
+running newer code can carry an attribute a pod still running older code hasn't declared yet -
+there is `raise_on_unknown_attributes`:
+
+```ruby
+    class Comment < CouchbaseOrm::Base
+      self.raise_on_unknown_attributes = false # tolerate any undeclared document key instead of raising
+    end
+```
+
+With the default (`true`), an undeclared key anywhere in `new`, `assign_attributes`, `find` or
+`reload` raises `ActiveModel::UnknownAttributeError`, same as plain ActiveModel. Set it to `false`
+and undeclared keys are dropped instead, with a warning logged the first time each one is seen on
+a given class. Unlike `ignored_properties`, it is a `class_attribute`, so it is inherited by
+subclasses and can be set once for a whole hierarchy (e.g. on your app's own base class) or
+globally via `CouchbaseOrm::Document.raise_on_unknown_attributes = false`.
+
+Because a dropped key was never assigned to an attribute, it is not written back out either: if
+the model is saved afterwards, the key disappears from the stored document. If you need to
+preserve an unknown key across a load-then-save round trip rather than only tolerate it on load,
+`ignored_properties` won't help with that either - both mechanisms are read-side tolerance, not a
+schemaless passthrough.
 
 WARNING: If a document exists without a property, the query will failed! So you must be sure that all documents have all properties.
 

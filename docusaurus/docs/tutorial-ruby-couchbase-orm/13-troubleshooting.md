@@ -16,6 +16,8 @@ Here are some common issues you may encounter while using CouchbaseOrm:
 
 5. **Unexpected Behavior**: If you experience unexpected behavior or results, double-check your code logic, query conditions, and attribute assignments. Ensure that you are using the correct methods, parameters, and data types.
 
+6. **`ActiveModel::UnknownAttributeError` right after a deploy**: This typically happens during a rolling or canary deploy, when a document written by a pod running newer code carries an attribute a pod still running older code hasn't declared yet. See [Handling Unknown Document Properties](./03-defining-models.md#37-handling-unknown-document-properties) for `raise_on_unknown_attributes`, or `ignored_properties` if you're phasing out a specific, known set of legacy keys instead.
+
 ## 15.2. Debugging Tips
 
 When troubleshooting issues with CouchbaseOrm, consider the following debugging tips:
