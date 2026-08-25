@@ -18,6 +18,18 @@ class TypeNestedTest < CouchbaseOrm::Base
 end
 
 describe CouchbaseOrm::Types::Nested do
+    describe "#serialize" do
+        it "builds an instance from a raw Hash before serializing it, filtering ignored properties" do
+            # `serialize` is normally called with an already-built NestedDocument
+            # instance (see the specs below); this exercises its Hash branch
+            # directly, using string keys to match the shape a real document
+            # (and thus `ignored_properties`, which stores string names) has.
+            type = CouchbaseOrm::Types::Nested.new(type: SubTypeWithIgnoredProperties)
+            serialized = type.serialize("name" => "Nested", "value" => "Valid", "deprecated_property" => "should be dropped")
+            expect(serialized).to eq("name" => "Nested", "value" => "Valid")
+        end
+    end
+
     it "should be able to store and retrieve a nested object" do
         obj = TypeNestedTest.new
         obj.main = SubTypeTest.new
