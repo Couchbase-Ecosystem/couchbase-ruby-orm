@@ -2,11 +2,15 @@
 
 require File.expand_path("../support", __FILE__)
 
-# A minimal stand-in for ActionController::Parameters (each_pair + except,
+# A minimal stand-in for ActionController::Parameters (each_pair/each/except,
 # no #to_hash). Real Parameters would work too, but pulling in actionpack
 # here would make this spec's outcome depend on whatever version bundler
 # happens to resolve it to; what actually matters is that the filter is
 # guarded by `respond_to?(:each_pair)`, not `is_a?(Hash)`.
+#
+# `each` is required too, not just `each_pair`: ActiveModel::AttributeAssignment's
+# own `_assign_attributes` (which our `super` eventually reaches) iterates via
+# `.each` on ActiveModel < 8.0, and via `.each_pair` on 8.0+.
 class EachPairOnly
     def initialize(hash)
         @hash = hash
@@ -15,6 +19,7 @@ class EachPairOnly
     def each_pair(&block)
         @hash.each_pair(&block)
     end
+    alias_method :each, :each_pair
 
     def except(*keys)
         EachPairOnly.new(@hash.except(*keys))
