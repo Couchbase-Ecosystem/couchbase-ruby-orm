@@ -50,6 +50,16 @@ describe CouchbaseOrm::Types::Encrypted do
         expect(obj.as_json["secret2"]).to eq "a secret"
     end
 
+    it "raises when serializing a non-String value for an encrypted attribute" do
+        obj = TypeEncryptedTest.new(secret: 12345)
+        expect { obj.send(:serialized_attributes) }.to raise_error(/Can not serialize value/)
+    end
+
+    it "raises from #as_json when a non-String value is held by an encrypted attribute" do
+        obj = TypeEncryptedTest.new(secret: 12345)
+        expect { obj.as_json }.to raise_error(/Can not serialize value/)
+    end
+
     it "prefix with custom algo" do
         obj = SpecificAlgoTest.new(secret: base64_secret)
         expect(obj.send(:serialized_attributes)["encrypted$secret"]).to eq({alg:"3DES", ciphertext: base64_secret})
