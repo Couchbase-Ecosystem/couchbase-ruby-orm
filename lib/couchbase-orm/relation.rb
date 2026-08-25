@@ -3,7 +3,7 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
 
         class CouchbaseOrm_Relation
-            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false, strict_loading: strict_loading = false)
+            def initialize(model:, where: where = nil, order: order = nil, limit: limit = nil, _not: _not = false, strict_loading: strict_loading = false, query_options: query_options = {})
                 CouchbaseOrm::logger.debug "CouchbaseOrm_Relation init: #{model} where:#{where.inspect} not:#{_not.inspect} order:#{order.inspect} limit: #{limit} strict_loading: #{strict_loading}"
                 @model = model
                 @limit = limit
@@ -12,6 +12,7 @@ module CouchbaseOrm
                 @order = merge_order(**order) if order
                 @where = merge_where(where, _not) if where
                 @strict_loading = strict_loading
+                @query_options = query_options || {}
                 CouchbaseOrm::logger.debug "- #{to_s}"
             end
 
@@ -21,31 +22,41 @@ module CouchbaseOrm
 
             def to_n1ql
                 bucket_name = @model.bucket.name
-                where = build_where
+                where = build_where_with_params(nil)
                 order = build_order
                 limit = build_limit
                 "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
             end
 
-            def execute(n1ql_query)
-                result = @model.cluster.query(n1ql_query, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
-                CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{CouchbaseOrm::N1ql.config[:scan_consistency]}" }
+            def to_n1ql_with_params
+                bucket_name = @model.bucket.name
+                params = []
+                where = build_where_with_params(params)
+                order = build_order
+                limit = build_limit
+                ["select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}", params]
+            end
+
+            def execute(n1ql_query, params = [])
+                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
+                CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows" }
                 N1qlProxy.new(result)
             end
 
             def query
                 CouchbaseOrm::logger.debug("Query: #{self}")
-                n1ql_query = to_n1ql
-                execute(n1ql_query)
+                n1ql_query, params = to_n1ql_with_params
+                execute(n1ql_query, params)
             end
-            
+
             def update_all(**cond)
                 bucket_name = @model.bucket.name
-                where = build_where
+                params = []
+                where = build_where_with_params(params)
                 limit = build_limit
-                update = build_update(**cond)
+                update = build_update_with_params(params, **cond)
                 n1ql_query = "update `#{bucket_name}` set #{update} where #{where} #{limit}"
-                execute(n1ql_query)
+                execute(n1ql_query, params)
             end
 
             def ids
@@ -60,15 +71,21 @@ module CouchbaseOrm
                 !!@strict_loading
             end
 
+            def with(opts = {})
+                CouchbaseOrm_Relation.new(**initializer_arguments.merge(query_options: @query_options.merge(opts)))
+            end
+
             def first
-                result = @model.cluster.query(self.limit(1).to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
+                n1ql_query, params = self.limit(1).to_n1ql_with_params
+                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
                 return unless (first_id = result.rows.to_a.first)
 
                 @model.find(first_id, with_strict_loading: @strict_loading)
             end
 
             def last
-                result = @model.cluster.query(to_n1ql, Couchbase::Options::Query.new(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency]))
+                n1ql_query, params = to_n1ql_with_params
+                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
                 last_id = result.rows.to_a.last
                 @model.find(last_id, with_strict_loading: @strict_loading) if last_id
             end
@@ -113,7 +130,7 @@ module CouchbaseOrm
             def delete_all
                 CouchbaseOrm::logger.debug{ "Delete all: #{self}" }
                 ids = query.to_a
-                CouchbaseOrm::Connection.bucket.default_collection.remove_multi(ids) unless ids.empty?
+                @model.bucket.default_collection.remove_multi(ids) unless ids.empty?
             end
 
             def where(string_cond=nil, **conds)
@@ -156,7 +173,7 @@ module CouchbaseOrm
             end
 
             def initializer_arguments
-                { model: @model, order: @order, where: @where, limit: @limit, strict_loading: @strict_loading }
+                { model: @model, order: @order, where: @where, limit: @limit, strict_loading: @strict_loading, query_options: @query_options }
             end
 
             def merge_order(*lorder, **horder)
@@ -166,7 +183,7 @@ module CouchbaseOrm
                     .merge(Array.wrap(lorder).map{ |o| [o, :asc] }.to_h)
                     .merge(horder)
             end
-     
+
             def merge_where(conds, _not = false)
                 @where + (_not ? conds.to_a.map{|k,v|[k,v,:not]} : conds.to_a)
             end
@@ -183,46 +200,52 @@ module CouchbaseOrm
                 end.join(", ")
                 order.empty? ? "meta().id" : order
             end
-            
-            def build_where
-                build_conds([[:type, @model.design_document]] + @where)
+
+            def build_where_with_params(params)
+                build_conds_with_params([[nil, "type = #{@model.quote(@model.design_document)}"]] + @where, params)
             end
 
-            def build_conds(conds)
+            def build_conds_with_params(conds, params)
                 conds.map do |key, value, opt|
                     if key
-                        opt == :not ? 
-                            @model.build_not_match(key, value) : 
-                            @model.build_match(key, value)
+                        opt == :not ?
+                            @model.build_not_match(key, value, params: params) :
+                            @model.build_match(key, value, params: params)
                     else
                         value
                     end
                 end.join(" AND ")
             end
 
-            def build_update(**cond)
+            def build_update_with_params(params, **cond)
                 cond.map do |key, value|
-                    for_clause=""
+                    for_clause = ""
                     if value.is_a?(Hash) && value[:_for]
                         path_clause = value.delete(:_for)
                         var_clause = path_clause.to_s.split(".").last.singularize
-                        
+
                         _when = value.delete(:_when)
-                        when_clause = _when ? build_conds(_when.to_a) : ""
-                        
-                        _set = value.delete(:_set)                       
+                        when_clause = _when ? build_conds_with_params(_when.to_a, params) : ""
+
+                        _set = value.delete(:_set)
                         value = _set if _set
 
                         for_clause = " for #{var_clause} in #{path_clause} when #{when_clause} end"
                     end
                     if value.is_a?(Hash)
                         value.map do |k, v|
-                            "#{key}.#{k} = #{v}"
+                            "#{key}.#{k} = #{v.nil? ? 'NULL' : @model.bind(v, params)}"
                         end.join(", ") + for_clause
                     else
-                        "#{key} = #{@model.quote(value)}#{for_clause}"
+                        "#{key} = #{value.nil? ? 'NULL' : @model.bind(value, params)}#{for_clause}"
                     end
                 end.join(", ")
+            end
+
+            def build_query_options(positional_parameters: [])
+                opts = CouchbaseOrm::N1ql.config.merge(@query_options)
+                opts[:positional_parameters] = positional_parameters unless positional_parameters.empty?
+                Couchbase::Options::Query.new(**opts)
             end
 
             def method_missing(method, *args, &block)
@@ -243,7 +266,7 @@ module CouchbaseOrm
 
             delegate :ids, :update_all, :delete_all, :count, :empty?, :filter, :reduce, :find_by, to: :all
 
-            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, to: :relation
+            delegate :where, :not, :order, :limit, :all, :strict_loading, :strict_loading?, :with, to: :relation
         end
     end
 end

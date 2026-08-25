@@ -9,6 +9,7 @@ module CouchbaseOrm
         extend ActiveSupport::Concern
         NO_VALUE = :no_value_specified
         DEFAULT_SCAN_CONSISTENCY = :request_plus
+        DEFAULT_ADHOC = true
         # sanitize for injection query
         def self.sanitize(value)
             if value.is_a?(String)
@@ -22,9 +23,10 @@ module CouchbaseOrm
 
         def self.config(new_config = nil)
             Thread.current['__couchbaseorm_n1ql_config__'] = new_config if new_config
-            Thread.current['__couchbaseorm_n1ql_config__'] || {
-                scan_consistency: DEFAULT_SCAN_CONSISTENCY
-            }
+            {
+                scan_consistency: DEFAULT_SCAN_CONSISTENCY,
+                adhoc: DEFAULT_ADHOC
+            }.merge(Thread.current['__couchbaseorm_n1ql_config__'] || {})
         end
 
         module ClassMethods
@@ -57,7 +59,10 @@ module CouchbaseOrm
                 @indexes[name] = method_opts
 
                 singleton_class.__send__(:define_method, name) do |key: NO_VALUE, **opts, &result_modifier|
-                    opts = options.merge(opts).reverse_merge(scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency])
+                    opts = options.merge(opts).reverse_merge(
+                        scan_consistency: CouchbaseOrm::N1ql.config[:scan_consistency],
+                        adhoc: CouchbaseOrm::N1ql.config[:adhoc]
+                    )
                     values = key == NO_VALUE ? NO_VALUE : convert_values(method_opts[:emit_key], key)
                     current_query = run_query(method_opts[:emit_key], values, query_fn, custom_order: custom_order, **opts.except(:include_docs, :key))
                     if result_modifier
@@ -95,10 +100,10 @@ module CouchbaseOrm
                 end
             end
 
-            def build_where(keys, values)
+            def build_where(keys, values, params: nil)
                 where = values == NO_VALUE ? '' : keys.zip(Array.wrap(values))
                             .reject { |key, value| key.nil? && value.nil? }
-                            .map { |key, value| build_match(key, value) }
+                            .map { |key, value| build_match(key, value, params: params) }
                             .join(" AND ")
                 "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end
@@ -119,12 +124,17 @@ module CouchbaseOrm
                     N1qlProxy.new(query_fn.call(bucket, values, Couchbase::Options::Query.new(**options)))
                 else
                     bucket_name = bucket.name
-                    where = build_where(keys, values)
+                    params = []
+                    where = build_where(keys, values, params: params)
                     order = custom_order || build_order(keys, descending)
                     limit = build_limit(limit)
                     n1ql_query = "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
-                    result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**options))
-                    CouchbaseOrm.logger.debug  "N1QL query: #{n1ql_query} return #{result.rows.to_a.length} rows with scan_consistency : #{options[:scan_consistency]}"
+
+                    query_options = options.merge(positional_parameters: params)
+                    result = cluster.query(n1ql_query, Couchbase::Options::Query.new(**query_options))
+                    CouchbaseOrm.logger.debug {
+                        "N1QL query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows with scan_consistency: #{options[:scan_consistency]}"
+                    }
                     N1qlProxy.new(result)
                 end
             end

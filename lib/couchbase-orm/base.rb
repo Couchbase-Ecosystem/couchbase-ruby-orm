@@ -34,8 +34,7 @@ module CouchbaseOrm
     class Document
         include Inspectable
         include ::ActiveModel::Model
-        include ::ActiveModel::Dirty
-        include Changeable # override some methods from ActiveModel::Dirty (keep it included after)
+        include Changeable
         include ::ActiveModel::Attributes
         include ::ActiveModel::Serializers::JSON
 
@@ -47,6 +46,7 @@ module CouchbaseOrm
         include Encrypt
 
         extend Enum
+        extend IgnoredProperties
 
         define_model_callbacks :initialize, :only => :after
 
@@ -178,7 +178,6 @@ module CouchbaseOrm
         extend EnsureUnique
         extend HasMany
         extend Index
-        extend IgnoredProperties
         extend JsonSchema::Validation
         extend PropertiesAlwaysExistsInDocument
 

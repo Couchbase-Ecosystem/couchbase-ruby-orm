@@ -9,13 +9,13 @@ Gem::Specification.new do |gem|
   gem.metadata = {
     "source_code_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm",
     "bug_tracker_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm/issues",
-    "documentation_uri" => "https://couchbase-ruby-orm.com/",
+    "documentation_uri" => "https://www.couchbase-ruby-orm.com/",
     "homepage_uri" => "https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm"
   }
   gem.summary = 'Couchbase ORM for Rails'
   gem.description = 'A Couchbase ORM for Rails'
 
-  gem.required_ruby_version = '>= 3.1.0'
+  gem.required_ruby_version = '>= 3.3.0'
   gem.require_paths = ['lib']
 
   gem.add_runtime_dependency 'activemodel', ENV['ACTIVE_MODEL_VERSION'] || '>= 7.1'

@@ -310,6 +310,55 @@ describe CouchbaseOrm::Relation do
         expect(RelationModel.empty?).to eq(false)
     end
 
+    describe "parameterized queries" do
+        it "should return parameterized query with to_n1ql_with_params" do
+            relation = RelationModel.where(active: true, name: "Jane")
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("type = 'relation_model'")
+            expect(n1ql).to include("active = $1")
+            expect(n1ql).to include("name = $2")
+            expect(n1ql).not_to include("'Jane'")
+            expect(params).to eq([true, "Jane"])
+        end
+
+        it "should parameterize NOT conditions" do
+            relation = RelationModel.not(active: true)
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("active != $1")
+            expect(params).to eq([true])
+        end
+
+        it "should parameterize range conditions" do
+            relation = RelationModel.where(age: 10..30)
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("age >= $1")
+            expect(n1ql).to include("age <= $2")
+            expect(params).to eq([10, 30])
+        end
+
+        it "should parameterize hash operator conditions" do
+            relation = RelationModel.where(age: { _gte: 18, _lt: 65 })
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("age >= $1")
+            expect(n1ql).to include("age < $2")
+            expect(params).to eq([18, 65])
+        end
+
+        it "should pass through string conditions without parameterization" do
+            relation = RelationModel.where("active = true")
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("(active = true)")
+            expect(params).to eq([])
+        end
+
+        it "should parameterize array IN conditions" do
+            relation = RelationModel.where(name: ["Alice", "Bob"])
+            n1ql, params = relation.send(:to_n1ql_with_params)
+            expect(n1ql).to include("name IN $1")
+            expect(params).to eq([["Alice", "Bob"]])
+        end
+    end
+
     describe "operators" do
         it "should query by gte and lte" do
             _m1 = RelationModel.create!(age: 10)
@@ -355,6 +404,32 @@ describe CouchbaseOrm::Relation do
             expect(m1.reload.children.map(&:age)).to eq([10, 20])
             expect(m2.reload.children.map(&:age)).to eq([50, 20])
             expect(m3.reload.children.map(&:age)).to eq([50, 20])
+        end
+
+        it "should update nested hash attributes with string values" do
+            m1 = RelationModel.create!(age: 10, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+            m2 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 15, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+
+            RelationModel.where(age: 20).update_all(child: {name: "Updated", _for: :children, _when: {child: {name: "Tom"}}})
+
+            expect(m1.reload.children.map(&:name)).to eq(["Tom", "Jerry"])
+            expect(m2.reload.children.map(&:name)).to eq(["Updated", "Jerry"])
+        end
+
+        it "should update nested hash attributes with nil values" do
+            m1 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+
+            RelationModel.where(age: 20).update_all(child: {name: nil, _for: :children, _when: {child: {name: "Tom"}}})
+
+            expect(m1.reload.children.map(&:name)).to eq([nil, "Jerry"])
+        end
+
+        it "should properly quote string values containing special characters in hash updates" do
+            m1 = RelationModel.create!(age: 20, children: [NestedRelationModel.new(age: 10, name: "Tom"), NestedRelationModel.new(age: 20, name: "Jerry")])
+
+            RelationModel.where(age: 20).update_all(child: {name: "it's a test", _for: :children, _when: {child: {name: "Tom"}}})
+
+            expect(m1.reload.children.map(&:name)).to eq(["it's a test", "Jerry"])
         end
 
         it "should update nested attributes with a path in a for clause" do
@@ -424,6 +499,39 @@ describe CouchbaseOrm::Relation do
                 end
                 expect(RelationModel.count).to eq 2
             end
+        end
+    end
+
+    it "should use adhoc: true by default (no prepared statement plan caching)" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
+        RelationModel.where(active: true).ids
+    end
+
+    describe "adhoc option via with" do
+        it "should return a relation when calling with(adhoc:)" do
+            expect(RelationModel.all.with(adhoc: false)).to be_a(CouchbaseOrm::Relation::CouchbaseOrm_Relation)
+        end
+
+        it "should pass adhoc: false to query options when set on the relation" do
+            expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+            RelationModel.where(active: true).with(adhoc: false).ids
+        end
+
+        it "should override N1ql.config adhoc when set on the relation" do
+            default_config = CouchbaseOrm::N1ql.config
+            CouchbaseOrm::N1ql.config(adhoc: false)
+            expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
+            RelationModel.where(active: true).with(adhoc: true).ids
+        ensure
+            CouchbaseOrm::N1ql.config(default_config)
+        end
+
+        it "should be chainable with other relation methods" do
+            m1 = RelationModel.create!(active: true, age: 10)
+            _m2 = RelationModel.create!(active: false, age: 20)
+            expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+            result = RelationModel.where(active: true).order(:age).with(adhoc: false).to_a
+            expect(result).to match_array([m1])
         end
     end
 end

@@ -172,7 +172,10 @@ describe CouchbaseOrm::N1ql do
     it "should log the default scan_consistency when n1ql query is executed" do
         allow(CouchbaseOrm.logger).to receive(:debug)
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : #{described_class::DEFAULT_SCAN_CONSISTENCY}")
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
+            msg = block ? block.call : nil
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  params: [] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY}"
+        end
     end
 
     it "should log the set scan_consistency when n1ql query is executed with a specific scan_consistency" do
@@ -180,11 +183,36 @@ describe CouchbaseOrm::N1ql do
         default_n1ql_config = CouchbaseOrm::N1ql.config
         CouchbaseOrm::N1ql.config({ scan_consistency: :not_bounded })
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : not_bounded")
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
+            msg = block ? block.call : nil
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  params: [] return 0 rows with scan_consistency: not_bounded"
+        end
 
         CouchbaseOrm::N1ql.config(default_n1ql_config)
         N1QLTest.by_rating_reverse()
-        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once).with("N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  return 0 rows with scan_consistency : #{described_class::DEFAULT_SCAN_CONSISTENCY}")
+        expect(CouchbaseOrm.logger).to have_received(:debug).at_least(:once) do |&block|
+            msg = block ? block.call : nil
+            msg == "N1QL query: select raw meta().id from `#{CouchbaseOrm::Connection.bucket.name}` where type=\"n1_ql_test\"  order by name DESC  params: [] return 0 rows with scan_consistency: #{described_class::DEFAULT_SCAN_CONSISTENCY}"
+        end
+    end
+
+    it "should use adhoc: true by default (no prepared statement plan caching)" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: true)).and_call_original
+        N1QLTest.by_rating_reverse()
+    end
+
+    it "should allow overriding adhoc per call to enable plan caching" do
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+        N1QLTest.by_rating_reverse(adhoc: false)
+    end
+
+    it "should respect N1ql.config adhoc setting" do
+        default_config = CouchbaseOrm::N1ql.config
+        CouchbaseOrm::N1ql.config({ adhoc: false })
+        expect(Couchbase::Options::Query).to receive(:new).with(hash_including(adhoc: false)).and_call_original
+        N1QLTest.by_rating_reverse()
+    ensure
+        CouchbaseOrm::N1ql.config(default_config)
     end
 
     after(:all) do
