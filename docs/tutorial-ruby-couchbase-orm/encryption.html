@@ -15,7 +15,7 @@
 
 <script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js" charset="UTF-8" data-domain-script="748511ff-10bf-44bf-88b8-36382e5b5fd9"></script>
 <script>function OptanonWrapper(){}</script><link rel="stylesheet" href="/assets/css/styles.a0287cde.css">
-<script src="/assets/js/runtime~main.38d68a7a.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.e395d81e.js" defer="defer"></script>
 <script src="/assets/js/main.9167810e.js" defer="defer"></script>
 </head>
 <body>
@@ -60,6 +60,16 @@
 <li class="">All actual encryption/decryption is your application&#x27;s responsibility</li>
 <li class="">Values must be valid Base64-encoded strings</li>
 </ul>
+<p>The <code>encrypted$</code> unwrapping in step 2 above happens for <strong>any</strong> key with that prefix, whether or
+not it maps to a declared <code>:encrypted</code> attribute. This means that if you are retiring an encrypted
+attribute with <a class="" href="/docs/tutorial-ruby-couchbase-orm/defining-models#37-handling-unknown-document-properties"><code>raise_on_unknown_attributes = false</code></a>
+instead of <code>ignored_properties</code>, a single rule covers both <code>legacy_field</code> and
+<code>encrypted$legacy_field</code> in the underlying document - you don&#x27;t need to list both spellings.
+One case only <code>ignored_properties</code> can handle: if an <code>encrypted$</code>-prefixed key&#x27;s value is not a
+<code>{alg:, ciphertext:}</code>-shaped hash (e.g. it was left over from a different serialization format),
+unwrapping raises before <code>raise_on_unknown_attributes</code> ever gets a chance to filter it - only
+naming the exact key with <code>ignored_properties</code>, which strips it before unwrapping is attempted,
+handles that case.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="114-considerations-and-best-practices">11.4. Considerations and Best Practices<a href="#114-considerations-and-best-practices" class="hash-link" aria-label="Direct link to 11.4. Considerations and Best Practices" title="Direct link to 11.4. Considerations and Best Practices" translate="no">​</a></h2>
 <p>When using encrypted attributes in CouchbaseOrm, consider the following best practices:</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="security">Security<a href="#security" class="hash-link" aria-label="Direct link to Security" title="Direct link to Security" translate="no">​</a></h3>
