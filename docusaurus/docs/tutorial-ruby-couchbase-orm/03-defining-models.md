@@ -236,4 +236,43 @@ Validations are automatically run when saving a document. If any validations fai
 
 By leveraging validations, you can ensure the quality and consistency of your data before it is persisted to Couchbase Server.
 
+## 3.7. Handling Unknown Document Properties
+
+By default, CouchbaseOrm requires every property found on a document to have a matching declared
+attribute: loading a document with an undeclared key raises `ActiveModel::UnknownAttributeError`.
+This is normally what you want, but it becomes a problem during a rolling or canary deploy: a pod
+running newer code can write a document with an attribute that a pod still running older code
+hasn't declared yet, and that older pod will raise the moment it tries to read the document back.
+
+Set `raise_on_unknown_attributes` to `false` on a model to tolerate this instead:
+
+```ruby
+class User < CouchbaseOrm::Base
+  self.raise_on_unknown_attributes = false
+
+  attribute :name, :string
+end
+
+User.find(id) # a document with an extra, undeclared key no longer raises;
+               # the key is simply dropped and a warning is logged.
+```
+
+A few things worth knowing:
+
+- It applies everywhere a document (or a hash) is turned into attributes: `new`, `assign_attributes`,
+  `find`, and `reload`.
+- It is a `class_attribute`, so unlike `ignored_properties` it is **inherited** by subclasses, and it
+  can be set once for a whole hierarchy - for example on your application's own base class - rather
+  than repeated per model. You can also set a global default with
+  `CouchbaseOrm::Document.raise_on_unknown_attributes = false` from a Rails initializer.
+- A key is considered "known" if the model responds to the corresponding writer, not just if it is a
+  declared `attribute` - so a `belongs_to`/`has_and_belongs_to_many` association key (e.g. `parent:`)
+  is never treated as unknown, even though its underlying attribute is actually named `parent_id`.
+- A dropped key is not written back out: since it was never assigned to an attribute, saving the
+  model afterwards omits it from the stored document, the same trade-off `ignored_properties` makes.
+- Unlike `ignored_properties`, which removes a fixed, named list of keys wherever a document is
+  decoded, `raise_on_unknown_attributes` tolerates *any* undeclared key. Use `ignored_properties`
+  when you know exactly which legacy keys you're phasing out; use `raise_on_unknown_attributes` when
+  you want a model to be structurally resilient to future attributes it doesn't know about yet.
+
 With the model definition covered, including attributes, callbacks, and validations, you're ready to start querying and persisting data using CouchbaseOrm. In the next section, we'll explore the querying capabilities of CouchbaseOrm and how to retrieve data from Couchbase Server efficiently.

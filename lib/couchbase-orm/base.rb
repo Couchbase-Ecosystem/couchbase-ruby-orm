@@ -1,6 +1,7 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
 
+require 'set'
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase'
@@ -26,6 +27,7 @@ require 'couchbase-orm/json_transcoder'
 require 'couchbase-orm/timestamps'
 require 'couchbase-orm/active_record_compat'
 require 'couchbase-orm/strict_loading'
+require 'couchbase-orm/unknown_attributes'
 require 'couchbase-orm/json_schema/validation'
 require 'couchbase-orm/utilities/properties_always_exists_in_document'
 
@@ -43,6 +45,7 @@ module CouchbaseOrm
         include ActiveRecordCompat
         include StrictLoading
         include Encrypt
+        include UnknownAttributes
 
         extend Enum
         extend IgnoredProperties

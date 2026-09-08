@@ -157,6 +157,10 @@ module CouchbaseOrm
             hash = hash.with_indifferent_access if hash.is_a?(Hash)
             super(hash.except("type"))
         end
+        # ActiveModel::AttributeAssignment aliases attributes= to its own
+        # assign_attributes at include-time, so without this, `model.attributes = hash`
+        # would bypass the "type" stripping above.
+        alias_method :attributes=, :assign_attributes
 
         # Updates the attributes of the model from the passed-in hash and saves the
         # record. If the object is invalid, the saving will fail and false will be returned.

@@ -18,6 +18,18 @@ class TypeNestedTest < CouchbaseOrm::Base
 end
 
 describe CouchbaseOrm::Types::Nested do
+    describe "#serialize" do
+        it "builds an instance from a raw Hash before serializing it, filtering ignored properties" do
+            # `serialize` is normally called with an already-built NestedDocument
+            # instance (see the specs below); this exercises its Hash branch
+            # directly, using string keys to match the shape a real document
+            # (and thus `ignored_properties`, which stores string names) has.
+            type = CouchbaseOrm::Types::Nested.new(type: SubTypeWithIgnoredProperties)
+            serialized = type.serialize("name" => "Nested", "value" => "Valid", "deprecated_property" => "should be dropped")
+            expect(serialized).to eq("name" => "Nested", "value" => "Valid")
+        end
+    end
+
     it "should be able to store and retrieve a nested object" do
         obj = TypeNestedTest.new
         obj.main = SubTypeTest.new
@@ -253,6 +265,86 @@ describe CouchbaseOrm::Types::Nested do
             expect(parent.nested.attributes.keys).not_to include("deprecated_property")
             expect(parent.nested.name).to eq("Parent Nested")
             expect(parent.nested.value).to eq("Parent Value")
+        end
+    end
+
+    describe "raise_on_unknown_attributes" do
+        class SubTypeWithUnknownAttributesAllowed < CouchbaseOrm::NestedDocument
+            self.raise_on_unknown_attributes = false
+            attribute :label, :string
+        end
+
+        class SubTypeWithDefaultUnknownAttributes < CouchbaseOrm::NestedDocument
+            attribute :label, :string
+        end
+
+        class ParentWithNestedUnknownAttributesAllowed < CouchbaseOrm::Base
+            self.raise_on_unknown_attributes = false
+            attribute :title, :string
+            attribute :main, :nested, type: SubTypeWithUnknownAttributesAllowed
+            attribute :others, :array, type: SubTypeWithUnknownAttributesAllowed
+        end
+
+        class ParentWithStrictNestedUnknownAttributes < CouchbaseOrm::Base
+            self.raise_on_unknown_attributes = false
+            attribute :title, :string
+            attribute :main, :nested, type: SubTypeWithDefaultUnknownAttributes
+        end
+
+        it "tolerates an unknown key in a nested document assigned as a Hash, via Types::Nested#cast" do
+            # This is the path the actual document-loading code takes; assigning an
+            # already-built NestedDocument *instance* (as opposed to a Hash) never
+            # reaches Types::Nested#cast at all.
+            parent = ParentWithNestedUnknownAttributesAllowed.new(title: "Parent")
+            parent.main = SubTypeWithUnknownAttributesAllowed.new(label: "Main")
+            parent.save!
+
+            doc_id = parent.id
+            raw_doc = ParentWithNestedUnknownAttributesAllowed.bucket.default_collection.get(doc_id).content
+            raw_doc["main"]["legacy"] = "should be ignored"
+            ParentWithNestedUnknownAttributesAllowed.bucket.default_collection.replace(doc_id, raw_doc)
+
+            parent.reload
+            expect(parent.main.label).to eq("Main")
+            expect(parent.main.attributes.keys).not_to include("legacy")
+
+            # Same assertion via `find` - a different code path (the GetResult
+            # branch of Document#initialize) than `reload`.
+            reloaded = ParentWithNestedUnknownAttributesAllowed.find(doc_id)
+            expect(reloaded.main.label).to eq("Main")
+            expect(reloaded.main.attributes.keys).not_to include("legacy")
+        end
+
+        it "tolerates an unknown key in a nested document inside a Types::Array, assigned as Hashes" do
+            parent = ParentWithNestedUnknownAttributesAllowed.new(title: "Parent")
+            parent.others = [
+                SubTypeWithUnknownAttributesAllowed.new(label: "First"),
+                SubTypeWithUnknownAttributesAllowed.new(label: "Second")
+            ]
+            parent.save!
+
+            doc_id = parent.id
+            raw_doc = ParentWithNestedUnknownAttributesAllowed.bucket.default_collection.get(doc_id).content
+            raw_doc["others"][0]["legacy"] = "should be ignored"
+            ParentWithNestedUnknownAttributesAllowed.bucket.default_collection.replace(doc_id, raw_doc)
+
+            parent.reload
+            expect(parent.others.map(&:label)).to eq(["First", "Second"])
+            expect(parent.others[0].attributes.keys).not_to include("legacy")
+            expect(parent.others[1].attributes.keys).not_to include("legacy")
+        end
+
+        it "is per nested class: a tolerant parent does not make a strict nested document tolerant" do
+            parent = ParentWithStrictNestedUnknownAttributes.new(title: "Parent")
+            parent.main = SubTypeWithDefaultUnknownAttributes.new(label: "Main")
+            parent.save!
+
+            doc_id = parent.id
+            raw_doc = ParentWithStrictNestedUnknownAttributes.bucket.default_collection.get(doc_id).content
+            raw_doc["main"]["legacy"] = "should raise"
+            ParentWithStrictNestedUnknownAttributes.bucket.default_collection.replace(doc_id, raw_doc)
+
+            expect { parent.reload }.to raise_error(ActiveModel::UnknownAttributeError)
         end
     end
 end

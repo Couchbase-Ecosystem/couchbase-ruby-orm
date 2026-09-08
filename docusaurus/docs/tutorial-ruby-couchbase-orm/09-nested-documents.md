@@ -135,4 +135,23 @@ Nested documents provide a powerful way to model complex data structures and rel
 
 However, it's important to consider the trade-offs when using nested documents. Embedding too much data within a single document can lead to large document sizes and potential performance issues. It's recommended to use nested documents judiciously and to consider the access patterns and data relationships of your application.
 
+## 9.8. Unknown Properties on Nested Documents
+
+`raise_on_unknown_attributes` (see [3.7](./03-defining-models.md#37-handling-unknown-document-properties))
+applies to `CouchbaseOrm::NestedDocument` the same way it does to `CouchbaseOrm::Base`, but the
+setting is per nested class - it is not inherited through composition from the parent document.
+A tolerant parent embedding a strict nested class still raises if that nested document carries an
+undeclared property, and vice versa:
+
+```ruby
+class Part < CouchbaseOrm::NestedDocument
+  self.raise_on_unknown_attributes = false # only Part tolerates unknown properties
+  attribute :name, :string
+end
+
+class Car < CouchbaseOrm::Base
+  attribute :parts, :array, type: Part # Car's own setting (default: true) is unaffected
+end
+```
+
 In the next section, we'll explore enums in CouchbaseOrm and how they can be used to define a fixed set of values for an attribute.
