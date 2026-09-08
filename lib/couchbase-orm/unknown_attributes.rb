@@ -39,7 +39,6 @@ module CouchbaseOrm
         # warn-once escalation stops.
         MAX_WARNED = 1_000
 
-        @warn_mutex = Mutex.new
         @warned = Set.new
 
         included do
@@ -51,6 +50,9 @@ module CouchbaseOrm
         # `raise_on_unknown_attributes` is false; otherwise unchanged.
         def assign_attributes(attributes)
             return super if self.class.raise_on_unknown_attributes
+            # Garbage input (nil, an Integer, a bare Object...) must still get
+            # ActiveModel's own "you must pass a hash" ArgumentError from
+            # `super`, not a NoMethodError from calling each_pair on it below.
             return super unless attributes.respond_to?(:each_pair)
 
             unknown = attributes.each_pair.filter_map { |key, _| key unless respond_to?(:"#{key}=") }
@@ -64,29 +66,16 @@ module CouchbaseOrm
         class << self
             # @api private
             def report(klass, keys)
-                CouchbaseOrm.logger.debug do
-                    "#{klass.name}: ignoring unknown propert#{'y' if keys.one?}#{'ies' unless keys.one?} #{keys.inspect}"
-                end
+                CouchbaseOrm.logger.debug { "#{klass.name}: ignoring unknown properties #{keys.inspect}" }
 
-                fresh = @warn_mutex.synchronize do
-                    if @warned.size >= MAX_WARNED
-                        []
-                    else
-                        keys.select { |key| @warned.add?("#{klass.name}##{key}") }
-                    end
-                end
-                return if fresh.empty?
+                newly_warned = @warned.size >= MAX_WARNED ? [] : keys.select { |key| @warned.add?("#{klass.name}##{key}") }
+                return if newly_warned.empty?
 
                 CouchbaseOrm.logger.warn(
-                    "#{klass.name}: ignoring unknown document propert#{'y' if fresh.one?}#{'ies' unless fresh.one?} " \
-                    "#{fresh.join(', ')} (raise_on_unknown_attributes is false for this class - " \
+                    "#{klass.name}: ignoring unknown document properties #{newly_warned.join(', ')} " \
+                    "(raise_on_unknown_attributes is false for this class - " \
                     "they will not be persisted if the document is saved)"
                 )
-            end
-
-            # @api private - test hook, so warn-once specs don't depend on run order
-            def reset_warnings!
-                @warn_mutex.synchronize { @warned.clear }
             end
         end
     end

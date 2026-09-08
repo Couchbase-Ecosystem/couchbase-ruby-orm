@@ -54,10 +54,9 @@ undeclared key logs at `DEBUG` level. To avoid flooding your logs on high-traffi
 is only emitted the first time a given (model class, property name) pair is seen in the process:
 
 ```
-D, [...] DEBUG -- : User: ignoring unknown property ["legacy_field"]
-W, [...]  WARN -- : User: ignoring unknown document property legacy_field (raise_on_unknown_attributes is false for this class - they will not be persisted if the document is saved)
+D, [...] DEBUG -- : User: ignoring unknown properties ["legacy_field"]
+W, [...]  WARN -- : User: ignoring unknown document properties legacy_field (raise_on_unknown_attributes is false for this class - they will not be persisted if the document is saved)
 ```
 
-That warning tracking is capped and can be reset (mainly useful in tests) with
-`CouchbaseOrm::UnknownAttributes.reset_warnings!`.
+That warning tracking is capped so it cannot grow unbounded.
 

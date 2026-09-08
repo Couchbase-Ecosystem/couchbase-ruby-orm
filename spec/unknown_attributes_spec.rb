@@ -60,7 +60,10 @@ class UnknownAttrsAssocChild < CouchbaseOrm::Base
 end
 
 RSpec.describe "raise_on_unknown_attributes" do
-    before { CouchbaseOrm::UnknownAttributes.reset_warnings! }
+    # No public reset API on purpose (it would be test-only surface on
+    # production code) - reach into the module's own warn-once tracking
+    # directly so these examples don't depend on run order.
+    before { CouchbaseOrm::UnknownAttributes.instance_variable_get(:@warned).clear }
 
     describe "defaults" do
         it "defaults to true" do
