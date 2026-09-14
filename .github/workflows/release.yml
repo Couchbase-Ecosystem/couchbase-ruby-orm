@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Verify tag is on master
+        run: |
+          git fetch origin master
+          if ! git merge-base --is-ancestor "${{ github.sha }}" origin/master; then
+            echo "::error::Tag ${{ github.ref_name }} (${{ github.sha }}) is not an ancestor of origin/master. Refusing to create a GitHub Release for a commit that hasn't been merged to master."
+            exit 1
+          fi
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes

@@ -34,6 +34,10 @@
   git tag X.Y.Z
   git push origin X.Y.Z
 
+  Pushing the tag automatically triggers the `Release` GitHub Actions workflow, which creates the
+  corresponding GitHub Release (with auto-generated notes) once it confirms the tag's commit is on
+  `master`.
+
   3. Verify Clean State
 
   Ensure your local master branch is clean and up-to-date:
@@ -66,6 +70,8 @@
 
   Post-Release
 
+  - Verify the GitHub Release was created automatically at
+    https://github.com/Couchbase-Ecosystem/couchbase-ruby-orm/releases/tag/X.Y.Z
   - Announce the release if applicable (changelog, team communication, etc.)
   - Update any documentation that references the version number
 
