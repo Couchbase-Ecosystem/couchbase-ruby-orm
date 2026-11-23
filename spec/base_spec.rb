@@ -77,6 +77,38 @@ describe CouchbaseOrm::Base do
         expect(base.changed?).to be false
     end
 
+    describe 'clean state after find' do
+        def expect_clean(model)
+            expect(model.changed?).to be false
+            expect(model.changes).to be_empty
+            expect(model.changes_to_save).to be_empty
+            expect(model.saved_changes).to be_empty
+            expect(model.previous_changes).to be_empty
+        end
+
+        it 'returns a model without any pending or previous changes' do
+            created = BaseTest.create!(name: 'joe')
+            expect_clean(BaseTest.find(created.id))
+        end
+
+        it 'returns clean models when finding several ids' do
+            created = [BaseTest.create!(name: 'joe'), BaseTest.create!(name: 'bob')]
+            found = BaseTest.find(created.map(&:id))
+            expect(found.size).to eq 2
+            found.each { |model| expect_clean(model) }
+        end
+
+        it 'returns a clean model from find_by_id' do
+            created = BaseTest.create!(name: 'joe')
+            expect_clean(BaseTest.find_by_id(created.id))
+        end
+
+        it 'returns a clean model when strict loading' do
+            created = BaseTest.create!(name: 'joe')
+            expect_clean(BaseTest.find(created.id, with_strict_loading: true))
+        end
+    end
+
     it 'stores not stringified changes' do
         compare = CompareTest.create!
         compare.age = '42'
