@@ -52,12 +52,6 @@ CouchbaseOrm::Connection.config = {
 }
 ```
 
-Views are generated on application load if they don't exist or mismatch.
-This works fine in production however by default in development models are lazy loaded.
-
-    # config/environments/development.rb
-    config.eager_load = true
-
 ## Examples
 
 ```ruby
@@ -148,51 +142,7 @@ context of rails application. You can also enforce types using ruby
     end
 ```
 
-## Views (aka Map/Reduce indexes)
-
-Views are defined in the model and typically just emit an attribute that
-can then be used for filtering results or ordering.
-
-```ruby
-    class Comment < CouchbaseOrm::Base
-      attribute :author :string
-      attribute :body, :string
-      view :all # => emits :id and will return all comments
-      view :by_author, emit_key: :author
-
-      # Generates two functions:
-      # * the by_author view above
-      # * def find_by_author(author); end
-      index_view :author
-
-      # You can make compound keys by passing an array to :emit_key
-      # this allow to query by read/unread comments
-      view :by_read, emit_key: [:user_id, :read]
-      # this allow to query by view_count
-      view :by_view_count, emit_key: [:user_id, :view_count]
-
-      validates_presence_of :author, :body
-    end
-```
-
-You can use `Comment.find_by_author('name')` to obtain all the comments by
-a particular author. The same thing, using the view directly would be:
-`Comment.by_author(key: 'name')`
-
-When using a compound key, the usage is the same, you just give the full key :
-
-```ruby
-   Comment.by_read(key: '["'+user_id+'",false]') # gives all unread comments for one particular user
-
-   # or even a range !
-
-   Comment.by_view_count(startkey: '["'+user_id+'",10]', endkey: '["'+user_id+'",20]') 
-   
-   # gives all comments that have been seen more than 10 times but less than 20
-```
-Check this couchbase help page to learn more on what's possible with compound keys : <https://developer.couchbase.com/documentation/server/3.x/admin/Views/views-translateSQL.html>
-
-Ex : Compound keys allows to decide the order of the results, and you can reverse it by passing `descending: true`
+## Ignored properties
 
 ```ruby
     class Comment < CouchbaseOrm::Base
@@ -233,7 +183,10 @@ WARNING: If a document exists without a property, the query will failed! So you 
 
 ## N1ql
 
-Like views, it's possible to use N1QL to process some requests used for filtering results or ordering.
+N1QL queries can be defined in the model to filter or order results.
+
+> Couchbase Views (map/reduce, `view` / `index_view` / `ensure_design_document!`) are no longer supported:
+> Couchbase Server 8.0 uses the Magma storage backend by default, which does not support Views. Use N1QL instead.
 
 ```ruby
     class Comment < CouchbaseOrm::Base
@@ -242,7 +195,7 @@ Like views, it's possible to use N1QL to process some requests used for filterin
       n1ql :by_author, emit_key: :author
 
       # Generates two functions:
-      # * the by_author view above
+      # * a by_author N1QL query
       # * def find_by_author(author); end
       index_n1ql :author
 
@@ -346,8 +299,7 @@ There are common active record helpers available for use `belongs_to` and `has_m
     end
 ```
 
-By default, `has_many` uses a view for association,
-but you can define a `type` option to specify an association using N1QL instead:
+`has_many` associations are resolved with N1QL queries:
 
   ```ruby
   class Comment < CouchbaseOrm::Base
@@ -355,7 +307,7 @@ but you can define a `type` option to specify an association using N1QL instead:
   end
 
   class Author < CouchbaseOrm::Base
-      has_many :comments, type: :n1ql, dependent: :destroy
+      has_many :comments, dependent: :destroy
   end
   ```
 

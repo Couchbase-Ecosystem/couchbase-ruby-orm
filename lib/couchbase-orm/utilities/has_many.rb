@@ -1,7 +1,8 @@
 module CouchbaseOrm
     module HasMany
         # :foreign_key, :class_name, :through
-        def has_many(model, class_name: nil, foreign_key: nil, through: nil, through_class: nil, through_key: nil, type: :view, **options)
+        def has_many(model, class_name: nil, foreign_key: nil, through: nil, through_class: nil, through_key: nil, type: :n1ql, **options)
+            raise ArgumentError, "has_many type: :view is no longer supported (Couchbase Views were removed), use type: :n1ql" if type == :view
             class_name = (class_name || model.to_s.singularize.camelcase).to_s
             foreign_key = (foreign_key || ActiveSupport::Inflector.foreign_key(self.name)).to_sym
             if through || through_class
@@ -38,16 +39,7 @@ module CouchbaseOrm
 
                     remote_klass = remote_class.constantize
                     raise ArgumentError, "Can't find #{remote_method} without an id" unless self.id.present?
-                    enum = klass.__send__(remote_method, key: self.id) { |row|
-                        case type
-                        when :n1ql
-                            remote_klass.find(row)
-                        when :view
-                            remote_klass.find(row[through_key])
-                        else
-                            raise 'type is unknown'
-                        end
-                    }
+                    enum = klass.__send__(remote_method, key: self.id) { |row| remote_klass.find(row) }
 
                     self.instance_variable_set(instance_var, enum)
                 end
@@ -66,28 +58,8 @@ module CouchbaseOrm
             case type
             when :n1ql
                 build_index_n1ql(klass, remote_class, remote_method, through_key, foreign_key)
-            when :view
-                build_index_view(klass, remote_class, remote_method, through_key, foreign_key)
             else
                 raise 'type is unknown'
-            end
-        end
-
-        def build_index_view(klass, remote_class, remote_method, through_key, foreign_key)
-            if remote_class
-                klass.class_eval do
-                    view remote_method, map: <<-EMAP
-                        function(doc) {
-                            if (doc.type === "{{design_document}}" && doc.#{through_key}) {
-                            emit(doc.#{foreign_key}, null);
-                            }
-                        }
-                    EMAP
-                end
-            else
-                klass.class_eval do
-                    index_view foreign_key, validate: false
-                end
             end
         end
 

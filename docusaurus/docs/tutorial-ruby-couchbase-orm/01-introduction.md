@@ -11,7 +11,7 @@ With Couchbase ORM, you can:
 - Define your data models and their relationships
 - Perform CRUD (Create, Read, Update, Delete) operations on your models
 - Query your data using a flexible and expressive query language
-- Use Couchbase-specific features like N1QL queries and views
+- Use Couchbase-specific features like N1QL queries
 - Implement advanced features such as data validation, callbacks, and associations
 
 Couchbase ORM abstracts away the low-level details of interacting with Couchbase Server, enabling you to focus on writing business logic and building great applications.
@@ -36,9 +36,7 @@ Couchbase ORM offers a wide range of features to make working with Couchbase Ser
 
 8. **N1QL Queries**: Execute N1QL queries directly from your Ruby code and map the results to your models.
 
-9. **Views**: Create and query Couchbase views to efficiently retrieve data based on specific criteria.
-
-10. **Nested Documents**: Embed related documents within a parent document for denormalized data modeling.
+9. **Nested Documents**: Embed related documents within a parent document for denormalized data modeling.
 
 These are just a few of the many features offered by Couchbase ORM. Throughout this documentation, we'll explore these features in-depth and provide examples of how to use them in your Ruby applications.
 

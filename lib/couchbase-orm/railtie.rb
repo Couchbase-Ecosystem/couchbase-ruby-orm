@@ -24,7 +24,6 @@ module Rails #:nodoc:
     module Couchbase #:nodoc:
         class Railtie < Rails::Railtie #:nodoc:
             config.couchbase_orm = ActiveSupport::OrderedOptions.new
-            config.couchbase_orm.ensure_design_documents = true
 
             # Maping of rescued exceptions to HTTP responses
             #
@@ -66,19 +65,6 @@ module Rails #:nodoc:
                 config.after_initialize do
                     unless config.action_dispatch.rescue_responses
                         ActionDispatch::ShowExceptions.rescue_responses.update(Railtie.rescue_responses)
-                    end
-                end
-            end
-
-            # Check (and upgrade if needed) all design documents
-            config.after_initialize do |app|
-                if config.couchbase_orm.ensure_design_documents
-                    begin
-                        ::CouchbaseOrm::Base.descendants.each do |model|
-                            model.ensure_design_document!
-                        end
-                    rescue ::MTLibcouchbase::Error::Timedout, ::MTLibcouchbase::Error::ConnectError, ::MTLibcouchbase::Error::NetworkError
-                        # skip connection errors for now
                     end
                 end
             end
