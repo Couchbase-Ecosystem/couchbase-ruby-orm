@@ -20,23 +20,20 @@ module CouchbaseOrm
                 "CouchbaseOrm_Relation: #{@model} where:#{@where.inspect} order:#{@order.inspect} limit: #{@limit} strict_loading: #{@strict_loading}"
             end
 
+            # Inlines condition values into the statement (for display/debugging).
             def to_n1ql
-                bucket_name = @model.bucket.name
-                where = build_where_with_params(nil)
-                order = build_order
-                limit = build_limit
-                "select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}"
+                build_select(nil)
             end
 
+            # Binds condition values as positional parameters ($1, $2, ...).
             def to_n1ql_with_params
-                bucket_name = @model.bucket.name
                 params = []
-                where = build_where_with_params(params)
-                order = build_order
-                limit = build_limit
-                ["select raw meta().id from `#{bucket_name}` where #{where} order by #{order} #{limit}", params]
+                [build_select(params), params]
             end
 
+            # The single seam through which every relation statement reaches the
+            # cluster, so query options (N1ql.config merged with #with) and logging
+            # are applied in one place.
             def execute(n1ql_query, params = [])
                 result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
                 CouchbaseOrm.logger.debug { "Relation query: #{n1ql_query} params: #{params.inspect} return #{result.rows.to_a.length} rows" }
@@ -76,17 +73,12 @@ module CouchbaseOrm
             end
 
             def first
-                n1ql_query, params = self.limit(1).to_n1ql_with_params
-                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
-                return unless (first_id = result.rows.to_a.first)
-
-                @model.find(first_id, with_strict_loading: @strict_loading)
+                first_id = limit(1).ids.first
+                @model.find(first_id, with_strict_loading: @strict_loading) if first_id
             end
 
             def last
-                n1ql_query, params = to_n1ql_with_params
-                result = @model.cluster.query(n1ql_query, build_query_options(positional_parameters: params))
-                last_id = result.rows.to_a.last
+                last_id = ids.last
                 @model.find(last_id, with_strict_loading: @strict_loading) if last_id
             end
 
@@ -170,6 +162,10 @@ module CouchbaseOrm
 
             def build_limit
                 @limit ? "limit #{@limit}" : ""
+            end
+
+            def build_select(params)
+                "select raw meta().id from `#{@model.bucket.name}` where #{build_where_with_params(params)} order by #{build_order} #{build_limit}"
             end
 
             def initializer_arguments
