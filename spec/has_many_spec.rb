@@ -9,10 +9,6 @@ shared_examples "has_many example" do |parameter|
         @object_test_class = Kernel.const_get("Object#{@context.camelize}Test".classify)
         @object_rating_test_class = Kernel.const_get("ObjectRating#{@context.camelize}Test".classify)
 
-        @rating_test_class.ensure_design_document!
-        @object_test_class.ensure_design_document!
-        @object_rating_test_class.ensure_design_document!
-
         @rating_test_class.delete_all
         @object_test_class.delete_all
         @object_rating_test_class.delete_all
@@ -76,28 +72,12 @@ shared_examples "has_many example" do |parameter|
 end
 
 describe CouchbaseOrm::HasMany do
-    context 'with view' do
-        class ObjectRatingViewTest < CouchbaseOrm::Base
-            join :object_view_test, :rating_view_test
-            view :view_all
-        end
-
-        class RatingViewTest < CouchbaseOrm::Base
-            enum rating: [:awesome, :good, :okay, :bad], default: :okay
-            belongs_to :object_view_test
-
-            has_many :object_view_tests, through: :object_rating_view_test
-            view :view_all
-        end
-
-        class ObjectViewTest < CouchbaseOrm::Base
-            attribute :name, type: String
-            has_many :rating_view_tests, dependent: :destroy
-
-            view :view_all
-        end
-
-        include_examples("has_many example", context: :view)
+    it 'rejects the removed :view type' do
+        expect {
+            class HasManyRemovedViewTypeTest < CouchbaseOrm::Base
+                has_many :object_n1ql_tests, type: :view
+            end
+        }.to raise_error(ArgumentError, /no longer supported/)
     end
 
     context 'with n1ql' do

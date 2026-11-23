@@ -23,7 +23,7 @@ module CouchbaseOrm
             add_joint_lookups(model_b, model_a, true)
 
             # use Index to allow lookups of joint records more efficiently than
-            # with a view or search
+            # with a N1QL query
             index ["#{model_a}_id".to_sym, "#{model_b}_id".to_sym], :join
         end
 
@@ -31,8 +31,8 @@ module CouchbaseOrm
             # belongs_to :group
             belongs_to model
 
-            # view :by_group_id
-            view "by_#{model}_id"
+            # n1ql :by_group_id, emit_key: :group_id
+            n1ql :"by_#{model}_id", emit_key: :"#{model}_id"
 
             # find_by_group_id
             instance_eval "

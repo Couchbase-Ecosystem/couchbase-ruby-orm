@@ -25,29 +25,4 @@ RSpec.describe CouchbaseOrm::BucketProxy do
         allow(proxyfied).to receive(:n1ql).and_return(:the_n1ql)
         expect(CouchbaseOrm::BucketProxy.new(proxyfied).n1ql).to be_a(CouchbaseOrm::N1qlProxy)
     end
-
-    describe '#view' do
-        it 'wraps the result in a ResultsProxy and caches it for the same design/view' do
-            allow(proxyfied).to receive(:view).with('design', 'view').and_return([:row1, :row2])
-            proxy = CouchbaseOrm::BucketProxy.new(proxyfied)
-
-            first = proxy.view('design', 'view')
-            second = proxy.view('design', 'view')
-
-            expect(first).to be_a(CouchbaseOrm::ResultsProxy)
-            expect(second).to be(first)
-            expect(proxyfied).to have_received(:view).once
-        end
-
-        it 'requeries when the design/view pair changes' do
-            allow(proxyfied).to receive(:view).with('design', 'view').and_return([:row1])
-            allow(proxyfied).to receive(:view).with('design', 'other').and_return([:row2])
-            proxy = CouchbaseOrm::BucketProxy.new(proxyfied)
-
-            proxy.view('design', 'view')
-            proxy.view('design', 'other')
-
-            expect(proxyfied).to have_received(:view).twice
-        end
-    end
 end

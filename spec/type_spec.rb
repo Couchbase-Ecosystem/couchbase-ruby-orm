@@ -58,9 +58,6 @@ class N1qlTypeTest < CouchbaseOrm::Base
     n1ql :by_both_dates, emit_key: [:renewal_date, :subscribed_at], presence: false
 end
 
-TypeTest.ensure_design_document!
-N1qlTypeTest.ensure_design_document!
-
 describe CouchbaseOrm::Types::Timestamp do
     it "should cast an integer to time" do
         t = Time.at(Time.now.to_i)

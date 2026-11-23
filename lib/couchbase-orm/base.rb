@@ -8,7 +8,6 @@ require 'couchbase'
 require 'couchbase-orm/changeable'
 require 'couchbase-orm/inspectable'
 require 'couchbase-orm/error'
-require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
@@ -126,7 +125,6 @@ module CouchbaseOrm
         include Persistence
 
         include Associations
-        include Views
         include QueryHelper
         include N1ql
         include Relation

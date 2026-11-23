@@ -21,7 +21,7 @@ class N1QLTest < CouchbaseOrm::Base
     n1ql :by_rating_without_docs, emit_key: :rating, include_docs: false
 
     # This generates both:
-    # view :by_rating, emit_key: :rating
+    # n1ql :by_rating, emit_key: :rating
     # def self.find_by_rating(rating); end  # also provide this helper function
     index_n1ql :rating
 end
