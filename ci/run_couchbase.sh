@@ -7,8 +7,21 @@ USER=$3
 PASSWORD=$4
 
 
-wget https://packages.couchbase.com/releases/$VERSION/couchbase-server-enterprise_$VERSION-ubuntu20.04_amd64.deb
-dpkg -i couchbase-server-enterprise_$VERSION-ubuntu20.04_amd64.deb
+# Couchbase Server 7.6+ only publishes a generic "linux" package; older
+# releases also ship distro-specific ones. Try the distro one first.
+PACKAGE=""
+for FLAVOR in ubuntu20.04 linux; do
+  CANDIDATE=couchbase-server-enterprise_$VERSION-${FLAVOR}_amd64.deb
+  if wget -q https://packages.couchbase.com/releases/$VERSION/$CANDIDATE; then
+    PACKAGE=$CANDIDATE
+    break
+  fi
+done
+if [ -z "$PACKAGE" ]; then
+  echo "No Couchbase Server package found for version $VERSION" >&2
+  exit 1
+fi
+dpkg -i $PACKAGE
 sleep 8
 sudo service couchbase-server status
 /opt/couchbase/bin/couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-username=admin --cluster-password=password --cluster-ramsize=320 --cluster-index-ramsize=256 --cluster-fts-ramsize=256 --services=data,index,query,fts

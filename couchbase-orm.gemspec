@@ -25,7 +25,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'json-schema',  '>= 3' # validating JSON against a schema
   gem.add_runtime_dependency     'logger',       '~> 1.6' # Required from Ruby 3.5.0+
 
-  gem.add_development_dependency 'rake', '~> 12.2'
+  gem.add_development_dependency 'rake', '>= 12.2'
   gem.add_development_dependency 'rspec', '~> 3.7'
   gem.add_development_dependency 'yard', '~> 0.9'
   gem.add_development_dependency 'pry'
