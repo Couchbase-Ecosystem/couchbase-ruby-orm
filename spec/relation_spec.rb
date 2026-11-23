@@ -534,5 +534,44 @@ describe CouchbaseOrm::Relation do
             expect(result).to match_array([m1])
         end
     end
+
+    describe "query execution seam" do
+        let(:relation) { RelationModel.where(active: true).order(age: :asc).with(adhoc: false, client_context_id: "relation-seam-spec") }
+
+        before do
+            @young = RelationModel.create!(active: true, age: 10)
+            @old = RelationModel.create!(active: true, age: 30)
+            RelationModel.create!(active: false, age: 20)
+        end
+
+        {
+            ids: ->(r) { r.ids },
+            first: ->(r) { r.first },
+            last: ->(r) { r.last },
+            count: ->(r) { r.count },
+            to_a: ->(r) { r.to_a },
+            update_all: ->(r) { r.update_all(name: "touched") },
+        }.each do |terminal, call|
+            it "routes #{terminal} through #execute with the relation's query options" do
+                expect_any_instance_of(CouchbaseOrm::Relation::CouchbaseOrm_Relation).to receive(:execute).once.and_call_original
+                expect(Couchbase::Options::Query).to receive(:new)
+                    .with(hash_including(adhoc: false, client_context_id: "relation-seam-spec", scan_consistency: :request_plus))
+                    .once.and_call_original
+                call.call(relation)
+            end
+        end
+
+        it "returns the first and last records" do
+            expect(relation.first).to eq @young
+            expect(relation.last).to eq @old
+        end
+
+        it "builds the same statement with inlined values or positional parameters" do
+            inlined = relation.to_n1ql
+            parameterized, params = relation.send(:to_n1ql_with_params)
+            expect(params).to eq([true])
+            expect(parameterized.sub("$1", "true")).to eq(inlined)
+        end
+    end
 end
 
